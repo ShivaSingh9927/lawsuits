@@ -1,0 +1,53 @@
+Recommended Storage Solutions
+Since you are already on Hetzner, you have two primary professional paths:
+
+Hetzner Object Storage (S3 Compatible)
+Hetzner offers S3-compatible storage. This is the most cost-effective and reliable method. It ensures your images are decoupled from your VPS, so if your server crashes, your images remain safe.
+
+The Media Processing Pipeline
+To keep your Vercel frontend fast, you shouldn't just "upload and forget." You need a pipeline to optimize these luxury images.
+
+The Workflow:
+Upload: Your Admin Dashboard (Next.js) sends the image to your Hetzner backend.
+
+Processing: Your backend uses a library like Sharp (Node.js) to:
+
+Convert to WebP: Significantly smaller file size with better quality.
+
+Generate Multiple Sizes: Create a thumbnail, medium, and large (hero) version.
+
+Apply Watermarks: (Optional) To protect your bespoke designs.
+
+Storage: The backend pushes these versions to Object Storage.
+
+Database Entry: You save the paths in your product_images table:
+
+JSON
+{
+  "original": "https://storage.yourbrand.com/suits/navy-suit-full.webp",
+  "thumbnail": "https://storage.yourbrand.com/suits/navy-suit-thumb.webp"
+}
+4. Content Delivery Network (CDN)
+Even if your files are on Hetzner in Germany, a lawyer in Mumbai or New York needs to see them instantly.
+
+Cloudflare: Point your storage domain to Cloudflare. It will cache your images in "edge" locations globally.
+
+Vercel Image Optimization: Since your frontend is on Vercel, you can use their <Image /> component. It automatically serves the right size and format based on the user's device.
+
+5. Handling Sensitive Data (Measurements)
+Since you are storing Home Measurement photos or profiles, security is paramount.
+
+Private Buckets: Keep the "Product" bucket public, but the "Customer Measurements" bucket private.
+
+Signed URLs: When a tailor needs to see a customer’s measurement photo, your backend generates a Signed URL that expires in 15 minutes. This ensures the data isn't just sitting on the open internet.
+
+6. Folder Structure for Organization
+Keep your storage bucket organized from Day 1:
+
+/products/{product_id}/ — High-res suit shots.
+
+/categories/ — Icons and banners.
+
+/users/{user_id}/measurements/ — Private customer data.
+
+/reviews/{review_id}/ — Customer-uploaded photos.

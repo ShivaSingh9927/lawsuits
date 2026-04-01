@@ -1,0 +1,80 @@
+To manage your inventory, pricing, and stock status dynamically, you need a Merchant/Admin Dashboard. Since you are using Vercel for the frontend and Hetzner for the backend, this dashboard can be a protected route in your Next.js application that communicates with your Node.js API.
+
+Here is the detailed design and functional plan for your Product Management System.
+
+1. The "Product Inventory" Master View
+This is the command center where you see everything at a glance.
+
+Top Bar: Search bar (for SKU or Name), "Add New Product" button, and a "Global Sale" toggle (to apply a discount to an entire category).
+
+The Table/Grid:
+
+Product Thumbnail: A small 50x50 image.
+
+Name & Category: (e.g., "The Barrister’s Navy" | Suits).
+
+Stock Status: A color-coded badge. [Green: In Stock], [Yellow: Low Stock], [Red: Out of Stock].
+
+Price: Shows current_price and compare_at_price.
+
+Quick Actions: Edit icon, Delete (Trash) icon, and a "Visibility" toggle (to hide a product without deleting it).
+
+2. The "Edit / Add Product" Page (The Form)
+This page maps directly to your Postgres Schema. It should be divided into logical sections:
+
+A. Basic Information
+Product Name & Slug: Auto-generate the slug from the name.
+
+Description: A Rich Text Editor (for bolding fabric specs).
+
+Category Dropdown: Pulls from your categories table.
+
+B. Pricing & Discounts (The "Freedom" Section)
+Base Price: The regular selling price.
+
+Compare At Price: Put the higher MSRP here to show a "Sale" tag on the frontend.
+
+Cost per Item: (Internal only) To calculate your profit margins.
+
+C. Variants & Inventory (The "Size/Color" Matrix)
+Since suits have many sizes, use a Variant Manager:
+
+A table where you can add rows for each size (38R, 40R, 42L).
+
+SKU Generator: Unique ID for each size.
+
+Stock Quantity: An input field to update numbers after a restock.
+
+Out of Stock Toggle: A manual override switch to mark a specific size as unavailable even if the database thinks there is 1 left.
+
+D. Media Upload
+Drag & Drop Zone: Upload images to your S3/Object Storage.
+
+Thumbnail Selector: A radio button to choose which image is the "Primary" view.
+
+3. Backend Logic for the Admin Panel
+To ensure these operations are secure and fast on your Hetzner VPS:
+
+Authorization (RBAC): You must implement Role-Based Access Control. Only users with the ROLE_ADMIN should be able to access these endpoints. Use a JWT (JSON Web Token) with a role claim.
+
+Audit Logs: Whenever you change a price or delete a product, write a record to an admin_logs table. This is vital for a business to track who changed what and when.
+
+Image Optimization: When you upload a high-res suit photo, have your backend resize it into three versions: thumbnail, mobile, and desktop to keep your Vercel frontend fast.
+
+Soft Deletes: Instead of permanently deleting a product from Postgres (which would break your order_items history), use a deleted_at timestamp. If it’s not null, the product is hidden.
+
+4. Special Feature: "Bulk Price Updater"
+Since you mentioned the freedom of price changes based on sales, you should include a tool that allows you to:
+
+"Increase price of all Accessories by 10%."
+
+"Mark all Slim Fit Suits as 'Sale' with a 20% discount."
+
+This sends a single UPDATE query to your Postgres database, saving you from editing 50 products one by one.
+
+5. Managing the "Home Fitting" Service from Admin
+You also need a view to manage the Appointments:
+
+Calendar View: See which tailors are booked and where.
+
+Assignment: Drag and drop an order onto a staff member to assign the home visit.

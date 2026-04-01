@@ -1,0 +1,12 @@
+product:
+{
+    name:"Advocate Dress Coat",
+    price:"₹2,400.00 – ₹2,600.00",
+    description:"Premium Advocate Dress Coat crafted for a sharp and professional courtroom look.
+        Made from high-quality fabric for comfort, durability, and a perfect fit.
+        Available in multiple sizes for both regular and senior styles.,
+        images:[],
+        size:[]
+
+
+

@@ -1,0 +1,77 @@
+1. The orders Table (Total Order Discount)
+This field tracks the total amount shaved off the entire bill (e.g., via a "FIRST10" coupon or a flat-rate loyalty discount).
+
+discount_total: Decimal(10,2) — The total value of all discounts applied to the order.
+
+coupon_id: FK -> coupons.id (Nullable) — Links the order to the specific coupon code used.
+
+2. The order_items Table (Line-Item Discount)
+This is crucial for "Buy One Get One" deals or when only specific suits are on sale. If you don't store the discount per item, you won't know the exact "Net Revenue" for a specific product SKU.
+
+unit_price: The original price at the time of purchase.
+
+discount_amount: Decimal(10,2) — The discount applied specifically to this line item.
+
+net_price: Decimal(10,2) — (unit_price - discount_amount). Store this explicitly so you don't have to calculate it during every read query.
+
+3. The product_variants Table (Active Sale Price)
+This is where you manage what the customer sees on the frontend (e.g., "$500 ~~$600~~").
+
+compare_at_price: Decimal(10,2) — The "Original" or "MSRP" price (e.g., $600).
+
+price: Decimal(10,2) — The current selling price (e.g., $500).
+
+Updated "Marketing & Discounts" Logic
+To make this work with your coupons table, here is the relational flow:
+
+coupons Table (The Rules)
+id: UUID
+
+code: (e.g., "LAWYER20")
+
+type: Enum (Percentage, Fixed Amount, Free Shipping)
+
+value: The numerical value (e.g., 20 for 20%)
+
+min_purchase_amount: To prevent using a $50 coupon on a $10 accessory.
+
+starts_at / expires_at: Self-explanatory.
+
+order_discounts (The Audit Trail)
+If you allow multiple discounts (e.g., a "Summer Sale" + a "Referral Code"), use a join table:
+
+order_id: FK
+
+coupon_id: FK
+
+applied_amount: The actual currency value this specific coupon saved the user.
+
+service_appointments
+This table manages the logistics of the person visiting the home.
+
+id: UUID
+
+order_id: FK -> orders.id (Links the payment to the visit)
+
+user_id: FK -> users.id
+
+status: Enum (Pending, Assigned, Out for Fitting, Completed, Cancelled)
+
+scheduled_date: Date
+
+time_slot: Enum (9am-12pm, 12pm-3pm, 3pm-6pm)
+
+address_id: FK -> user_addresses.id
+
+assigned_staff_id: FK -> staff.id (The person visiting)
+
+notes: Text (Any specific requests, e.g., "Bring extra slim-fit samples")
+
+staff (Internal Team)
+id: UUID
+
+name: Varchar
+
+phone: Varchar
+
+current_location: Point (Optional: for real-time tracking)

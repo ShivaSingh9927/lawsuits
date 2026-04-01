@@ -1,0 +1,39 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+/lawsuits-app/node_modules
+/lawsuits-app/.pnp
+/lawsuits-app/.pnp.*
+/lawsuits-app/.yarn/*
+
+# Next.js
+/.next/
+/out/
+/lawsuits-app/.next/
+/lawsuits-app/out/
+
+# Production
+/build
+/lawsuits-app/build
+
+# Misc
+.DS_Store
+*.pem
+*debug.log*
+
+# Env files
+.env*
+/lawsuits-app/.env*
+
+# Vercel
+.vercel
+/lawsuits-app/.vercel
+
+# TypeScript
+*.tsbuildinfo
+/lawsuits-app/next-env.d.ts
+
+# OS files
+.DS_Store
+Thumbs.db

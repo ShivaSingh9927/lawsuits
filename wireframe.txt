@@ -1,0 +1,98 @@
+1. Homepage: The "Power Suit" Entrance
+The goal here is branding and quick navigation into categories.
+
+Header: Sticky Nav with [Logo] | [Suits] [Shirts] [Accessories] | [Search] [Account/Profile] [Cart (0)].
+
+Hero Section: High-resolution image of a lawyer in a courtroom or office.
+
+Headline: "Dress for the Verdict."
+
+CTA: [Shop the Collection] [Book a Virtual Tailor].
+
+Curated Categories: Three large cards: "The Courtroom Classic," "The Boardroom Power Move," and "Essential Accessories."
+
+Social Proof: A "Trusted by Partners at [Law Firm Logos]" bar to build immediate prestige.
+
+The Form Layout (Above the Fold or Mid-Page)
+Section Header: "The At-Home Atelier: Professional Tailoring at Your Doorstep."
+
+Step 1: Select Your Interest: (Dropdown) e.g., Three-Piece Suit, Tuxedo, Corporate Daily.
+
+Step 2: Fitting Address: (Auto-complete via Google Maps API).
+
+Step 3: Schedule: A calendar widget showing available dates and time slots.
+
+Step 4: Contact Info: Name, Email, Phone.
+
+The "Pay & Book" Button: This triggers the Razorpay flow immediately.
+
+2. Product Listing Page (PLP)
+This is where your Postgres filters (Fabric, Fit, Color) come to life.
+
+Left Sidebar (Filters): * Fit (Slim, Modern, Classic).
+
+Fabric (Wool, Linen, Silk Blend).
+
+Price Range (using your base_price field).
+
+Product Grid: 2 or 3 columns.
+
+Card Content: Primary Image, Hover for second image, Name, Price, and a small Rating Star (from your avg_rating field).
+
+Quick Add: A "Quick Buy" button that opens a small overlay for size selection.
+
+3. Product Detail Page (PDP): The Conversion Point
+This page needs to handle the complex variants we discussed in the schema.
+
+Left Side: Vertical thumbnail list + Large main image viewer.
+
+Right Side:
+
+Product Title & Price.
+
+Size Selection: A dropdown or tile list.
+
+"Find My Fit" Tool: A link that opens a modal to the Measurement Profile.
+
+Add to Cart / Wishlist.
+
+Fabric Details: Pulling from your attributes table (e.g., "Super 120s Italian Wool").
+
+Below the Fold:
+
+"Complete the Look": Cross-sell ties, cufflinks, or pocket squares that go with this specific suit.
+
+Reviews & Ratings: Displaying the comments, verified purchase badges, and admin replies.
+
+4. The "Measurement Vault" (User Profile)
+This is your "sticky" feature. Once a lawyer saves their measurements here, they are locked into your ecosystem.
+
+Layout: A clean, form-based dashboard.
+
+Input Fields: [Neck] [Chest] [Waist] [Inseam] [Sleeve].
+
+Visual Aid: Small diagrams showing exactly where to measure.
+
+Status: "Verified by Admin" badge (linked to your is_verified_by_tailor boolean).
+
+5. Checkout: The Razorpay Handshake
+Keep this single-page to reduce drop-offs.
+
+Column 1: Shipping & Billing: Pulling from user_addresses.
+
+Column 2: Order Summary: * List of items with unit_price.
+
+Discount Code Input: (Applies the logic to your coupons table).
+
+Subtotal, Shipping, Tax, and Grand Total.
+
+Column 3: Payment: * "Proceed to Secure Payment" button (Triggers the Razorpay Modal).
+
+Security badges (SSL, Razorpay Secured).
+
+Section,Element,Purpose
+Top Nav,Hamburger + Logo + Cart,Navigation & Brand
+Hero,Big Image + 1 Primary CTA,Focus
+Grid,2-Column Product Cards,Discovery
+Sticky Bar,"""Add to Cart"" (on PDP)",Easy Conversion
+Footer,Newsletter + Terms + Socials,Retention

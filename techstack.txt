@@ -1,0 +1,17 @@
+1. Frontend: Vercel
+2. Backend: Hetzner VPS (Node.js/Express)
+3. Database & Infrastructure
+    Primary DB: PostgreSQL. The industry standard for relational data like yours.
+
+    Caching & Queues: Redis.
+
+    Use Case: Use BullMQ (powered by Redis) to schedule your "Tailor Appointment" reminders. If a lawyer books for 10:00 AM, BullMQ triggers a WhatsApp notification at 9:00 AM.
+
+    Storage: Hetzner Object Storage (S3-Compatible). To store your product images and user-uploaded measurement photos.
+
+    Reverse Proxy: Caddy. It’s simpler than Nginx and handles SSL certificates (HTTPS) for your Hetzner VPS automatically.
+
+4. Third-Party "Business" Integrations: Google Oauth, SMTP for emails, Razorpay for payments.
+
+5. Deployment & DevOps
+Containerization: Docker. Wrap your Node.js app, Postgres, and Redis into a docker-compose setup for easy management on Hetzner.

@@ -1,0 +1,118 @@
+1. Homepage: The "Digital Atelier"
+Goal: Establish brand authority and drive the "Home Measurement" VIP service.
+
+Hero Section: * Full-width cinematic image of a sharp suit in a law library setting.
+
+Overlay Text: "The Verdict is In: Precision Tailoring for the Modern Counsel."
+
+Primary CTA: [Book Home Measurement] (High-contrast button).
+
+Secondary CTA: [Explore Collection].
+
+The VIP Service Form (Mid-Page): * A clean, "Step-based" card.
+
+Fields: [Select Suit Category] -> [Preferred Date/Time] -> [Location Pin].
+
+Value Prop: "Our Master Tailor brings the showroom to your chambers."
+
+Shop by Category Grid: * Four large high-res tiles: Courtroom Classics, The Boardroom, Formal Galas, and Executive Accessories.
+
+Trust Bar: Logos of top-tier law firms or "As seen in" legal journals.
+
+2. "All Products" / Shop Page
+Goal: High-speed discovery with powerful filtering.
+
+Top Bar: * Breadcrumbs: Home > Suits > All Products.
+
+Active Filters Display: Small chips showing "Wool", "Size 40R", "Under ₹50,000" with "X" to remove.
+
+Sort Dropdown: [Newest] [Price: Low to High] [Most Popular] [Rating: High to Low].
+
+Left Sidebar (The Filter Engine):
+
+Category: Accordion for Suits, Shirts, Ties, Belts, Cufflinks.
+
+Price Range: A dual-point slider with manual input boxes.
+
+Size: A grid of buttons (38, 40, 42, 44...).
+
+Fabric: Checkboxes (100% Merino Wool, Silk Blend, Egyptian Cotton).
+
+Fit: [Slim Fit] [Modern Fit] [Classic Fit].
+
+Product Grid: * 3-column layout on desktop, 1-column on mobile.
+
+Card UI: * Image with "Quick View" hover effect.
+
+"Home Fitting Available" badge in the corner.
+
+Price and star rating (e.g., ★ 4.8 | 120 Reviews).
+
+3. Product Detail Page (PDP)
+Goal: Sensory details and fit confidence.
+
+Image Gallery (Left): Vertical thumbnails on the side, large main image with "Deep Zoom" capability to show fabric texture.
+
+Product Info (Right):
+
+Title: "The Solicitor's Charcoal Three-Piece."
+
+Price: Clear display with "Or 3 interest-free payments" (Financing info).
+
+Size Selection: Grid of sizes + [Size Guide] link.
+
+The "VIP Handshake": A toggle switch:
+
+( ) Standard Shipping
+
+(x) Home Measurement & Sample Viewing (+₹999 - Refundable on purchase).
+
+Fabric Composition: Bullet points describing the thread count and breathability.
+
+Cross-Sell: "Pairs perfectly with our Silk Navy Tie."
+
+4. The Cart & Checkout
+Goal: Secure the transaction and schedule the visit.
+
+Mini-Cart (Slide-out): Appears when an item is added. Shows subtotal and a progress bar for "Free Home Fitting" (e.g., "Add ₹2,000 more for free VIP service").
+
+Checkout Page (One-Page Design):
+
+Section 1: Contact & Address: Auto-fill for logged-in users.
+
+Section 2: The Appointment: A calendar UI. If the user chose "Home Measurement," they pick their 3-hour window here.
+
+Section 3: Payment: Integrated Razorpay frame. Options for UPI, Cards, and Netbanking.
+
+Section 4: Summary: Final breakdown including the discount_total from the coupon applied.
+
+5. User Dashboard: "The Lawyer's Vault"
+Goal: Retention and easy re-ordering.
+
+Measurement Profile: A visual silhouette of a suit showing the user's saved metrics (Chest, Waist, Inseam).
+
+Status: "Verified by Tailor [Name] on [Date]."
+
+Order History: List of past purchases with "Re-order this Fit" buttons.
+
+Wishlist: A "Saved for Later" grid for accessories they might want for their next court date.
+
+6. Global Elements (Nav & Footer)
+Sticky Header: * Left: Hamburger menu (Mobile) / Category Links (Desktop).
+
+Center: Minimalist Logo (Gold or Silver Serif font).
+
+Right: Search icon, User Profile icon, and Cart icon with a red notification bubble.
+
+Footer:
+
+Columns: Company (About, Careers), Client Care (Returns, Shipping, FAQ), Legal (Privacy, Terms).
+
+Newsletter: "Join the Inner Circle: Weekly style tips for the modern advocate."
+
+UX Design Principles for this Case:
+Mobile-First: Most lawyers will browse this while commuting or between hearings. The "Home Measurement" form must be thumb-friendly.
+
+High-Contrast Typography: Use a combination of a classic Serif font (for headings) and a clean Sans-serif (for body text/data) to ensure readability and professional "weight."
+
+Loading States: Use "Skeleton Screens" while your Hetzner backend fetches the product list to make the site feel instantaneous.
