@@ -4,44 +4,26 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
+// Create a lazy-initialized browser client
 let browserClient: ReturnType<typeof createBrowserClient> | null = null;
 
-export function getSupabase() {
+function getClient() {
   if (!browserClient && supabaseUrl && supabaseAnonKey) {
     browserClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
+  }
+  if (!browserClient) {
+    throw new Error("Supabase not configured");
   }
   return browserClient;
 }
 
-export const supabase = {
-  auth: {
-    signInWithPassword: async (params: Parameters<ReturnType<typeof createBrowserClient>["auth"]["signInWithPassword"]>[0]) => {
-      const client = getSupabase();
-      if (!client) throw new Error("Supabase not configured");
-      return client.auth.signInWithPassword(params);
-    },
-    signUp: async (params: Parameters<ReturnType<typeof createBrowserClient>["auth"]["signUp"]>[0]) => {
-      const client = getSupabase();
-      if (!client) throw new Error("Supabase not configured");
-      return client.auth.signUp(params);
-    },
-    signInWithOAuth: async (params: Parameters<ReturnType<typeof createBrowserClient>["auth"]["signInWithOAuth"]>[0]) => {
-      const client = getSupabase();
-      if (!client) throw new Error("Supabase not configured");
-      return client.auth.signInWithOAuth(params);
-    },
-    signOut: async () => {
-      const client = getSupabase();
-      if (!client) throw new Error("Supabase not configured");
-      return client.auth.signOut();
-    },
-    getUser: async () => {
-      const client = getSupabase();
-      if (!client) return { data: { user: null }, error: null };
-      return client.auth.getUser();
-    },
+// Export a proxy that lazily initializes the client
+export const supabase = new Proxy({} as ReturnType<typeof createBrowserClient>, {
+  get(_target, prop) {
+    const client = getClient();
+    return (client as Record<string, unknown>)[prop as string];
   },
-};
+});
 
 // Server-side admin client (for API routes)
 export function createAdminClient() {
