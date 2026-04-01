@@ -7,16 +7,17 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Heart, ShoppingBag, Eye } from "lucide-react";
+import { Heart, Eye } from "lucide-react";
 import { Product } from "@/types";
 import { useWishlistStore } from "@/store";
 
 interface ProductCardProps {
   product: Product;
   className?: string;
+  priority?: boolean;
 }
 
-export function ProductCard({ product, className }: ProductCardProps) {
+export function ProductCard({ product, className, priority = false }: ProductCardProps) {
   const [hovered, setHovered] = useState(false);
   const { isWishlisted, addItem, removeItem } = useWishlistStore();
   const wishlisted = isWishlisted(product.id);
@@ -46,6 +47,10 @@ export function ProductCard({ product, className }: ProductCardProps) {
             src={primaryImage?.url || "/placeholder-suit.jpg"}
             alt={product.name}
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            quality={80}
+            priority={priority}
+            loading={priority ? "eager" : "lazy"}
             className={cn(
               "object-cover transition-all duration-500",
               hovered ? "scale-110 opacity-0" : "scale-100 opacity-100"
@@ -55,6 +60,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
             src={secondaryImage?.url || primaryImage?.url || "/placeholder-suit.jpg"}
             alt={product.name}
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            quality={80}
+            loading="lazy"
             className={cn(
               "object-cover transition-all duration-500",
               hovered ? "scale-100 opacity-100" : "scale-100 opacity-0"
