@@ -81,6 +81,17 @@ export function Header() {
               </Link>
             </Button>
             
+            {mounted && (
+              <div className="hidden lg:flex items-center gap-6 mr-4 border-r border-white/10 pr-6">
+                <Link href="/login" className="text-xs uppercase tracking-[0.3em] text-zinc-400 hover:text-accent-yellow transition-all font-bold">
+                  Log In
+                </Link>
+                <Link href="/login?mode=signup" className="text-xs uppercase tracking-[0.3em] text-zinc-100 hover:text-accent-yellow transition-all font-bold">
+                  Sign Up
+                </Link>
+              </div>
+            )}
+
             <Button variant="ghost" size="icon" asChild className="h-10 w-10 opacity-80 hover:opacity-100 hover:text-zinc-100 hover:bg-white/5">
               <Link href="/account">
                 <User className="h-5 w-5" />
@@ -94,7 +105,7 @@ export function Header() {
               onClick={toggleCart}
             >
               <ShoppingBag className="h-5 w-5" />
-              {itemCount > 0 && (
+              {mounted && itemCount > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-accent-yellow text-[10px] font-bold text-black ring-2 ring-zinc-950">
                   {itemCount}
                 </span>
@@ -108,7 +119,7 @@ export function Header() {
                 <Button variant="ghost" size="icon" className="md:hidden text-zinc-100">
                   <Menu className="h-6 w-6" />
                 </Button>
-              </SheetTrigger>
+              </Trigger>
               <SheetContent side="right" className="w-80 bg-zinc-950 border-white/5">
                 <SheetHeader>
                   <SheetTitle className="font-serif text-2xl tracking-[0.1em] text-zinc-100">Menu</SheetTitle>
