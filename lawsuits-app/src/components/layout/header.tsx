@@ -119,7 +119,7 @@ export function Header() {
                 <Button variant="ghost" size="icon" className="md:hidden text-zinc-100">
                   <Menu className="h-6 w-6" />
                 </Button>
-              </Trigger>
+              </SheetTrigger>
               <SheetContent side="right" className="w-80 bg-zinc-950 border-white/5">
                 <SheetHeader>
                   <SheetTitle className="font-serif text-2xl tracking-[0.1em] text-zinc-100">Menu</SheetTitle>
