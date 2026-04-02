@@ -97,159 +97,122 @@ export function HomeFittingForm() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="relative overflow-hidden bg-white/50 p-10 backdrop-blur-sm border border-border/50"
+            className="relative overflow-hidden bg-[#EAE0D5]/20 p-10 backdrop-blur-sm border border-black/5"
           >
-            <div className="mb-10 flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground">Step {step} of 4</span>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4].map((s) => (
-                  <div
-                    key={s}
-                    className={`h-[2px] w-8 transition-all duration-500 ${
-                      s <= step ? "bg-accent-yellow" : "bg-border"
-                    }`}
-                  />
-                ))}
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-12">
+              <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
+                {/* Style Selection */}
+                <div className="space-y-6">
+                  <h3 className="font-serif text-xl tracking-tight text-black">1. Style Selection</h3>
+                  <div className="space-y-4 text-left">
+                    <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Category</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(v) => setFormData({ ...formData, category: v ?? "" })}
+                    >
+                      <SelectTrigger className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus:ring-0">
+                        <SelectValue placeholder="Choose preference" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {suitCategories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Location */}
+                <div className="space-y-6">
+                  <h3 className="font-serif text-xl tracking-tight text-black">2. Location</h3>
+                  <div className="space-y-4 text-left">
+                    <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Fitting Address</Label>
+                    <Input
+                      className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus-visible:ring-0"
+                      placeholder="Chambers or residence"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Scheduling */}
+                <div className="space-y-6 lg:col-span-2">
+                  <h3 className="font-serif text-xl tracking-tight text-black">3. Scheduling</h3>
+                  <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                    <div className="space-y-4 text-left">
+                      <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Date</Label>
+                      <Input
+                        type="date"
+                        className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus-visible:ring-0"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-4 text-left">
+                      <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Time Slot</Label>
+                      <Select
+                        value={formData.timeSlot}
+                        onValueChange={(v) => setFormData({ ...formData, timeSlot: v ?? "" })}
+                      >
+                        <SelectTrigger className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus:ring-0">
+                          <SelectValue placeholder="Select time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeSlots.map((slot) => (
+                            <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Personal Details */}
+                <div className="space-y-6 lg:col-span-2">
+                  <h3 className="font-serif text-xl tracking-tight text-black">4. Personal Details</h3>
+                  <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+                    <div className="space-y-1 text-left">
+                      <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Full Name</Label>
+                      <Input
+                        className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus-visible:ring-0"
+                        placeholder="Name, Esq."
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1 text-left">
+                      <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Email</Label>
+                      <Input
+                        type="email"
+                        className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus-visible:ring-0"
+                        placeholder="counsel@chambers.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1 text-left">
+                      <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Phone</Label>
+                      <Input
+                        type="tel"
+                        className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus-visible:ring-0"
+                        placeholder="+91 00000 00000"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <form onSubmit={handleSubmit} className="min-h-[300px]">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={step}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="space-y-8"
-                >
-                  {step === 1 && (
-                    <div className="space-y-6">
-                      <h3 className="font-serif text-2xl tracking-tight text-foreground">What style defines you?</h3>
-                      <div className="space-y-4 text-left">
-                        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Select Category</Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(v) => setFormData({ ...formData, category: v ?? "" })}
-                        >
-                          <SelectTrigger className="border-0 border-b border-border bg-transparent px-0 text-lg focus:ring-0">
-                            <SelectValue placeholder="Choose your preference" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {suitCategories.map((cat) => (
-                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
-
-                  {step === 2 && (
-                    <div className="space-y-6">
-                      <h3 className="font-serif text-2xl tracking-tight text-foreground">Where shall we meet?</h3>
-                      <div className="space-y-4 text-left">
-                        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Fitting Address</Label>
-                        <Input
-                          className="border-0 border-b border-border bg-transparent px-0 text-lg focus-visible:ring-0"
-                          placeholder="Your chambers or residence"
-                          value={formData.address}
-                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {step === 3 && (
-                    <div className="space-y-6">
-                      <h3 className="font-serif text-2xl tracking-tight text-foreground">Choose a moment</h3>
-                      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-                        <div className="space-y-4 text-left">
-                          <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Date</Label>
-                          <Input
-                            type="date"
-                            className="border-0 border-b border-border bg-transparent px-0 text-lg focus-visible:ring-0"
-                            value={formData.date}
-                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-4 text-left">
-                          <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Time Slot</Label>
-                          <Select
-                            value={formData.timeSlot}
-                            onValueChange={(v) => setFormData({ ...formData, timeSlot: v ?? "" })}
-                          >
-                            <SelectTrigger className="border-0 border-b border-border bg-transparent px-0 text-lg focus:ring-0">
-                              <SelectValue placeholder="Select time" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {timeSlots.map((slot) => (
-                                <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {step === 4 && (
-                    <div className="space-y-8">
-                      <h3 className="font-serif text-2xl tracking-tight text-foreground">Final Details</h3>
-                      <div className="grid grid-cols-1 gap-8">
-                        <div className="space-y-1 text-left">
-                          <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Full Name</Label>
-                          <Input
-                            className="border-0 border-b border-border bg-transparent px-0 text-lg focus-visible:ring-0"
-                            placeholder="John Doe, Esq."
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-                          <div className="space-y-1 text-left">
-                            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Email</Label>
-                            <Input
-                              type="email"
-                              className="border-0 border-b border-border bg-transparent px-0 text-lg focus-visible:ring-0"
-                              placeholder="counsel@chambers.com"
-                              value={formData.email}
-                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            />
-                          </div>
-                          <div className="space-y-1 text-left">
-                            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Phone</Label>
-                            <Input
-                              type="tel"
-                              className="border-0 border-b border-border bg-transparent px-0 text-lg focus-visible:ring-0"
-                              placeholder="+91 00000 00000"
-                              value={formData.phone}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-
-              <div className="mt-12 flex gap-4">
-                {step > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setStep(step - 1)}
-                    className="flex h-14 w-14 items-center justify-center border border-border transition-colors hover:bg-black/5"
-                  >
-                    <ArrowLeft className="h-5 w-5" />
-                  </button>
-                )}
+              <div className="pt-8">
                 <button
                   type="submit"
-                  className="group relative flex h-14 flex-1 items-center justify-center bg-black text-[10px] font-medium uppercase tracking-[0.4em] text-white transition-all hover:bg-black/90"
+                  onClick={() => console.log("Booking submitted:", formData)}
+                  className="group relative flex h-14 w-full items-center justify-center bg-black text-[10px] font-medium uppercase tracking-[0.4em] text-white transition-all hover:bg-black/90"
                 >
                   <span className="relative z-10 flex items-center gap-4">
-                    {step === 4 ? "Complete Invitation" : "Next Movement"}
+                    Send Invitation
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-2" />
                   </span>
                 </button>

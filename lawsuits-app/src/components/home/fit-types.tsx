@@ -38,7 +38,7 @@ export function FitTypes() {
           >
             <div className="relative mb-12 aspect-[2/3] w-full max-w-[450px] overflow-hidden rounded-sm bg-muted shadow-2xl">
               <Image
-                src="/slim-fit.png"
+                src="/slim-fit.webp"
                 alt="Slim Fit Model"
                 fill
                 sizes="(max-width: 768px) 100vw, 450px"
@@ -73,7 +73,7 @@ export function FitTypes() {
           >
             <div className="relative mb-12 aspect-[2/3] w-full max-w-[450px] overflow-hidden rounded-sm bg-muted shadow-2xl">
               <Image
-                src="/modern-fit.png"
+                src="/modern-fit.webp"
                 alt="Modern Fit Model"
                 fill
                 sizes="(max-width: 768px) 100vw, 450px"

@@ -6,7 +6,7 @@ export const categories: Category[] = [
     name: "Advocate Suits",
     slug: "suits",
     description: "Premium tailored suits for the legal profession",
-    image_url: "/advocate_dress_coat.jpeg",
+    image_url: "/advocate_dress_coat.webp",
     parent_id: null,
   },
   {
@@ -14,7 +14,7 @@ export const categories: Category[] = [
     name: "Gowns & Robes",
     slug: "gowns",
     description: "Distinguished legal gowns and robes",
-    image_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg",
+    image_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp",
     parent_id: null,
   },
   {
@@ -22,7 +22,7 @@ export const categories: Category[] = [
     name: "Formal Pants",
     slug: "pants",
     description: "Professional formal trousers",
-    image_url: "/hunters-race-MYbhN8KaaEc-unsplash.jpg",
+    image_url: "/hunters-race-MYbhN8KaaEc-unsplash.webp",
     parent_id: null,
   },
   {
@@ -30,7 +30,7 @@ export const categories: Category[] = [
     name: "Premium Shirts",
     slug: "shirts",
     description: "Crisp white and formal shirts",
-    image_url: "/pexels-unique-bash-creative-1927464998-34850161.jpg",
+    image_url: "/pexels-unique-bash-creative-1927464998-34850161.webp",
     parent_id: null,
   },
   {
@@ -38,7 +38,7 @@ export const categories: Category[] = [
     name: "Legal Vests",
     slug: "vests",
     description: "Formal waistcoats and vests",
-    image_url: "/pexels-pavel-danilyuk-8112126.jpg",
+    image_url: "/pexels-pavel-danilyuk-8112126.webp",
     parent_id: null,
   },
   {
@@ -46,7 +46,7 @@ export const categories: Category[] = [
     name: "Atelier Accessories",
     slug: "accessories",
     description: "Essential legal accessories",
-    image_url: "/pexels-karola-g-7876289.jpg",
+    image_url: "/pexels-karola-g-7876289.webp",
     parent_id: null,
   },
 ];
@@ -71,8 +71,8 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[0],
     images: [
-      { id: "img-1-1", product_id: "prod-1", url: "/hunters-race-MYbhN8KaaEc-unsplash.jpg", thumbnail_url: "/hunters-race-MYbhN8KaaEc-unsplash.jpg", medium_url: "/hunters-race-MYbhN8KaaEc-unsplash.jpg", alt: "Charcoal three-piece suit front view", position: 0, is_primary: true },
-      { id: "img-1-2", product_id: "prod-1", url: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg", thumbnail_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg", medium_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg", alt: "Charcoal three-piece suit back view", position: 1, is_primary: false },
+      { id: "img-1-1", product_id: "prod-1", url: "/hunters-race-MYbhN8KaaEc-unsplash.webp", thumbnail_url: "/hunters-race-MYbhN8KaaEc-unsplash.webp", medium_url: "/hunters-race-MYbhN8KaaEc-unsplash.webp", alt: "Charcoal three-piece suit front view", position: 0, is_primary: true },
+      { id: "img-1-2", product_id: "prod-1", url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", thumbnail_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", medium_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", alt: "Charcoal three-piece suit back view", position: 1, is_primary: false },
     ],
     variants: [
       { id: "var-1-0", product_id: "prod-1", sku: "BAR-CH-36", size: "36", stock_quantity: 5, price: 45000, compare_at_price: 55000, is_out_of_stock: false },
@@ -101,8 +101,8 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[0],
     images: [
-      { id: "img-2-1", product_id: "prod-2", url: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg", thumbnail_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg", medium_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg", alt: "Navy two-piece suit", position: 0, is_primary: true },
-      { id: "img-2-2", product_id: "prod-2", url: "/pexels-pavel-danilyuk-8112126.jpg", thumbnail_url: "/pexels-pavel-danilyuk-8112126.jpg", medium_url: "/pexels-pavel-danilyuk-8112126.jpg", alt: "Navy two-piece suit detail", position: 1, is_primary: false },
+      { id: "img-2-1", product_id: "prod-2", url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", thumbnail_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", medium_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", alt: "Navy two-piece suit", position: 0, is_primary: true },
+      { id: "img-2-2", product_id: "prod-2", url: "/pexels-pavel-danilyuk-8112126.webp", thumbnail_url: "/pexels-pavel-danilyuk-8112126.webp", medium_url: "/pexels-pavel-danilyuk-8112126.webp", alt: "Navy two-piece suit detail", position: 1, is_primary: false },
     ],
     variants: [
       { id: "var-2-0", product_id: "prod-2", sku: "SOL-NV-36", size: "36", stock_quantity: 10, price: 35000, compare_at_price: null, is_out_of_stock: false },
@@ -130,7 +130,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[0],
     images: [
-      { id: "img-3-1", product_id: "prod-3", url: "/pexels-ekaterina-bolovtsova-6077961.jpg", thumbnail_url: "/pexels-ekaterina-bolovtsova-6077961.jpg", medium_url: "/pexels-ekaterina-bolovtsova-6077961.jpg", alt: "Black tuxedo", position: 0, is_primary: true },
+      { id: "img-3-1", product_id: "prod-3", url: "/pexels-ekaterina-bolovtsova-6077961.webp", thumbnail_url: "/pexels-ekaterina-bolovtsova-6077961.webp", medium_url: "/pexels-ekaterina-bolovtsova-6077961.webp", alt: "Black tuxedo", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-3-0", product_id: "prod-3", sku: "ADV-BK-36", size: "36", stock_quantity: 3, price: 65000, compare_at_price: 75000, is_out_of_stock: false },
@@ -157,7 +157,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[5],
     images: [
-      { id: "img-4-1", product_id: "prod-4", url: "/pexels-karola-g-7876289.jpg", thumbnail_url: "/pexels-karola-g-7876289.jpg", medium_url: "/pexels-karola-g-7876289.jpg", alt: "Silk navy tie", position: 0, is_primary: true },
+      { id: "img-4-1", product_id: "prod-4", url: "/pexels-karola-g-7876289.webp", thumbnail_url: "/pexels-karola-g-7876289.webp", medium_url: "/pexels-karola-g-7876289.webp", alt: "Silk navy tie", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-4-1", product_id: "prod-4", sku: "TIE-NV-STD", size: "Standard", stock_quantity: 25, price: 3500, compare_at_price: 4500, is_out_of_stock: false },
@@ -182,7 +182,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[3],
     images: [
-      { id: "img-5-1", product_id: "prod-5", url: "/pexels-unique-bash-creative-1927464998-34850161.jpg", thumbnail_url: "/pexels-unique-bash-creative-1927464998-34850161.jpg", medium_url: "/pexels-unique-bash-creative-1927464998-34850161.jpg", alt: "Cream dress shirt", position: 0, is_primary: true },
+      { id: "img-5-1", product_id: "prod-5", url: "/pexels-unique-bash-creative-1927464998-34850161.webp", thumbnail_url: "/pexels-unique-bash-creative-1927464998-34850161.webp", medium_url: "/pexels-unique-bash-creative-1927464998-34850161.webp", alt: "Cream dress shirt", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-5-1", product_id: "prod-5", sku: "QCC-CR-S", size: "S", stock_quantity: 8, price: 8500, compare_at_price: null, is_out_of_stock: false },
@@ -209,7 +209,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[0],
     images: [
-      { id: "img-6-1", product_id: "prod-6", url: "/pexels-pavel-danilyuk-8112126.jpg", thumbnail_url: "/pexels-pavel-danilyuk-8112126.jpg", medium_url: "/pexels-pavel-danilyuk-8112126.jpg", alt: "Burgundy three-piece suit", position: 0, is_primary: true },
+      { id: "img-6-1", product_id: "prod-6", url: "/pexels-pavel-danilyuk-8112126.webp", thumbnail_url: "/pexels-pavel-danilyuk-8112126.webp", medium_url: "/pexels-pavel-danilyuk-8112126.webp", alt: "Burgundy three-piece suit", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-6-1", product_id: "prod-6", sku: "JBG-BG-38", size: "38", stock_quantity: 4, price: 55000, compare_at_price: 65000, is_out_of_stock: false },
@@ -237,7 +237,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[5],
     images: [
-      { id: "img-7-1", product_id: "prod-7", url: "/pexels-karola-g-7876289.jpg", thumbnail_url: "/pexels-karola-g-7876289.jpg", medium_url: "/pexels-karola-g-7876289.jpg", alt: "Silver cufflink set", position: 0, is_primary: true },
+      { id: "img-7-1", product_id: "prod-7", url: "/pexels-karola-g-7876289.webp", thumbnail_url: "/pexels-karola-g-7876289.webp", medium_url: "/pexels-karola-g-7876289.webp", alt: "Silver cufflink set", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-7-1", product_id: "prod-7", sku: "CF-SV-STD", size: "Standard", stock_quantity: 30, price: 5500, compare_at_price: null, is_out_of_stock: false },
@@ -262,7 +262,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[5],
     images: [
-      { id: "img-8-1", product_id: "prod-8", url: "/pexels-karola-g-7876289.jpg", thumbnail_url: "/pexels-karola-g-7876289.jpg", medium_url: "/pexels-karola-g-7876289.jpg", alt: "Black leather belt", position: 0, is_primary: true },
+      { id: "img-8-1", product_id: "prod-8", url: "/pexels-karola-g-7876289.webp", thumbnail_url: "/pexels-karola-g-7876289.webp", medium_url: "/pexels-karola-g-7876289.webp", alt: "Black leather belt", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-8-1", product_id: "prod-8", sku: "BLT-BK-32", size: "32", stock_quantity: 12, price: 4500, compare_at_price: 5500, is_out_of_stock: false },

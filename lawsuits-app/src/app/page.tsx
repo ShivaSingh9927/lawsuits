@@ -10,9 +10,8 @@ export default function HomePage() {
   return (
     <div className="bg-[#FDFCFB]">
       <Hero />
-      <TrustBar />
       <CategoryGrid />
-      <FitTypes />
+      {/* <FitTypes /> */}
       <FeaturedProducts />
       <HowItWorks />
       <HomeFittingForm />

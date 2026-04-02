@@ -43,12 +43,7 @@ export function Header() {
 
   return (
     <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-in-out px-6 md:px-12",
-        isScrolled 
-          ? "py-4 bg-white/95 backdrop-blur-md border-b border-black/5" 
-          : "py-8 bg-transparent"
-      )}
+      className="fixed top-0 left-0 right-0 z-50 px-6 md:px-12 py-6 bg-[#0F0A07] border-b border-white/5"
     >
       <div className="mx-auto max-w-screen-2xl">
         <div className="flex items-center justify-between">
@@ -56,17 +51,18 @@ export function Header() {
             {/* Logo */}
             <Link 
               href="/" 
-              className="group relative z-10"
+              className="group relative z-10 flex items-center"
             >
               <Image 
-                src="/TDO-black-logo-transp-01.png" 
+                src="/TDO-black-logo-transp-01.webp" 
                 alt="THE DRESS OUTFITTERS" 
-                width={180} 
-                height={50} 
-                className="h-10 w-auto brightness-0" 
+                width={160} 
+                height={45} 
+                className="h-8 md:h-10 w-auto invert brightness-200" 
               />
-              <div className="h-[1px] w-0 bg-accent-yellow transition-all duration-500 group-hover:w-full mt-1" />
-            </Link>
+              <div className="absolute -bottom-2 left-0 h-[1px] w-0 bg-accent-yellow transition-all duration-500 group-hover:w-full" />
+            </Link> 
+
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-10">
@@ -78,7 +74,7 @@ export function Header() {
                     "relative text-[10px] uppercase tracking-[0.3em] font-bold transition-all duration-300",
                     pathname === item.href 
                       ? "text-accent-yellow" 
-                      : isScrolled ? "text-zinc-600 hover:text-black" : "text-black hover:text-black/80"
+                      : "text-zinc-400 hover:text-white"
                   )}
                 >
                   {item.name}
@@ -96,21 +92,21 @@ export function Header() {
           <div className="flex items-center gap-4 md:gap-8">
             <div className="hidden lg:flex items-center gap-6 text-[10px] uppercase tracking-[0.2em] text-zinc-500 mr-4 font-bold">
               <div className="flex items-center gap-2">
-                <MapPin className="h-3 w-3" />
-                <span>Delhi / Mumbai</span>
+                <MapPin className="h-3 w-3 text-accent-yellow" />
+                <span>Sector 1, Chandigarh, Punjab - 160001</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="h-3 w-3" />
-                <span>+91 1800-ATELIER</span>
+                <Phone className="h-3 w-3 text-accent-yellow" />
+                <span>+91 77779-55002</span>
               </div>
             </div>
 
-            <Button variant="ghost" size="icon" className={cn("transition-colors", isScrolled ? "text-black hover:bg-black/5" : "text-black hover:bg-white/10")}>
+            <Button variant="ghost" size="icon" className="transition-colors text-white hover:bg-white/10">
               <Search className="h-5 w-5" />
             </Button>
 
             <Link href="/account">
-              <Button variant="ghost" size="icon" className={cn("transition-colors", isScrolled ? "text-black hover:bg-black/5" : "text-black hover:bg-white/10")}>
+              <Button variant="ghost" size="icon" className="transition-colors text-white hover:bg-white/10">
                 <User className="h-5 w-5" />
               </Button>
             </Link>
@@ -118,7 +114,7 @@ export function Header() {
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className={cn("relative transition-colors", isScrolled ? "text-black hover:bg-black/5" : "text-black hover:bg-white/10")}
+                className="relative transition-colors text-white hover:bg-white/10"
                 onClick={() => useCartStore.getState().toggleCart()}
             >
               <ShoppingBag className="h-5 w-5" />
@@ -140,41 +136,47 @@ export function Header() {
               <SheetTrigger
                 asChild
               >
-                <Button variant="ghost" size="icon" className={cn("md:hidden transition-colors", isScrolled ? "text-black" : "text-black")}>
+                <Button variant="ghost" size="icon" className="md:hidden transition-colors text-white">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
+
               <SheetContent side="right" className="w-80 bg-white border-black/5">
-                <SheetHeader>
-                  <SheetTitle className="font-serif text-2xl tracking-[0.1em] text-black">Menu</SheetTitle>
+                <SheetHeader className="text-left border-b border-black/5 pb-8">
+                  <SheetTitle className="font-serif text-3xl font-light tracking-[0.1em] text-black italic">Menu</SheetTitle>
                 </SheetHeader>
-                <div className="mt-12 flex flex-col gap-8">
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        "flex items-center justify-between text-sm uppercase tracking-[0.2em] font-bold transition-colors",
-                        pathname === item.href ? "text-accent-yellow" : "text-zinc-600 hover:text-black"
-                      )}
-                    >
-                      {item.name}
-                      <ChevronRight className="h-4 w-4 opacity-30" />
-                    </Link>
-                  ))}
-                </div>
-                
-                <div className="mt-auto pt-12 space-y-6">
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-4 text-zinc-500">
-                            <MapPin className="h-4 w-4 text-accent-yellow" />
-                            <span className="text-[10px] uppercase tracking-widest font-bold">New Delhi Atelier</span>
-                        </div>
-                        <div className="flex items-center gap-4 text-zinc-500">
-                            <Phone className="h-4 w-4 text-accent-yellow" />
-                            <span className="text-[10px] uppercase tracking-widest font-bold">+91 1800 283 5437</span>
-                        </div>
-                    </div>
+                <div className="flex flex-col h-full py-12">
+                  <div className="flex flex-col gap-8">
+                    {navItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "flex items-center justify-between text-sm uppercase tracking-[0.2em] font-bold transition-colors py-2 border-b border-black/5",
+                          pathname === item.href ? "text-accent-yellow" : "text-black/70 hover:text-black"
+                        )}
+                      >
+                        {item.name}
+                        <ChevronRight className="h-4 w-4 opacity-30" />
+                      </Link>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-auto space-y-8 pt-12 border-t border-black/5">
+                      <div className="space-y-6">
+                          <div className="flex items-start gap-4 text-black/70">
+                              <MapPin className="h-4 w-4 text-accent-yellow mt-1 shrink-0" />
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[10px] uppercase tracking-widest font-bold text-black leading-tight">Punjab and Haryana High Court</span>
+                                <span className="text-[10px] uppercase tracking-widest font-medium">Sector 1, Chandigarh, Punjab - 160001</span>
+                              </div>
+                          </div>
+                          <div className="flex items-center gap-4 text-black/70">
+                              <Phone className="h-4 w-4 text-accent-yellow" />
+                              <span className="text-[10px] uppercase tracking-widest font-bold text-black">+91 77779-55002</span>
+                          </div>
+                      </div>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>

@@ -16,8 +16,8 @@ export function Footer() {
   };
   return (
     <footer className="border-t border-border bg-[#FDFCFB] pt-24 pb-12">
-      <div className="mx-auto max-w-screen-2xl px-12 py-24 lg:px-32">
-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-4">
+      <div className="mx-auto max-w-screen-2xl px-6 py-16 sm:px-12 sm:py-24 lg:px-32">
+        <div className="grid grid-cols-1 gap-12 sm:gap-16 lg:grid-cols-4">
           <div className="space-y-8">
             <h3 className="font-serif text-3xl font-light tracking-[0.2em] text-black">
               THE DRESS OUTFITTERS<span className="text-black">.</span>
@@ -40,10 +40,10 @@ export function Footer() {
                 <span className="text-base font-light text-muted-foreground">+91 77779-55002</span>
               </li>
               <li className="flex items-start gap-4">
-                <MapPin className="mt-1 h-5 w-5 text-black/40" />
+                <MapPin className="mt-1 h-5 w-5 text-black/40 shrink-0" />
                 <span className="text-base font-light text-black/70 flex flex-col">
                   <span>Punjab and Haryana High Court</span>
-                  <span>Chandigarh</span>
+                  <span>Sector 1, Chandigarh, Punjab - 160001</span>
                 </span>
               </li>
             </ul>
@@ -92,14 +92,16 @@ export function Footer() {
 
         <Separator className="my-24 bg-border/40" />
 
-        <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground/60 font-medium">
+        <div className="flex flex-col items-center justify-between gap-12 md:flex-row">
+          <p className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground/60 font-medium text-center md:text-left">
             © {new Date().getFullYear()} THE DRESS OUTFITTERS Atelier. All rights reserved.
           </p>
-          <div className="flex gap-12 text-xs uppercase tracking-widest text-muted-foreground/60 font-medium">
-            <Link href="#" className="hover:text-accent-yellow transition-colors">Privacy</Link>
-            <Link href="#" className="hover:text-accent-yellow transition-colors">Terms</Link>
-            <div className="flex gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-8 sm:gap-12 text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground/60 font-medium">
+            <div className="flex gap-8">
+              <Link href="#" className="hover:text-accent-yellow transition-colors">Privacy</Link>
+              <Link href="#" className="hover:text-accent-yellow transition-colors">Terms</Link>
+            </div>
+            <div className="flex gap-6 border-t sm:border-t-0 sm:border-l border-border/20 pt-8 sm:pt-0 sm:pl-12">
             <Link href="https://instagram.com" target="_blank">
               <Globe className="h-5 w-5 cursor-pointer hover:text-accent-yellow transition-colors" />
             </Link>
