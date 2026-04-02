@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ShoppingBag, Menu, User, Search, X, ChevronRight, MapPin, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ export function Header() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-in-out px-6 md:px-12",
         isScrolled 
-          ? "py-4 bg-zinc-950/95 backdrop-blur-md border-b border-white/5" 
+          ? "py-4 bg-white/95 backdrop-blur-md border-b border-black/5" 
           : "py-8 bg-transparent"
       )}
     >
@@ -57,9 +58,13 @@ export function Header() {
               href="/" 
               className="group relative z-10"
             >
-              <span className="font-serif text-2xl md:text-3xl tracking-[0.2em] font-light text-zinc-100 transition-colors group-hover:text-accent-yellow">
-                LAWSUITS
-              </span>
+              <Image 
+                src="/TDO-black-logo-transp-01.png" 
+                alt="THE DRESS OUTFITTERS" 
+                width={180} 
+                height={50} 
+                className="h-10 w-auto brightness-0" 
+              />
               <div className="h-[1px] w-0 bg-accent-yellow transition-all duration-500 group-hover:w-full mt-1" />
             </Link>
 
@@ -67,13 +72,13 @@ export function Header() {
             <nav className="hidden md:flex items-center gap-10">
               {navItems.map((item) => (
                 <Link
-                  key={item.href}
+                  key={item.name}
                   href={item.href}
                   className={cn(
                     "relative text-[10px] uppercase tracking-[0.3em] font-bold transition-all duration-300",
                     pathname === item.href 
                       ? "text-accent-yellow" 
-                      : "text-zinc-400 hover:text-zinc-100"
+                      : isScrolled ? "text-zinc-600 hover:text-black" : "text-black hover:text-black/80"
                   )}
                 >
                   {item.name}
@@ -100,12 +105,12 @@ export function Header() {
               </div>
             </div>
 
-            <Button variant="ghost" size="icon" className="text-zinc-100 hover:bg-white/5 transition-colors">
+            <Button variant="ghost" size="icon" className={cn("transition-colors", isScrolled ? "text-black hover:bg-black/5" : "text-black hover:bg-white/10")}>
               <Search className="h-5 w-5" />
             </Button>
 
             <Link href="/account">
-              <Button variant="ghost" size="icon" className="text-zinc-100 hover:bg-white/5 transition-colors">
+              <Button variant="ghost" size="icon" className={cn("transition-colors", isScrolled ? "text-black hover:bg-black/5" : "text-black hover:bg-white/10")}>
                 <User className="h-5 w-5" />
               </Button>
             </Link>
@@ -113,7 +118,7 @@ export function Header() {
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative text-zinc-100 hover:bg-white/5 transition-colors"
+                className={cn("relative transition-colors", isScrolled ? "text-black hover:bg-black/5" : "text-black hover:bg-white/10")}
                 onClick={() => useCartStore.getState().toggleCart()}
             >
               <ShoppingBag className="h-5 w-5" />
@@ -135,13 +140,13 @@ export function Header() {
               <SheetTrigger
                 asChild
               >
-                <Button variant="ghost" size="icon" className="md:hidden text-zinc-100">
+                <Button variant="ghost" size="icon" className={cn("md:hidden transition-colors", isScrolled ? "text-black" : "text-black")}>
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80 bg-zinc-950 border-white/5">
+              <SheetContent side="right" className="w-80 bg-white border-black/5">
                 <SheetHeader>
-                  <SheetTitle className="font-serif text-2xl tracking-[0.1em] text-zinc-100">Menu</SheetTitle>
+                  <SheetTitle className="font-serif text-2xl tracking-[0.1em] text-black">Menu</SheetTitle>
                 </SheetHeader>
                 <div className="mt-12 flex flex-col gap-8">
                   {navItems.map((item) => (
@@ -150,7 +155,7 @@ export function Header() {
                       href={item.href}
                       className={cn(
                         "flex items-center justify-between text-sm uppercase tracking-[0.2em] font-bold transition-colors",
-                        pathname === item.href ? "text-accent-yellow" : "text-zinc-400"
+                        pathname === item.href ? "text-accent-yellow" : "text-zinc-600 hover:text-black"
                       )}
                     >
                       {item.name}

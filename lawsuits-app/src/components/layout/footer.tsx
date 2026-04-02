@@ -19,17 +19,17 @@ export function Footer() {
       <div className="mx-auto max-w-screen-2xl px-12 py-24 lg:px-32">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-4">
           <div className="space-y-8">
-            <h3 className="font-serif text-3xl font-light tracking-[0.2em] text-foreground">
-              THE DRESS OUTFITTERS<span className="text-accent-yellow">.</span>
+            <h3 className="font-serif text-3xl font-light tracking-[0.2em] text-black">
+              THE DRESS OUTFITTERS<span className="text-black">.</span>
             </h3>
-            <p className="max-w-xs text-base font-light leading-relaxed text-muted-foreground/90">
+            <p className="max-w-xs text-base font-light leading-relaxed text-black/70">
               Crafting the finest legal attire for the modern advocate. Precision, 
               tradition, and excellence in every stitch.
             </p>
           </div>
 
           <div>
-            <h4 className="mb-8 text-sm font-semibold uppercase tracking-[0.3em] text-accent-yellow">Contact</h4>
+            <h4 className="mb-8 text-sm font-semibold uppercase tracking-[0.3em] text-black">Contact</h4>
             <ul className="space-y-6">
               <li className="flex items-start gap-4">
                 <Mail className="mt-1 h-5 w-5 text-accent-yellow/60" />
@@ -40,8 +40,8 @@ export function Footer() {
                 <span className="text-base font-light text-muted-foreground">+91 77779-55002</span>
               </li>
               <li className="flex items-start gap-4">
-                <MapPin className="mt-1 h-5 w-5 text-accent-yellow/60" />
-                <span className="text-base font-light text-muted-foreground flex flex-col">
+                <MapPin className="mt-1 h-5 w-5 text-black/40" />
+                <span className="text-base font-light text-black/70 flex flex-col">
                   <span>Punjab and Haryana High Court</span>
                   <span>Chandigarh</span>
                 </span>
@@ -50,7 +50,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-8 text-sm font-semibold uppercase tracking-[0.3em] text-accent-yellow">Navigation</h4>
+            <h4 className="mb-8 text-sm font-semibold uppercase tracking-[0.3em] text-black">Navigation</h4>
             <ul className="space-y-4">
               {[
                 { name: "Collection", href: "/shop" },
@@ -59,7 +59,7 @@ export function Footer() {
                 { name: "Contact", href: "mailto:thedressoutfitters@gmail.com" }
               ].map((item) => (
                 <li key={item.name}>
-                  <Link href={item.href} className="text-base font-light text-muted-foreground transition-colors hover:text-accent-yellow">
+                  <Link href={item.href} className="text-base font-light text-black/70 transition-colors hover:text-black">
                     {item.name}
                   </Link>
                 </li>
@@ -68,7 +68,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-8 text-sm font-semibold uppercase tracking-[0.3em] text-accent-yellow">Atelier Newsletter</h4>
+            <h4 className="mb-8 text-sm font-semibold uppercase tracking-[0.3em] text-black">Atelier Newsletter</h4>
             <p className="mb-8 text-base font-light text-muted-foreground/80">
               Join our mailing list for private collection launches.
             </p>

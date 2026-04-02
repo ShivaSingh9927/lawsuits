@@ -15,7 +15,7 @@ export function CategoryGrid() {
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-6 block text-sm uppercase tracking-[0.4em] text-accent-yellow bg-accent-yellow/10 px-6 py-2 font-semibold"
+            className="mb-6 block text-sm uppercase tracking-[0.4em] text-black bg-black/5 px-6 py-2 font-semibold"
           >
             Legal Attire
           </motion.span>
@@ -24,7 +24,7 @@ export function CategoryGrid() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
-            className="font-serif text-5xl font-light tracking-tight sm:text-6xl"
+            className="font-serif text-4xl font-light tracking-tight sm:text-6xl"
           >
             Advocate Dress Products
           </motion.h2>
@@ -61,10 +61,10 @@ export function CategoryGrid() {
                 </div>
                 
                 <div className="mt-10 text-center">
-                  <h3 className="font-serif text-xl tracking-tight text-foreground transition-colors group-hover:text-accent-yellow">
+                  <h3 className="font-serif text-xl tracking-tight text-black transition-colors">
                     {category.name}
                   </h3>
-                  <p className="mt-3 text-sm uppercase tracking-[0.1em] text-muted-foreground/60">
+                  <p className="mt-3 text-sm uppercase tracking-[0.1em] text-black/40 font-bold">
                     {category.product_count} products
                   </p>
                 </div>
