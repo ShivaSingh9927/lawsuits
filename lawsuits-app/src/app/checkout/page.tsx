@@ -1,8 +1,7 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +48,8 @@ interface RazorpayResponse {
 
 const timeSlots = ["9am-12pm", "12pm-3pm", "3pm-6pm"];
 
-export default function CheckoutPage() {
+function CheckoutContent() {
+  const router = useRouter();
   const { items, getSubtotal, clearCart } = useCartStore();
   const subtotal = getSubtotal();
   const shipping = subtotal >= 5000 ? 0 : 299;
@@ -74,6 +74,17 @@ export default function CheckoutPage() {
     discount: 0,
   });
 
+  // Auth Guard
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login?returnTo=/checkout");
+      }
+    };
+    checkUser();
+  }, [router]);
+
   // Load Razorpay script
   useEffect(() => {
     const script = document.createElement("script");
@@ -81,7 +92,9 @@ export default function CheckoutPage() {
     script.async = true;
     document.body.appendChild(script);
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
@@ -110,6 +123,14 @@ export default function CheckoutPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         alert("Please login first");
+        router.push("/login?returnTo=/checkout");
+        setLoading(false);
+        return;
+      }
+
+      // Final validation before payment
+      if (!/^\d{6}$/.test(formData.postalCode)) {
+        alert("Please enter a valid 6-digit Indian pincode.");
         setLoading(false);
         return;
       }
@@ -159,7 +180,7 @@ export default function CheckoutPage() {
         key: razorpayData.keyId,
         amount: razorpayData.amount,
         currency: razorpayData.currency || "INR",
-        name: "Suits",
+        name: "THE DRESS OUTFITTERS",
         description: `Order ${orderData.order.order_number}`,
         order_id: razorpayData.orderId,
         handler: async function (response: RazorpayResponse) {
@@ -245,6 +266,7 @@ export default function CheckoutPage() {
     );
   }
 
+  const isPincodeValid = /^\d{6}$/.test(formData.postalCode);
   const isFormValid =
     formData.firstName &&
     formData.lastName &&
@@ -253,7 +275,7 @@ export default function CheckoutPage() {
     formData.address &&
     formData.city &&
     formData.state &&
-    formData.postalCode;
+    isPincodeValid;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -304,8 +326,17 @@ export default function CheckoutPage() {
                   <Input placeholder="Maharashtra" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} required />
                 </div>
                 <div>
-                  <Label>Postal Code *</Label>
-                  <Input placeholder="400001" value={formData.postalCode} onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })} required />
+                  <Label>Postal Code (6 Digits) *</Label>
+                  <Input 
+                    placeholder="400001" 
+                    value={formData.postalCode} 
+                    onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })} 
+                    required 
+                    className={formData.postalCode && !isPincodeValid ? "border-red-500" : ""}
+                  />
+                  {formData.postalCode && !isPincodeValid && (
+                    <p className="mt-1 text-xs text-red-500">Must be exactly 6 digits</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -424,5 +455,17 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-yellow"></div>
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   );
 }

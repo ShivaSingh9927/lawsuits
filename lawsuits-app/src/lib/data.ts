@@ -75,10 +75,11 @@ export const products: Product[] = [
       { id: "img-1-2", product_id: "prod-1", url: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg", thumbnail_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg", medium_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg", alt: "Charcoal three-piece suit back view", position: 1, is_primary: false },
     ],
     variants: [
-      { id: "var-1-1", product_id: "prod-1", sku: "BAR-CH-38", size: "38R", stock_quantity: 5, price: 45000, compare_at_price: 55000, is_out_of_stock: false },
-      { id: "var-1-2", product_id: "prod-1", sku: "BAR-CH-40", size: "40R", stock_quantity: 8, price: 45000, compare_at_price: 55000, is_out_of_stock: false },
-      { id: "var-1-3", product_id: "prod-1", sku: "BAR-CH-42", size: "42R", stock_quantity: 3, price: 45000, compare_at_price: 55000, is_out_of_stock: false },
-      { id: "var-1-4", product_id: "prod-1", sku: "BAR-CH-44", size: "44R", stock_quantity: 0, price: 45000, compare_at_price: 55000, is_out_of_stock: true },
+      { id: "var-1-0", product_id: "prod-1", sku: "BAR-CH-36", size: "36", stock_quantity: 5, price: 45000, compare_at_price: 55000, is_out_of_stock: false },
+      { id: "var-1-1", product_id: "prod-1", sku: "BAR-CH-38", size: "38", stock_quantity: 5, price: 45000, compare_at_price: 55000, is_out_of_stock: false },
+      { id: "var-1-2", product_id: "prod-1", sku: "BAR-CH-40", size: "40", stock_quantity: 8, price: 45000, compare_at_price: 55000, is_out_of_stock: false },
+      { id: "var-1-3", product_id: "prod-1", sku: "BAR-CH-42", size: "42", stock_quantity: 3, price: 45000, compare_at_price: 55000, is_out_of_stock: false },
+      { id: "var-1-4", product_id: "prod-1", sku: "BAR-CH-44", size: "44", stock_quantity: 0, price: 45000, compare_at_price: 55000, is_out_of_stock: true },
     ],
   },
   {
@@ -104,9 +105,10 @@ export const products: Product[] = [
       { id: "img-2-2", product_id: "prod-2", url: "/pexels-pavel-danilyuk-8112126.jpg", thumbnail_url: "/pexels-pavel-danilyuk-8112126.jpg", medium_url: "/pexels-pavel-danilyuk-8112126.jpg", alt: "Navy two-piece suit detail", position: 1, is_primary: false },
     ],
     variants: [
-      { id: "var-2-1", product_id: "prod-2", sku: "SOL-NV-38", size: "38R", stock_quantity: 10, price: 35000, compare_at_price: null, is_out_of_stock: false },
-      { id: "var-2-2", product_id: "prod-2", sku: "SOL-NV-40", size: "40R", stock_quantity: 12, price: 35000, compare_at_price: null, is_out_of_stock: false },
-      { id: "var-2-3", product_id: "prod-2", sku: "SOL-NV-42", size: "42R", stock_quantity: 6, price: 35000, compare_at_price: null, is_out_of_stock: false },
+      { id: "var-2-0", product_id: "prod-2", sku: "SOL-NV-36", size: "36", stock_quantity: 10, price: 35000, compare_at_price: null, is_out_of_stock: false },
+      { id: "var-2-1", product_id: "prod-2", sku: "SOL-NV-38", size: "38", stock_quantity: 10, price: 35000, compare_at_price: null, is_out_of_stock: false },
+      { id: "var-2-2", product_id: "prod-2", sku: "SOL-NV-40", size: "40", stock_quantity: 12, price: 35000, compare_at_price: null, is_out_of_stock: false },
+      { id: "var-2-3", product_id: "prod-2", sku: "SOL-NV-42", size: "42", stock_quantity: 6, price: 35000, compare_at_price: null, is_out_of_stock: false },
     ],
   },
   {
@@ -131,8 +133,9 @@ export const products: Product[] = [
       { id: "img-3-1", product_id: "prod-3", url: "/pexels-ekaterina-bolovtsova-6077961.jpg", thumbnail_url: "/pexels-ekaterina-bolovtsova-6077961.jpg", medium_url: "/pexels-ekaterina-bolovtsova-6077961.jpg", alt: "Black tuxedo", position: 0, is_primary: true },
     ],
     variants: [
-      { id: "var-3-1", product_id: "prod-3", sku: "ADV-BK-38", size: "38R", stock_quantity: 3, price: 65000, compare_at_price: 75000, is_out_of_stock: false },
-      { id: "var-3-2", product_id: "prod-3", sku: "ADV-BK-40", size: "40R", stock_quantity: 5, price: 65000, compare_at_price: 75000, is_out_of_stock: false },
+      { id: "var-3-0", product_id: "prod-3", sku: "ADV-BK-36", size: "36", stock_quantity: 3, price: 65000, compare_at_price: 75000, is_out_of_stock: false },
+      { id: "var-3-1", product_id: "prod-3", sku: "ADV-BK-38", size: "38", stock_quantity: 3, price: 65000, compare_at_price: 75000, is_out_of_stock: false },
+      { id: "var-3-2", product_id: "prod-3", sku: "ADV-BK-40", size: "40", stock_quantity: 5, price: 65000, compare_at_price: 75000, is_out_of_stock: false },
     ],
   },
   {
@@ -209,9 +212,10 @@ export const products: Product[] = [
       { id: "img-6-1", product_id: "prod-6", url: "/pexels-pavel-danilyuk-8112126.jpg", thumbnail_url: "/pexels-pavel-danilyuk-8112126.jpg", medium_url: "/pexels-pavel-danilyuk-8112126.jpg", alt: "Burgundy three-piece suit", position: 0, is_primary: true },
     ],
     variants: [
-      { id: "var-6-1", product_id: "prod-6", sku: "JBG-BG-38", size: "38R", stock_quantity: 4, price: 55000, compare_at_price: 65000, is_out_of_stock: false },
-      { id: "var-6-2", product_id: "prod-6", sku: "JBG-BG-40", size: "40R", stock_quantity: 7, price: 55000, compare_at_price: 65000, is_out_of_stock: false },
-      { id: "var-6-3", product_id: "prod-6", sku: "JBG-BG-42", size: "42R", stock_quantity: 2, price: 55000, compare_at_price: 65000, is_out_of_stock: false },
+      { id: "var-6-1", product_id: "prod-6", sku: "JBG-BG-38", size: "38", stock_quantity: 4, price: 55000, compare_at_price: 65000, is_out_of_stock: false },
+      { id: "var-6-2", product_id: "prod-6", sku: "JBG-BG-40", size: "40", stock_quantity: 7, price: 55000, compare_at_price: 65000, is_out_of_stock: false },
+      { id: "var-6-3", product_id: "prod-6", sku: "JBG-BG-42", size: "42", stock_quantity: 2, price: 55000, compare_at_price: 65000, is_out_of_stock: false },
+      { id: "var-6-4", product_id: "prod-6", sku: "JBG-BG-44", size: "44", stock_quantity: 1, price: 55000, compare_at_price: 65000, is_out_of_stock: false },
     ],
   },
   {

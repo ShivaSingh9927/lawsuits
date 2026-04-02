@@ -168,7 +168,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             {/* Size Selection */}
             <div>
               <div className="flex items-center justify-between mb-10">
-                <h3 className="text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">Select Silhouette</h3>
+                <h3 className="text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">Indian Standard Size</h3>
                 <button className="text-xs uppercase tracking-widest text-muted-foreground underline underline-offset-4 decoration-accent-yellow/40 hover:text-foreground transition-colors font-semibold">
                   Size Guide
                 </button>
@@ -230,7 +230,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   onClick={handleAddToCart}
                   disabled={selectedVariant.is_out_of_stock}
                 >
-                   {selectedVariant.is_out_of_stock ? "Exhausted" : "Reserve for Atelier"}
+                   {selectedVariant.is_out_of_stock ? "Exhausted" : "Add to Cart"}
                 </Button>
 
                 <div className="flex gap-6">
