@@ -116,29 +116,29 @@ export function ProductCard({ product, className, priority = false }: ProductCar
             href={`/product/${product.slug}`}
             className="flex w-full items-center justify-center bg-black py-4 md:py-5 text-[10px] md:text-xs uppercase tracking-[0.4em] text-white transition-opacity hover:opacity-90 font-semibold"
           >
-            Explore Detail
+            Select Options
           </Link>
         </div>
       </div>
 
       <div className="mt-10 space-y-3">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1.5">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="space-y-1.5 flex-1">
             <Link href={`/product/${product.slug}`}>
-              <h3 className="font-serif text-lg md:text-2xl tracking-tight text-foreground transition-colors group-hover:text-accent-yellow">
+              <h3 className="font-serif text-lg md:text-2xl tracking-tight text-white transition-colors group-hover:text-accent-yellow">
                 {product.name}
               </h3>
             </Link>
-            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground/70 font-medium">
+            <p className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-white/50 font-medium">
               {product.category?.name || "Bespoke Collection"}
             </p>
           </div>
-          <div className="text-right">
-            <span className="font-serif text-lg md:text-xl font-light tracking-tighter text-foreground">
+          <div className="text-left sm:text-right shrink-0">
+            <span className="font-serif text-lg md:text-xl font-light tracking-tighter text-white">
               ₹{lowestPrice.toLocaleString()}
             </span>
             {hasDiscount && (
-              <p className="text-[10px] md:text-sm text-muted-foreground/40 line-through">
+              <p className="text-[10px] md:text-sm text-white/30 line-through">
                 ₹{product.compare_at_price?.toLocaleString()}
               </p>
             )}

@@ -25,7 +25,7 @@ export function Hero() {
     <section 
       ref={containerRef}
       className={cn(
-        "relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background transition-all duration-700",
+        "relative flex min-h-screen w-full items-center justify-start overflow-hidden bg-background transition-all duration-700",
         !mounted && "opacity-0"
       )}
     >
@@ -33,32 +33,33 @@ export function Hero() {
       <div className="absolute inset-0 z-0">
         <div className="relative h-full w-full">
           <Image
-            src="/pexels-unique-bash-creative-1927464998-34850161.jpg"
+            src="/heroimage.jpeg"
             alt="Tailored Suit Detail"
             fill
             priority
             quality={100}
-            className="object-cover object-center opacity-60 brightness-[0.7]"
+            className="object-cover object-center opacity"
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
+          {/* Black blur gradient at bottom */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-white/30" />
         </div>
       </div>
 
-      <div className="relative mx-auto flex h-full max-w-screen-2xl flex-col justify-center px-12 lg:px-32">
+      <div className="relative flex h-full max-w-screen-2xl flex-col justify-center px-12 lg:px-32">
         <div className="max-w-4xl space-y-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
             className="space-y-4"
           >
-            <span className="text-sm font-semibold uppercase tracking-[0.5em] text-accent-yellow drop-shadow-sm">
+            <span className="text-[0.7rem] font-bold uppercase tracking-[0.4em] text-white/60 drop-shadow-sm sm:text-sm sm:tracking-[0.5em]">
               Established Excellence
             </span>
-            <h1 className="font-serif text-6xl font-light leading-[1.1] tracking-tight text-white sm:text-7xl lg:text-9xl">
-              THE<br />
-              <span className="italic">Dress</span> Outfitters
+            <h1 className="font-serif text-[2.75rem] font-light leading-[0.9] tracking-tight text-white sm:text-7xl lg:text-9xl">
+              THE DRESS<br />
+              Outfitters
             </h1>
           </motion.div>
 
@@ -66,24 +67,25 @@ export function Hero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="max-w-2xl text-lg font-light leading-relaxed text-white/90 drop-shadow-sm sm:text-xl"
+            className="max-w-2xl text-sm font-light leading-relaxed text-white/80 drop-shadow-sm sm:text-xl"
           >
             Defining the apex of professional attire for the modern advocate. 
             Excellence in every stitch, power in every profile.
           </motion.p>
 
+
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.2 }}
-            className="mt-12 flex flex-col items-center justify-start gap-8 sm:flex-row"
+            className="mt-6 flex flex-col items-start justify-start gap-8 sm:flex-row sm:items-center"
           >
             <Link 
               href="/#home-fitting"
-              className="group relative px-10 py-5 text-sm font-semibold uppercase tracking-[0.2em] text-black transition-all"
+              className="group relative px-8 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-black transition-all"
             >
-              <div className="absolute inset-0 bg-accent-yellow transition-transform duration-300 group-hover:scale-105" />
-              <span className="relative z-10">Book a Fitting</span>
+              <div className="absolute inset-0 bg-accent-yellow rounded-full transition-transform duration-300 group-hover:scale-105" />
+              <span className="relative z-10 text-white transition-colors">Book a Fitting</span>
             </Link>
             
             <Link 

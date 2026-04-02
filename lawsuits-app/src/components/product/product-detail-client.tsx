@@ -20,6 +20,21 @@ import {
   ArrowRight,
   Info
 } from "lucide-react";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Product, ProductVariant } from "@/types";
 import { useCartStore, useRecentlyViewedStore } from "@/store";
 import { products } from "@/lib/data";
@@ -64,19 +79,19 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     .slice(0, 4);
 
   return (
-    <main className="bg-[#FDFCFB] min-h-screen pt-20 pb-48">
-      <div className="mx-auto max-w-screen-2xl px-10 py-12 lg:px-20">
+    <main className="bg-[#FDFCFB] min-h-screen pt-20 pb-24">
+      <div className="mx-auto max-w-screen-2xl px-6 sm:px-10 py-12 lg:px-20">
         {/* Breadcrumbs */}
-        <nav className="mb-20 flex items-center gap-4 text-sm uppercase tracking-[0.2em] text-muted-foreground/60 font-semibold">
-          <Link href="/" className="hover:text-foreground transition-colors">Atelier</Link>
-          <ChevronRight className="h-4 w-4 stroke-[1px]" />
-          <Link href="/shop" className="hover:text-foreground transition-colors">Collection</Link>
-          <ChevronRight className="h-4 w-4 stroke-[1px]" />
-          <Link href={`/shop?category=${product.category?.slug}`} className="hover:text-foreground transition-colors">
+        <nav className="mb-12 sm:mb-20 flex items-center gap-3 sm:gap-4 text-[10px] sm:text-sm uppercase tracking-[0.2em] text-muted-foreground/60 font-semibold overflow-x-auto whitespace-nowrap pb-4 scrollbar-hide">
+          <Link href="/" className="hover:text-foreground transition-colors shrink-0">Atelier</Link>
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 stroke-[1px] shrink-0" />
+          <Link href="/shop" className="hover:text-foreground transition-colors shrink-0">Collection</Link>
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 stroke-[1px] shrink-0" />
+          <Link href={`/shop?category=${product.category?.slug}`} className="hover:text-foreground transition-colors shrink-0">
             {product.category?.name}
           </Link>
-          <ChevronRight className="h-4 w-4 stroke-[1px]" />
-          <span className="text-foreground">{product.name}</span>
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 stroke-[1px] shrink-0" />
+          <span className="text-foreground shrink-0">{product.name}</span>
         </nav>
 
         <div className="grid grid-cols-1 gap-24 lg:grid-cols-12 items-start">
@@ -143,22 +158,21 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   {product.category?.name} Catalog
                 </p>
               </div>
-              <h1 className="font-serif text-5xl font-light tracking-tight md:text-6xl lg:text-7xl mb-8 leading-[1.1]">
+              <h1 className="font-serif text-3xl font-light tracking-tight sm:text-5xl md:text-6xl lg:text-7xl mb-8 leading-[1.1]">
                 {product.name}
               </h1>
               
-              <div className="flex items-baseline gap-8">
-                <span className="font-serif text-4xl font-light tracking-tighter text-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-baseline gap-4 sm:gap-8">
+                <span className="font-serif text-3xl sm:text-4xl font-light tracking-tighter text-foreground">
                   ₹{selectedVariant.price.toLocaleString()}
                 </span>
                 {selectedVariant.compare_at_price && (
-                  <span className="text-2xl text-muted-foreground/30 line-through font-light">
+                  <span className="text-xl sm:text-2xl text-muted-foreground/30 line-through font-light">
                     ₹{selectedVariant.compare_at_price.toLocaleString()}
                   </span>
                 )}
               </div>
-              
-              <p className="mt-6 text-xs uppercase tracking-[0.3em] text-muted-foreground/70 leading-relaxed font-bold">
+              <p className="mt-6 text-[10px] sm:text-xs uppercase tracking-[0.3em] text-muted-foreground/70 leading-relaxed font-bold">
                 Complimentary seasonal tailoring included
               </p>
             </motion.div>
@@ -169,9 +183,56 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             <div>
               <div className="flex items-center justify-between mb-10">
                 <h3 className="text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">Indian Standard Size</h3>
-                <button className="text-xs uppercase tracking-widest text-muted-foreground underline underline-offset-4 decoration-accent-yellow/40 hover:text-foreground transition-colors font-semibold">
-                  Size Guide
-                </button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="text-xs uppercase tracking-widest text-muted-foreground underline underline-offset-4 decoration-accent-yellow/40 hover:text-foreground transition-colors font-semibold">
+                      Size Guide
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl bg-[#FDFCFB] border-border/20 rounded-none sm:p-12">
+                    <DialogHeader className="mb-12">
+                      <div className="flex items-center gap-4 mb-6">
+                        <span className="h-[1px] w-12 bg-accent-yellow/40" />
+                        <p className="text-sm uppercase tracking-[0.5em] text-accent-yellow font-bold">Measurements</p>
+                      </div>
+                      <DialogTitle className="font-serif text-3xl sm:text-4xl font-light tracking-tight text-foreground text-left">
+                        Size Guide
+                      </DialogTitle>
+                    </DialogHeader>
+                    <Table className="border-t border-border/20">
+                      <TableHeader className="bg-black/5">
+                        <TableRow className="border-border/10 hover:bg-transparent">
+                          <TableHead className="py-6 text-[11px] uppercase tracking-[0.2em] font-black text-foreground">Size</TableHead>
+                          <TableHead className="py-6 text-[11px] uppercase tracking-[0.2em] font-black text-foreground text-center">Chest</TableHead>
+                          <TableHead className="py-6 text-[11px] uppercase tracking-[0.2em] font-black text-foreground text-center">Waist</TableHead>
+                          <TableHead className="py-6 text-[11px] uppercase tracking-[0.2em] font-black text-foreground text-right">Hips</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {[
+                          { size: "XS", chest: 34, waist: 28, hips: 34 },
+                          { size: "S", chest: 36, waist: 30, hips: 36 },
+                          { size: "M", chest: 38, waist: 32, hips: 38 },
+                          { size: "L", chest: 40, waist: 34, hips: 40 },
+                          { size: "XL", chest: 42, waist: 36, hips: 42 },
+                          { size: "2XL", chest: 44, waist: 38, hips: 44 },
+                        ].map((row) => (
+                          <TableRow key={row.size} className="border-border/10 hover:bg-black/[0.02]">
+                            <TableCell className="py-6 text-sm font-black text-foreground tracking-widest">{row.size}</TableCell>
+                            <TableCell className="py-6 text-sm text-muted-foreground/80 text-center font-medium">{row.chest}</TableCell>
+                            <TableCell className="py-6 text-sm text-muted-foreground/80 text-center font-medium">{row.waist}</TableCell>
+                            <TableCell className="py-6 text-sm text-muted-foreground/80 text-right font-medium">{row.hips}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <div className="mt-12 py-8 border-t border-border/10">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 leading-loose italic">
+                        * All measurements are in inches. For the best fit, we recommend our <span className="text-accent-yellow font-black">In-Home Fitting Experience</span> or visiting an Atelier boutique.
+                      </p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
               <div className="grid grid-cols-4 gap-4">
                 {product.variants.map((variant) => (
@@ -211,8 +272,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                     {wantsHomeFitting && <Check className="h-4 w-4 text-black stroke-[3px]" />}
                   </div>
                   <div>
-                    <h3 className="text-base uppercase tracking-widest text-foreground font-bold leading-none">In-Home Fitting Experience</h3>
-                    <p className="mt-3 text-xs uppercase tracking-widest text-muted-foreground/70 font-semibold">
+                    <h3 className="text-sm sm:text-base uppercase tracking-widest text-foreground font-bold leading-none">In-Home Fitting Experience</h3>
+                    <p className="mt-3 text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground/70 font-semibold">
                       Bespoke curation at your residence — +₹999
                     </p>
                   </div>
@@ -248,26 +309,28 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
             {/* Product Story */}
             <Tabs defaultValue="details" className="w-full pt-8">
-              <TabsList className="w-full justify-start rounded-none border-b border-border/20 bg-transparent p-0 gap-12">
-                <TabsTrigger 
-                  value="details" 
-                  className="rounded-none border-b-2 border-transparent px-2 pb-6 text-sm uppercase tracking-[0.4em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-bold"
-                >
-                  Details
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="fabric" 
-                  className="rounded-none border-b-2 border-transparent px-2 pb-6 text-sm uppercase tracking-[0.4em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-bold"
-                >
-                  Textile
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="reviews" 
-                  className="rounded-none border-b-2 border-transparent px-2 pb-6 text-sm uppercase tracking-[0.4em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-bold"
-                >
-                  Legacy
-                </TabsTrigger>
-              </TabsList>
+              <div className="w-full overflow-x-auto scrollbar-hide border-b border-border/20">
+                <TabsList className="inline-flex w-max justify-start rounded-none bg-transparent p-0 gap-8 sm:gap-12">
+                  <TabsTrigger 
+                    value="details" 
+                    className="rounded-none border-b-2 border-transparent px-2 pb-6 text-[10px] sm:text-sm uppercase tracking-[0.4em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-bold"
+                  >
+                    Details
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="fabric" 
+                    className="rounded-none border-b-2 border-transparent px-2 pb-6 text-[10px] sm:text-sm uppercase tracking-[0.4em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-bold"
+                  >
+                    Textile
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="reviews" 
+                    className="rounded-none border-b-2 border-transparent px-2 pb-6 text-[10px] sm:text-sm uppercase tracking-[0.4em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-bold"
+                  >
+                    Legacy
+                  </TabsTrigger>
+                </TabsList>
+              </div>
               <TabsContent value="details" className="mt-12">
                 <p className="text-base leading-loose tracking-wide text-muted-foreground/90 font-light">
                   {product.description}
@@ -302,7 +365,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         </div>
 
         {/* New Sections */}
-        <div className="mt-64 space-y-64">
+        <div className="mt-32 space-y-32">
           <ProductCarousel 
             title="You May Also Like"
             subtitle="Related Curations"
