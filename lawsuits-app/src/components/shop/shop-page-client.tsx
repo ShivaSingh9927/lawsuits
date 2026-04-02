@@ -328,7 +328,7 @@ export function ShopPageClient() {
 
           <div className="flex items-center gap-8">
             <span className="hidden text-xs uppercase tracking-[0.4em] text-muted-foreground/60 md:block font-medium">Sort :</span>
-            <Select value={sortBy} onValueChange={(v: string ) => setSortBy(v ?? "newest")}>
+            <Select value={sortBy} onValueChange={(v: string | null) => setSortBy(v ?? "newest")}>
               <SelectTrigger className="w-56 border-0 bg-transparent p-0 text-xs uppercase tracking-[0.3em] focus:ring-0 font-semibold">
                 <SelectValue />
               </SelectTrigger>
