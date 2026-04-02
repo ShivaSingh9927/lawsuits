@@ -1,7 +1,5 @@
-"use client";
-
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -9,9 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Star, Heart, ShoppingBag, Truck, Shield, RotateCcw, Check, ChevronRight } from "lucide-react";
+import { 
+  Star, 
+  Heart, 
+  ShoppingBag, 
+  Truck, 
+  Shield, 
+  RotateCcw, 
+  Check, 
+  ChevronRight,
+  ArrowRight,
+  Info
+} from "lucide-react";
 import { Product, ProductVariant } from "@/types";
-import { useCartStore } from "@/store";
+import { useCartStore, useRecentlyViewedStore } from "@/store";
+import { products } from "@/lib/data";
+import { ProductCarousel } from "./product-carousel";
 
 interface ProductDetailClientProps {
   product: Product;
@@ -24,6 +35,11 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [wantsHomeFitting, setWantsHomeFitting] = useState(false);
   const { addItem, toggleCart } = useCartStore();
+  const { addItem: addRecentlyViewed, items: recentlyViewedIds } = useRecentlyViewedStore();
+
+  useEffect(() => {
+    addRecentlyViewed(product.id);
+  }, [product.id, addRecentlyViewed]);
 
   const handleAddToCart = () => {
     addItem({
@@ -37,231 +53,259 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     toggleCart();
   };
 
+  const relatedProducts = products
+    .filter((p) => p.category_id === product.category_id && p.id !== product.id)
+    .slice(0, 4);
+
+  const recentlyViewedProducts = recentlyViewedIds
+    .map((id) => products.find((p) => p.id === id))
+    .filter((p): p is Product => !!p && p.id !== product.id)
+    .slice(0, 4);
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground">Home</Link>
-        <ChevronRight className="h-4 w-4" />
-        <Link href="/shop" className="hover:text-foreground">Products</Link>
-        <ChevronRight className="h-4 w-4" />
-        <Link href={`/shop?category=${product.category?.slug}`} className="hover:text-foreground">
-          {product.category?.name}
-        </Link>
-        <ChevronRight className="h-4 w-4" />
-        <span className="text-foreground">{product.name}</span>
-      </nav>
+    <main className="bg-[#FDFCFB] min-h-screen pt-12 pb-32">
+      <div className="mx-auto max-w-7xl px-8 py-12 lg:px-12">
+        {/* Breadcrumbs */}
+        <nav className="mb-12 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-muted-foreground/60 font-medium">
+          <Link href="/" className="hover:text-foreground">Atelier</Link>
+          <ChevronRight className="h-3 w-3" />
+          <Link href="/shop" className="hover:text-foreground">Collection</Link>
+          <ChevronRight className="h-3 w-3" />
+          <Link href={`/shop?category=${product.category?.slug}`} className="hover:text-foreground">
+            {product.category?.name}
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-foreground">{product.name}</span>
+        </nav>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="flex gap-4">
-          <div className="flex flex-col gap-2">
-            {product.images.map((image, index) => (
-              <button
-                key={image.id}
-                onClick={() => setSelectedImage(index)}
-                className={cn(
-                  "relative h-20 w-16 overflow-hidden rounded-md border-2 transition-all",
-                  selectedImage === index
-                    ? "border-accent-yellow"
-                    : "border-border hover:border-muted-foreground"
-                )}
-              >
-                <Image
-                  src={image.url}
-                  alt={image.alt}
-                  fill
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
-
-          <div className="relative aspect-[3/4] flex-1 overflow-hidden rounded-lg bg-muted">
-            <Image
-              src={product.images[selectedImage]?.url || "/placeholder-suit.jpg"}
-              alt={product.name}
-              fill
-              className="object-cover"
-              priority
-            />
-            {product.compare_at_price && (
-              <Badge className="absolute left-4 top-4 bg-accent-yellow text-black">
-                Sale
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col">
-          <div>
-            <Badge variant="secondary" className="mb-2">
-              {product.category?.name}
-            </Badge>
-            <h1 className="font-serif text-3xl font-bold">{product.name}</h1>
-
-            <div className="mt-3 flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={cn(
-                      "h-4 w-4",
-                      i < 4 ? "fill-accent-yellow text-accent-yellow" : "text-muted"
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground">4.8 (120 reviews)</span>
-            </div>
-
-            <div className="mt-4 flex items-baseline gap-3">
-              <span className="font-serif text-3xl font-bold">
-                ₹{selectedVariant.price.toLocaleString()}
-              </span>
-              {selectedVariant.compare_at_price && (
-                <span className="text-xl text-muted-foreground line-through">
-                  ₹{selectedVariant.compare_at_price.toLocaleString()}
-                </span>
-              )}
-            </div>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Or 3 interest-free payments of ₹
-              {Math.round(selectedVariant.price / 3).toLocaleString()}
-            </p>
-          </div>
-
-          <Separator className="my-6" />
-
-          <div>
-            <h3 className="mb-3 text-sm font-semibold">Size</h3>
-            <div className="flex flex-wrap gap-2">
-              {product.variants.map((variant) => (
+        <div className="grid grid-cols-1 gap-16 lg:grid-cols-12">
+          {/* Visual Presentation */}
+          <div className="lg:col-span-7 flex flex-col-reverse gap-6 md:flex-row">
+            {/* Thumbnails */}
+            <div className="flex flex-row gap-4 md:flex-col">
+              {product.images.map((image, index) => (
                 <button
-                  key={variant.id}
-                  disabled={variant.is_out_of_stock}
-                  onClick={() => setSelectedVariant(variant)}
+                  key={image.id}
+                  onClick={() => setSelectedImage(index)}
                   className={cn(
-                    "flex h-11 min-w-[4rem] items-center justify-center rounded-md border px-3 text-sm font-medium transition-all",
-                    selectedVariant.id === variant.id
-                      ? "border-accent-yellow bg-accent-yellow/10 text-foreground"
-                      : variant.is_out_of_stock
-                      ? "cursor-not-allowed border-border bg-muted text-muted-foreground line-through"
-                      : "border-border hover:border-foreground"
+                    "relative aspect-[3/4] w-20 overflow-hidden border transition-all duration-500",
+                    selectedImage === index
+                      ? "border-accent-yellow scale-105 shadow-md"
+                      : "border-transparent opacity-60 hover:opacity-100"
                   )}
                 >
-                  {variant.size}
+                  <Image
+                    src={image.url}
+                    alt={image.alt}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
                 </button>
               ))}
             </div>
-            <button className="mt-2 text-sm text-accent-yellow underline">
-              Size Guide
-            </button>
+
+            {/* Main Stage */}
+            <div className="relative aspect-[3/4] flex-1 overflow-hidden bg-[#F5F3F1] shadow-sm">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={selectedImage}
+                  initial={{ opacity: 0, scale: 1.05 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                  className="relative h-full w-full"
+                >
+                  <Image
+                    src={product.images[selectedImage]?.url || "/placeholder-suit.jpg"}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 600px"
+                    priority
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
 
-          <Separator className="my-6" />
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border border-border p-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
-                    wantsHomeFitting ? "bg-accent-yellow" : "bg-muted"
-                  )}
-                >
-                  <Check
-                    className={cn(
-                      "h-5 w-5",
-                      wantsHomeFitting ? "text-black" : "text-muted-foreground"
-                    )}
-                  />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Home Measurement & Sample Viewing</p>
-                  <p className="text-xs text-muted-foreground">
-                    +₹999 - Refundable on purchase
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setWantsHomeFitting(!wantsHomeFitting)}
-                className={cn(
-                  "relative h-6 w-11 rounded-full transition-colors",
-                  wantsHomeFitting ? "bg-accent-yellow" : "bg-muted"
+          {/* Configuration & Details */}
+          <div className="lg:col-span-5 flex flex-col space-y-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <p className="text-xs uppercase tracking-[0.4em] text-accent-yellow mb-4 font-semibold">
+                {product.category?.name} Catalog
+              </p>
+              <h1 className="font-serif text-4xl font-light tracking-tight md:text-5xl lg:text-6xl mb-6">
+                {product.name}
+              </h1>
+              
+              <div className="flex items-baseline gap-6">
+                <span className="font-serif text-3xl font-light">
+                  ₹{selectedVariant.price.toLocaleString()}
+                </span>
+                {selectedVariant.compare_at_price && (
+                  <span className="text-lg text-muted-foreground/40 line-through font-light">
+                    ₹{selectedVariant.compare_at_price.toLocaleString()}
+                  </span>
                 )}
-              >
-                <motion.div
-                  className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow"
-                  animate={{ x: wantsHomeFitting ? 22 : 2 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                />
-              </button>
+              </div>
+              
+              <p className="mt-4 text-[10px] uppercase tracking-widest text-muted-foreground/60 leading-relaxed font-medium">
+                Complimentary seasonal tailoring included
+              </p>
+            </motion.div>
+
+            <Separator className="bg-border/40" />
+
+            {/* Size Selection */}
+            <div>
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xs uppercase tracking-[0.3em] text-accent-yellow font-semibold">Select Silhouette</h3>
+                <button className="text-[10px] uppercase tracking-widest text-muted-foreground underline hover:text-foreground transition-colors">
+                  Size Guide
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                {product.variants.map((variant) => (
+                  <button
+                    key={variant.id}
+                    disabled={variant.is_out_of_stock}
+                    onClick={() => setSelectedVariant(variant)}
+                    className={cn(
+                      "flex h-14 items-center justify-center border text-[11px] tracking-widest transition-all duration-300",
+                      selectedVariant.id === variant.id
+                        ? "border-accent-yellow bg-accent-yellow/5 text-foreground ring-1 ring-accent-yellow font-semibold"
+                        : variant.is_out_of_stock
+                        ? "opacity-20 cursor-not-allowed border-border line-through"
+                        : "border-border hover:border-foreground"
+                    )}
+                  >
+                    {variant.size}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <Button
-              size="lg"
-              className="w-full bg-accent-yellow text-black hover:bg-accent-yellow/90"
-              onClick={handleAddToCart}
-              disabled={selectedVariant.is_out_of_stock}
-            >
-              <ShoppingBag className="mr-2 h-5 w-5" />
-              {selectedVariant.is_out_of_stock ? "Out of Stock" : "Add to Cart"}
-            </Button>
-
-            <Button variant="outline" size="lg" className="w-full">
-              <Heart className="mr-2 h-5 w-5" />
-              Add to Wishlist
-            </Button>
-          </div>
-
-          <div className="mt-6 grid grid-cols-3 gap-4">
-            {[
-              { icon: Truck, text: "Free Shipping" },
-              { icon: Shield, text: "1 Year Warranty" },
-              { icon: RotateCcw, text: "Easy Returns" },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex flex-col items-center gap-1 text-center">
-                <Icon className="h-5 w-5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">{text}</span>
+            {/* Atelier Services */}
+            <div className="space-y-6">
+              <div 
+                onClick={() => setWantsHomeFitting(!wantsHomeFitting)}
+                className={cn(
+                  "group flex cursor-pointer items-center justify-between border-y border-border/40 py-8 transition-all duration-500",
+                  wantsHomeFitting ? "bg-accent-yellow/5" : "hover:bg-accent-yellow/5"
+                )}
+              >
+                <div className="flex items-start gap-6 px-2">
+                  <div className={cn(
+                    "flex h-6 w-6 items-center justify-center border rounded-full transition-all duration-500",
+                    wantsHomeFitting ? "border-accent-yellow bg-accent-yellow" : "border-border group-hover:border-accent-yellow"
+                  )}>
+                    {wantsHomeFitting && <Check className="h-3 w-3 text-black" />}
+                  </div>
+                  <div>
+                    <h3 className="text-sm uppercase tracking-widest text-foreground font-semibold">In-Home Fitting Experience</h3>
+                    <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium">
+                      Bespoke curation at your residence — +₹999
+                    </p>
+                  </div>
+                </div>
+                <Info className="h-4 w-4 text-muted-foreground/40 mr-2" />
               </div>
-            ))}
+
+              <div className="flex flex-col gap-4">
+                <Button
+                  size="lg"
+                  className="w-full h-16 rounded-none bg-accent-yellow text-black hover:bg-accent-yellow/90 uppercase tracking-[0.4em] text-[11px] font-bold shadow-lg shadow-accent-yellow/10"
+                  onClick={handleAddToCart}
+                  disabled={selectedVariant.is_out_of_stock}
+                >
+                   {selectedVariant.is_out_of_stock ? "Exhausted" : "Reserve for Atelier"}
+                </Button>
+
+                <div className="flex gap-4">
+                   <Button variant="outline" className="flex-1 h-14 rounded-none border-border/40 uppercase tracking-[0.3em] text-[10px] font-medium hover:bg-transparent hover:border-foreground">
+                      <Heart className="mr-2 h-3.5 w-3.5" />
+                      Add to Archive
+                   </Button>
+                   <Button variant="outline" className="flex-1 h-14 rounded-none border-border/40 uppercase tracking-[0.3em] text-[10px] font-medium hover:bg-transparent hover:border-foreground">
+                      <ShoppingBag className="mr-2 h-3.5 w-3.5" />
+                      Gift Curation
+                   </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Product Story */}
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="w-full justify-start rounded-none border-b border-border/40 bg-transparent p-0">
+                <TabsTrigger 
+                  value="details" 
+                  className="rounded-none border-b-2 border-transparent px-8 pb-4 text-xs uppercase tracking-[0.3em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-semibold"
+                >
+                  Details
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="fabric" 
+                  className="rounded-none border-b-2 border-transparent px-8 pb-4 text-xs uppercase tracking-[0.3em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-semibold"
+                >
+                  Textile
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="reviews" 
+                  className="rounded-none border-b-2 border-transparent px-8 pb-4 text-xs uppercase tracking-[0.3em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-semibold"
+                >
+                  Legacy
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="details" className="mt-8">
+                <p className="text-sm leading-relaxed tracking-wide text-muted-foreground/80 font-light">
+                  {product.description}
+                </p>
+                <div className="mt-8 grid grid-cols-2 gap-4">
+                   <div className="space-y-4">
+                      <span className="text-xs uppercase tracking-widest text-accent-yellow font-semibold">Construction</span>
+                      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">Half-Canvas Interior</p>
+                   </div>
+                   <div className="space-y-4">
+                      <span className="text-xs uppercase tracking-widest text-accent-yellow font-semibold">Silhouette</span>
+                      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">{product.fit}</p>
+                   </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="fabric" className="mt-8">
+                <p className="text-sm leading-relaxed tracking-wide text-muted-foreground/80 font-light">
+                  Crafted with precision from {product.fabric}. This selection represents the pinnacle of 
+                  textile engineering, offering a natural drape that matures with the wearer.
+                </p>
+              </TabsContent>
+              <TabsContent value="reviews" className="mt-8">
+                <p className="text-sm leading-relaxed tracking-wide text-muted-foreground/80 font-light">
+                  Refined by our patrons. 120 curated endorsements with an average distinction of 4.8.
+                </p>
+              </TabsContent>
+            </Tabs>
           </div>
+        </div>
 
-          <Separator className="my-6" />
-
-          <Tabs defaultValue="details">
-            <TabsList>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="fabric">Fabric</TabsTrigger>
-              <TabsTrigger value="reviews">Reviews</TabsTrigger>
-            </TabsList>
-            <TabsContent value="details" className="mt-4">
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {product.description}
-              </p>
-              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                <li>• Fit: <span className="capitalize">{product.fit}</span></li>
-                <li>• Color: {product.color}</li>
-                <li>• Half-canvas construction</li>
-                <li>• Horn buttons</li>
-                <li>• Bemberg lining</li>
-              </ul>
-            </TabsContent>
-            <TabsContent value="fabric" className="mt-4">
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Crafted from {product.fabric}. This premium fabric offers
-                exceptional breathability, wrinkle resistance, and a luxurious
-                hand feel. Each piece is hand-cut and sewn by our master tailors.
-              </p>
-            </TabsContent>
-            <TabsContent value="reviews" className="mt-4">
-              <p className="text-sm text-muted-foreground">
-                120 verified reviews with an average rating of 4.8/5.
-              </p>
-            </TabsContent>
-          </Tabs>
+        {/* New Sections */}
+        <div className="mt-40 space-y-40">
+          <ProductCarousel 
+            title="You May Also Like"
+            subtitle="Related Curations"
+            products={relatedProducts}
+          />
+          
+          <ProductCarousel 
+            title="Recently Viewed"
+            subtitle="Your History"
+            products={recentlyViewedProducts}
+          />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

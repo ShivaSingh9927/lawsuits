@@ -1,8 +1,7 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -14,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, SlidersHorizontal } from "lucide-react";
+import { X, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { ProductCard } from "@/components/product/product-card";
 import { products as mockProducts, categories as mockCategories } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -39,10 +38,10 @@ const fabrics = [
   "Full-Grain Leather",
 ];
 const sortOptions = [
-  { value: "newest", label: "Newest" },
+  { value: "newest", label: "Newest Arrivals" },
   { value: "price-asc", label: "Price: Low to High" },
   { value: "price-desc", label: "Price: High to Low" },
-  { value: "popular", label: "Most Popular" },
+  { value: "popular", label: "Curated Selection" },
 ];
 
 export function ShopPageClient() {
@@ -60,9 +59,9 @@ export function ShopPageClient() {
   const [categories, setCategories] = useState<Category[]>(mockCategories);
   const [loading, setLoading] = useState(true);
 
-  // Fetch from API if available
   useEffect(() => {
     const fetchProducts = async () => {
+      setLoading(true);
       try {
         const params = new URLSearchParams();
         if (selectedCategory) params.set("category", selectedCategory);
@@ -75,11 +74,12 @@ export function ShopPageClient() {
           const data = await res.json();
           if (data.products?.length > 0) {
             setAllProducts(data.products);
+            setLoading(false);
             return;
           }
         }
       } catch {
-        // API not available, use mock data
+        // API not available
       }
       setAllProducts(mockProducts);
       setLoading(false);
@@ -119,10 +119,10 @@ export function ShopPageClient() {
   };
 
   const FiltersContent = () => (
-    <div className="space-y-6">
+    <div className="space-y-12 pr-8">
       <div>
-        <h3 className="mb-3 font-serif text-sm font-semibold">Category</h3>
-        <div className="space-y-2">
+        <h3 className="mb-6 text-[10px] uppercase tracking-[0.4em] text-accent-yellow">Category</h3>
+        <div className="space-y-4">
           {categories.map((cat) => (
             <button
               key={cat.id}
@@ -132,10 +132,10 @@ export function ShopPageClient() {
                 )
               }
               className={cn(
-                "block w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors",
+                "block w-full text-left text-xs tracking-widest transition-all",
                 selectedCategory === cat.slug
-                  ? "bg-accent-yellow/20 text-foreground font-medium"
-                  : "text-muted-foreground hover:bg-muted"
+                  ? "font-medium text-foreground translate-x-2"
+                  : "text-muted-foreground/60 hover:text-foreground"
               )}
             >
               {cat.name}
@@ -144,11 +144,11 @@ export function ShopPageClient() {
         </div>
       </div>
 
-      <Separator />
+      <div className="h-[1px] w-full bg-border/50" />
 
       <div>
-        <h3 className="mb-3 font-serif text-sm font-semibold">Fit</h3>
-        <div className="space-y-2">
+        <h3 className="mb-6 text-[10px] uppercase tracking-[0.4em] text-accent-yellow">The Silhouette</h3>
+        <div className="space-y-4">
           {fits.map((fit) => (
             <button
               key={fit}
@@ -156,10 +156,10 @@ export function ShopPageClient() {
                 setSelectedFit(selectedFit === fit ? null : fit)
               }
               className={cn(
-                "block w-full rounded-md px-3 py-1.5 text-left text-sm capitalize transition-colors",
+                "block w-full text-left text-xs capitalize tracking-widest transition-all",
                 selectedFit === fit
-                  ? "bg-accent-yellow/20 text-foreground font-medium"
-                  : "text-muted-foreground hover:bg-muted"
+                  ? "font-medium text-foreground translate-x-2"
+                  : "text-muted-foreground/60 hover:text-foreground"
               )}
             >
               {fit}
@@ -168,179 +168,187 @@ export function ShopPageClient() {
         </div>
       </div>
 
-      <Separator />
+      <div className="h-[1px] w-full bg-border/50" />
 
       <div>
-        <h3 className="mb-3 font-serif text-sm font-semibold">Fabric</h3>
-        <div className="space-y-2">
-          {fabrics.map((fabric) => (
-            <button
-              key={fabric}
-              onClick={() =>
-                setSelectedFabric(selectedFabric === fabric ? null : fabric)
+        <h3 className="mb-6 text-[10px] uppercase tracking-[0.4em] text-accent-yellow">Value</h3>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between text-[10px] tracking-widest text-muted-foreground">
+            <span>₹{priceRange[0].toLocaleString()}</span>
+            <span>₹{priceRange[1].toLocaleString()}+</span>
+          </div>
+          <div className="flex gap-4">
+            <Input
+              type="number"
+              placeholder="Min"
+              value={priceRange[0]}
+              onChange={(e) =>
+                setPriceRange([Number(e.target.value), priceRange[1]])
               }
-              className={cn(
-                "block w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors",
-                selectedFabric === fabric
-                  ? "bg-accent-yellow/20 text-foreground font-medium"
-                  : "text-muted-foreground hover:bg-muted"
-              )}
-            >
-              {fabric}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <Separator />
-
-      <div>
-        <h3 className="mb-3 font-serif text-sm font-semibold">Price Range</h3>
-        <div className="flex gap-2">
-          <Input
-            type="number"
-            placeholder="Min"
-            value={priceRange[0]}
-            onChange={(e) =>
-              setPriceRange([Number(e.target.value), priceRange[1]])
-            }
-            className="h-9"
-          />
-          <Input
-            type="number"
-            placeholder="Max"
-            value={priceRange[1]}
-            onChange={(e) =>
-              setPriceRange([priceRange[0], Number(e.target.value)])
-            }
-            className="h-9"
-          />
+              className="h-10 border-0 border-b border-border bg-transparent px-0 text-xs focus-visible:ring-0"
+            />
+            <Input
+              type="number"
+              placeholder="Max"
+              value={priceRange[1]}
+              onChange={(e) =>
+                setPriceRange([priceRange[0], Number(e.target.value)])
+              }
+              className="h-10 border-0 border-b border-border bg-transparent px-0 text-xs focus-visible:ring-0"
+            />
+          </div>
         </div>
       </div>
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent-yellow border-t-transparent mx-auto" />
-          <p className="mt-4 text-muted-foreground">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="font-serif text-3xl font-bold">All Products</h1>
-        <p className="mt-1 text-muted-foreground">
-          {filteredProducts.length} products found
-        </p>
-      </div>
-
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {selectedCategory && (
-            <Badge variant="secondary" className="gap-1">
-              {categories.find((c) => c.slug === selectedCategory)?.name}
-              <button onClick={() => setSelectedCategory(null)}>
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          )}
-          {selectedFit && (
-            <Badge variant="secondary" className="gap-1 capitalize">
-              {selectedFit}
-              <button onClick={() => setSelectedFit(null)}>
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          )}
-          {selectedFabric && (
-            <Badge variant="secondary" className="gap-1">
-              {selectedFabric}
-              <button onClick={() => setSelectedFabric(null)}>
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          )}
-          {activeFiltersCount > 0 && (
-            <button
-              onClick={clearAllFilters}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              Clear all
-            </button>
-          )}
+    <main className="bg-[#FDFCFB] min-h-screen">
+      <div className="mx-auto max-w-7xl px-8 py-24 lg:px-12">
+        {/* Cinematic Header */}
+        <div className="mb-24 flex flex-col items-center text-center space-y-6">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-[10px] uppercase tracking-[0.5em] text-accent-yellow"
+          >
+            The Collection
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="font-serif text-5xl font-light tracking-tight md:text-7xl"
+          >
+            Distinctive <span className="italic">Tailoring</span>
+          </motion.h1>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="h-[1px] w-24 bg-accent-yellow/30"
+          />
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="max-w-xl text-sm font-light leading-relaxed text-muted-foreground"
+          >
+            Explore our curated range of professional attire, 
+            where every piece is an intersection of heritage and modern power.
+          </motion.p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Sheet>
-            <SheetTrigger
-              render={
-                <Button variant="outline" size="sm" className="lg:hidden" />
-              }
-            >
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
-              Filters
-              {activeFiltersCount > 0 && (
-                <Badge className="ml-1 h-5 w-5 rounded-full p-0">
-                  {activeFiltersCount}
-                </Badge>
-              )}
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80">
-              <SheetHeader>
-                <SheetTitle className="font-serif">Filters</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6">
+        {/* Toolbar */}
+        <div className="mb-12 flex flex-wrap items-center justify-between gap-8 border-y border-border/40 py-8">
+          <div className="flex items-center gap-12">
+            <Sheet>
+              <SheetTrigger
+                render={
+                  <button className="flex items-center gap-4 text-[10px] uppercase tracking-[0.4em] transition-opacity hover:opacity-70">
+                    <SlidersHorizontal className="h-4 w-4 stroke-[1px]" />
+                    Filter Archives
+                  </button>
+                }
+              />
+              <SheetContent side="left" className="w-[350px] bg-[#FDFCFB]">
+                <SheetHeader className="mb-12 text-left">
+                  <SheetTitle className="font-serif text-3xl font-light">Refine</SheetTitle>
+                </SheetHeader>
                 <FiltersContent />
+              </SheetContent>
+            </Sheet>
+
+            <div className="hidden h-4 w-[1px] bg-border md:block" />
+
+            <div className="hidden items-center gap-4 md:flex">
+                {activeFiltersCount > 0 && (
+                  <>
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">Active:</span>
+                    <div className="flex gap-4">
+                      {selectedCategory && (
+                        <button 
+                          onClick={() => setSelectedCategory(null)}
+                          className="text-[10px] uppercase tracking-widest hover:line-through"
+                        >
+                          {selectedCategory}
+                        </button>
+                      )}
+                      {selectedFit && (
+                        <button 
+                          onClick={() => setSelectedFit(null)}
+                          className="text-[10px] uppercase tracking-widest hover:line-through"
+                        >
+                          {selectedFit}
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      onClick={clearAllFilters}
+                      className="text-[10px] uppercase tracking-[0.2em] text-accent-yellow"
+                    >
+                      Reset
+                    </button>
+                  </>
+                )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <span className="hidden text-[10px] uppercase tracking-[0.4em] text-muted-foreground/60 md:block">Sort :</span>
+            <Select value={sortBy} onValueChange={(v: string | null) => setSortBy(v ?? "newest")}>
+              <SelectTrigger className="w-48 border-0 bg-transparent p-0 text-[10px] uppercase tracking-[0.3em] focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#FDFCFB] border-border/40">
+                {sortOptions.map((opt) => (
+                  <SelectItem 
+                    key={opt.value} 
+                    value={opt.value}
+                    className="text-[10px] uppercase tracking-[0.2em] focus:bg-accent-yellow/10"
+                  >
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex gap-16">
+          {/* Desktop Filters Sidebar */}
+          <aside className="hidden w-72 flex-shrink-0 lg:block">
+            <FiltersContent />
+          </aside>
+
+          <div className="flex-1">
+            {loading ? (
+              <div className="flex min-h-[40vh] items-center justify-center">
+                 <div className="h-10 w-[1px] animate-pulse bg-accent-yellow" />
               </div>
-            </SheetContent>
-          </Sheet>
-
-          <Select value={sortBy} onValueChange={(v: string | null) => setSortBy(v ?? "newest")}>
-            <SelectTrigger className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            ) : filteredProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-32 text-center">
+                <h3 className="font-serif text-2xl font-light">Void of Results</h3>
+                <p className="mt-4 text-xs tracking-widest text-muted-foreground">
+                  Your current criteria remains unfulfilled.
+                </p>
+                <button 
+                  onClick={clearAllFilters}
+                  className="mt-12 text-[10px] uppercase tracking-[0.5em] text-accent-yellow underline transition-opacity hover:opacity-70"
+                >
+                  Reset Archives
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-x-12 gap-y-24 sm:grid-cols-2">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      <div className="flex gap-8">
-        <aside className="hidden w-64 flex-shrink-0 lg:block">
-          <FiltersContent />
-        </aside>
-
-        <div className="flex-1">
-          {filteredProducts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-lg font-medium">No products found</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Try adjusting your filters
-              </p>
-              <Button variant="outline" className="mt-4" onClick={clearAllFilters}>
-                Clear Filters
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    </main>
   );
 }

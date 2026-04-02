@@ -1,89 +1,77 @@
 "use client";
-
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 
-const categories = [
-  {
-    name: "Courtroom Classics",
-    description: "Timeless pieces for the advocate",
-    image: "/hunters-race-MYbhN8KaaEc-unsplash.jpg",
-    slug: "courtroom-classics",
-  },
-  {
-    name: "The Boardroom",
-    description: "Power dressing for the executive",
-    image: "/nussbaum-law-IOvsEAEjnDE-unsplash.jpg",
-    slug: "boardroom",
-  },
-  {
-    name: "Formal Galas",
-    description: "Elegant evening wear",
-    image: "/pexels-ekaterina-bolovtsova-6077961.jpg",
-    slug: "formal-galas",
-  },
-  {
-    name: "Executive Accessories",
-    description: "Complete the look",
-    image: "/pexels-karola-g-7876289.jpg",
-    slug: "accessories",
-  },
-];
+import { categories } from "@/lib/data";
 
 export function CategoryGrid() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="text-center">
-        <h2 className="font-serif text-3xl font-bold sm:text-4xl">
-          Shop by Category
-        </h2>
-        <p className="mt-2 text-muted-foreground">
-          Curated collections for every occasion
-        </p>
-      </div>
-
-      <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {categories.map((category, index) => (
-          <motion.a
-            key={category.slug}
-            href={`/shop?category=${category.slug}`}
+    <section className="bg-white py-32 overflow-hidden border-y border-border/40">
+      <div className="mx-auto max-w-7xl px-8 lg:px-12">
+        <div className="mb-20 flex flex-col items-center text-center">
+          <motion.span
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-4 block text-xs uppercase tracking-[0.4em] text-accent-yellow bg-accent-yellow/10 px-4 py-1.5 font-medium"
+          >
+            Legal Attire
+          </motion.span>
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: index * 0.1 }}
-            className="group relative aspect-[3/4] overflow-hidden rounded-lg"
+            transition={{ duration: 1 }}
+            className="font-serif text-4xl font-light tracking-tight sm:text-5xl"
           >
-            <Image
-              src={category.image}
-              alt={category.name}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              quality={80}
-              loading="lazy"
-              className="object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-6">
-              <h3 className="font-serif text-xl font-bold text-white">
-                {category.name}
-              </h3>
-              <p className="mt-1 text-sm text-white/70">
-                {category.description}
-              </p>
-              <div className="mt-3 flex items-center gap-2 text-accent-yellow">
-                <span className="text-sm font-medium">Shop Now</span>
-                <motion.span
-                  className="inline-block"
-                  initial={{ x: 0 }}
-                  whileHover={{ x: 5 }}
-                >
-                  →
-                </motion.span>
-              </div>
-            </div>
-          </motion.a>
-        ))}
+            Advocate Dress Products
+          </motion.h2>
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, staggerChildren: 0.1 }}
+          className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5"
+        >
+          {categories.map((category, index) => (
+            <motion.div
+              key={category.slug}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1, duration: 0.8 }}
+            >
+              <Link
+                href={`/shop?category=${encodeURIComponent(category.slug)}`}
+                className="group flex flex-col items-center"
+              >
+                <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted transition-transform duration-700 group-hover:-translate-y-2">
+                  <Image
+                    src={category.image_url || "/placeholder-category.jpg"}
+                    alt={category.name}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    className="object-cover transition-all duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/5" />
+                </div>
+                
+                <div className="mt-8 text-center">
+                  <h3 className="font-serif text-lg tracking-tight text-foreground transition-colors group-hover:text-accent-yellow">
+                    {category.name}
+                  </h3>
+                  <p className="mt-2 text-xs uppercase tracking-[0.1em] text-muted-foreground/60">
+                    1 products
+                  </p>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
   );

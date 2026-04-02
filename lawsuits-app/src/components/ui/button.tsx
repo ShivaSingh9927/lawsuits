@@ -38,7 +38,7 @@ const buttonVariants = cva(
 )
 
 interface ButtonProps
-  extends React.ComponentProps<"button">,
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
 }

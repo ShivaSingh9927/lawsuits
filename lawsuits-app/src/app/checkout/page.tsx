@@ -17,14 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, CreditCard, Smartphone, Building2, ShieldCheck } from "lucide-react";
+import { ChevronLeft, CreditCard, Smartphone, Building2, ShieldCheck, CheckCircle } from "lucide-react";
 import { useCartStore } from "@/store";
+import { supabase } from "@/lib/supabase/client";
 
 const timeSlots = [
-  "9:00 AM - 12:00 PM",
-  "12:00 PM - 3:00 PM",
-  "3:00 PM - 6:00 PM",
+  "9am-12pm",
+  "12pm-3pm",
+  "3pm-6pm",
 ];
 
 export default function CheckoutPage() {
@@ -35,6 +35,9 @@ export default function CheckoutPage() {
   const total = subtotal + shipping + tax;
 
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [orderComplete, setOrderComplete] = useState(false);
+  const [orderNumber, setOrderNumber] = useState("");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -50,18 +53,120 @@ export default function CheckoutPage() {
     discount: 0,
   });
 
-  const handleApplyCoupon = () => {
-    if (formData.couponCode.toUpperCase() === "LAWYER10") {
-      setFormData({ ...formData, discount: Math.round(subtotal * 0.1) });
+  const handleApplyCoupon = async () => {
+    if (!formData.couponCode) return;
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: formData.couponCode, subtotal }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setFormData({ ...formData, discount: data.coupon.discount });
+      } else {
+        alert(data.message);
+      }
+    } catch {
+      alert("Failed to validate coupon");
     }
   };
 
-  const handlePayment = () => {
-    // Razorpay integration
-    console.log("Processing payment:", { total, items, formData });
-    alert("Payment integration ready! Connect Razorpay keys in .env.local");
-    clearCart();
+  const handleTestPayment = async () => {
+    setLoading(true);
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        alert("Please login first");
+        setLoading(false);
+        return;
+      }
+
+      // Prepare order items
+      const orderItems = items.map((item) => ({
+        variant_id: item.variant_id,
+        quantity: item.quantity,
+      }));
+
+      // Create order via API
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: orderItems,
+          shipping: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            phone: formData.phone,
+            email: formData.email,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            postalCode: formData.postalCode,
+          },
+          coupon_code: formData.couponCode || null,
+          appointment_date: formData.appointmentDate || null,
+          time_slot: formData.timeSlot || null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create order");
+      }
+
+      // Simulate successful payment
+      await supabase
+        .from("orders")
+        .update({
+          payment_status: "captured",
+          status: "confirmed",
+          payment_method: "test_mode",
+          razorpay_payment_id: "test_" + Date.now(),
+        })
+        .eq("id", data.order.id);
+
+      setOrderNumber(data.order.order_number);
+      setOrderComplete(true);
+      clearCart();
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert("Error: " + error.message);
+    }
+    setLoading(false);
   };
+
+  if (orderComplete) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", duration: 0.5 }}
+        >
+          <CheckCircle className="mx-auto h-24 w-24 text-green-500" />
+        </motion.div>
+        <h1 className="mt-6 font-serif text-3xl font-bold">Order Confirmed!</h1>
+        <p className="mt-2 text-lg text-muted-foreground">
+          Order number: <span className="font-semibold text-foreground">{orderNumber}</span>
+        </p>
+        <p className="mt-4 max-w-md text-sm text-muted-foreground">
+          Thank you for your order. Our team will contact you shortly to confirm
+          your home fitting appointment.
+        </p>
+        <div className="mt-8 flex gap-4">
+          <Button asChild>
+            <Link href="/account">View Orders</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/shop">Continue Shopping</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -81,11 +186,18 @@ export default function CheckoutPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/cart">
+          <Link href="/shop">
             <ChevronLeft className="h-4 w-4" />
-            Back to Cart
+            Back to Shop
           </Link>
         </Button>
+      </div>
+
+      {/* Test Mode Banner */}
+      <div className="mb-6 rounded-lg border border-accent-yellow/50 bg-accent-yellow/10 p-4">
+        <p className="text-sm font-medium">
+          🧪 <strong>Test Mode</strong> - No real payment will be processed. Click "Place Order (Test)" to complete checkout.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -93,33 +205,36 @@ export default function CheckoutPage() {
           <h1 className="font-serif text-2xl font-bold">Checkout</h1>
 
           <div className="mt-6 space-y-8">
+            {/* Contact & Shipping */}
             <div className="rounded-lg border border-border p-6">
               <h2 className="mb-4 font-serif text-lg font-semibold">
                 1. Contact & Shipping
               </h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label>First Name</Label>
+                  <Label>First Name *</Label>
                   <Input
                     placeholder="John"
                     value={formData.firstName}
                     onChange={(e) =>
                       setFormData({ ...formData, firstName: e.target.value })
                     }
+                    required
                   />
                 </div>
                 <div>
-                  <Label>Last Name</Label>
+                  <Label>Last Name *</Label>
                   <Input
                     placeholder="Doe"
                     value={formData.lastName}
                     onChange={(e) =>
                       setFormData({ ...formData, lastName: e.target.value })
                     }
+                    required
                   />
                 </div>
                 <div>
-                  <Label>Email</Label>
+                  <Label>Email *</Label>
                   <Input
                     type="email"
                     placeholder="john@example.com"
@@ -127,10 +242,11 @@ export default function CheckoutPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
+                    required
                   />
                 </div>
                 <div>
-                  <Label>Phone</Label>
+                  <Label>Phone *</Label>
                   <Input
                     type="tel"
                     placeholder="+91 98765 43210"
@@ -138,54 +254,60 @@ export default function CheckoutPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
+                    required
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <Label>Address</Label>
+                  <Label>Address *</Label>
                   <Input
                     placeholder="Flat/House No., Building, Street"
                     value={formData.address}
                     onChange={(e) =>
                       setFormData({ ...formData, address: e.target.value })
                     }
+                    required
                   />
                 </div>
                 <div>
-                  <Label>City</Label>
+                  <Label>City *</Label>
                   <Input
                     placeholder="Mumbai"
                     value={formData.city}
                     onChange={(e) =>
                       setFormData({ ...formData, city: e.target.value })
                     }
+                    required
                   />
                 </div>
                 <div>
-                  <Label>State</Label>
+                  <Label>State *</Label>
                   <Input
                     placeholder="Maharashtra"
                     value={formData.state}
                     onChange={(e) =>
                       setFormData({ ...formData, state: e.target.value })
                     }
+                    required
                   />
                 </div>
                 <div>
-                  <Label>Postal Code</Label>
+                  <Label>Postal Code *</Label>
                   <Input
                     placeholder="400001"
                     value={formData.postalCode}
                     onChange={(e) =>
                       setFormData({ ...formData, postalCode: e.target.value })
                     }
+                    required
                   />
                 </div>
               </div>
             </div>
 
+            {/* Appointment */}
             <div className="rounded-lg border border-border p-6">
               <h2 className="mb-4 font-serif text-lg font-semibold">
-                2. Home Fitting Appointment
+                2. Home Fitting Appointment (Optional)
               </h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
@@ -200,7 +322,7 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <Label>Time Slot</Label>
-                    <Select
+                  <Select
                     value={formData.timeSlot}
                     onValueChange={(v: string | null) =>
                       setFormData({ ...formData, timeSlot: v ?? "" })
@@ -225,70 +347,23 @@ export default function CheckoutPage() {
               </p>
             </div>
 
+            {/* Payment (Test Mode) */}
             <div className="rounded-lg border border-border p-6">
               <h2 className="mb-4 font-serif text-lg font-semibold">
                 3. Payment
               </h2>
-              <Tabs defaultValue="card">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="card">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Card
-                  </TabsTrigger>
-                  <TabsTrigger value="upi">
-                    <Smartphone className="mr-2 h-4 w-4" />
-                    UPI
-                  </TabsTrigger>
-                  <TabsTrigger value="netbanking">
-                    <Building2 className="mr-2 h-4 w-4" />
-                    Netbanking
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="card" className="mt-4 space-y-4">
-                  <div>
-                    <Label>Card Number</Label>
-                    <Input placeholder="4242 4242 4242 4242" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Expiry</Label>
-                      <Input placeholder="MM/YY" />
-                    </div>
-                    <div>
-                      <Label>CVV</Label>
-                      <Input placeholder="123" />
-                    </div>
-                  </div>
-                </TabsContent>
-                <TabsContent value="upi" className="mt-4">
-                  <div>
-                    <Label>UPI ID</Label>
-                    <Input placeholder="yourname@upi" />
-                  </div>
-                </TabsContent>
-                <TabsContent value="netbanking" className="mt-4">
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your bank" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hdfc">HDFC Bank</SelectItem>
-                      <SelectItem value="icici">ICICI Bank</SelectItem>
-                      <SelectItem value="sbi">State Bank of India</SelectItem>
-                      <SelectItem value="axis">Axis Bank</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TabsContent>
-              </Tabs>
-
-              <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                <ShieldCheck className="h-4 w-4 text-green-600" />
-                Secured by Razorpay. Your payment info is encrypted.
+              <div className="rounded-lg bg-muted p-4 text-center">
+                <CreditCard className="mx-auto h-8 w-8 text-muted-foreground" />
+                <p className="mt-2 text-sm font-medium">Test Mode Active</p>
+                <p className="text-xs text-muted-foreground">
+                  No real payment will be processed
+                </p>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="sticky top-24 rounded-lg border border-border p-6">
             <h2 className="font-serif text-lg font-semibold">Order Summary</h2>
@@ -372,10 +447,16 @@ export default function CheckoutPage() {
             <Button
               className="mt-6 w-full bg-accent-yellow text-black hover:bg-accent-yellow/90"
               size="lg"
-              onClick={handlePayment}
+              onClick={handleTestPayment}
+              disabled={loading || !formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.address || !formData.city || !formData.state || !formData.postalCode}
             >
-              Pay ₹{(total - formData.discount).toLocaleString()}
+              {loading ? "Processing..." : "Place Order (Test)"}
             </Button>
+
+            <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+              <ShieldCheck className="h-4 w-4 text-green-600" />
+              Test mode - No real payment
+            </div>
           </div>
         </div>
       </div>

@@ -1,8 +1,6 @@
 "use client";
-
 import React from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 const firms = [
   "Khaitan & Co",
@@ -14,20 +12,28 @@ const firms = [
 
 export function TrustBar() {
   return (
-    <section className="border-y border-border bg-muted/50 py-12">
+    <section className="bg-background py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <p className="mb-8 text-center text-sm uppercase tracking-wider text-muted-foreground">
-          Trusted by Partners at
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+        <motion.p 
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1 }}
+          className="mb-12 text-center text-[10px] uppercase tracking-[0.4em] text-muted-foreground/60"
+        >
+          Trusted by the Nation's Preeminent Counsel
+        </motion.p>
+        
+        <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-10">
           {firms.map((firm, index) => (
             <motion.div
               key={firm}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 0.5 }}
+              initial={{ opacity: 0, filter: "blur(4px)" }}
+              whileInView={{ opacity: 0.4, filter: "blur(0px)" }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="font-serif text-sm font-medium text-muted-foreground transition-opacity hover:opacity-100 sm:text-base"
+              transition={{ delay: index * 0.1, duration: 1 }}
+              whileHover={{ opacity: 0.8 }}
+              className="font-serif text-sm font-medium tracking-tight text-foreground transition-all duration-300 sm:text-base"
             >
               {firm}
             </motion.div>

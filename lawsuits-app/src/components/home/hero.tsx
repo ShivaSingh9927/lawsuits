@@ -1,106 +1,108 @@
 "use client";
-
-import React from "react";
+import React, { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 export function Hero() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"],
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+
   return (
-    <section className="relative flex min-h-[90vh] w-full items-center overflow-hidden bg-background">
+    <section 
+      ref={containerRef}
+      className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background"
+    >
+      {/* Background Image Container */}
       <div className="absolute inset-0 z-0">
-        <Image
-          src="/pexels-pavel-danilyuk-8112126.jpg"
-          alt="Professional in sharp suit"
-          fill
-          sizes="100vw"
-          quality={85}
-          priority
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+        <div className="relative h-full w-full">
+          <Image
+            src="/pexels-unique-bash-creative-1927464998-34850161.jpg"
+            alt="Tailored Suit Detail"
+            fill
+            priority
+            quality={100}
+            className="object-cover object-center opacity-60 brightness-[0.7]"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
+        </div>
       </div>
 
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          style={{ opacity }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="text-white"
+          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
         >
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full bg-accent-yellow/20 px-4 py-1.5 text-sm font-medium text-accent-yellow"
+          <motion.span
+            initial={{ opacity: 0, letterSpacing: "0.2em" }}
+            animate={{ opacity: 1, letterSpacing: "0.5em" }}
+            transition={{ duration: 1.5, delay: 0.2 }}
+            className="mb-6 block text-xs font-medium uppercase tracking-[0.5em] text-accent-yellow"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-accent-yellow" />
-            Bespoke Tailoring for Legal Professionals
-          </motion.div>
+            The Art of the Suit
+          </motion.span>
 
-          <h1 className="font-serif text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
-            The Verdict is In:
-            <br />
-            <span className="text-accent-yellow">Precision Tailoring</span>
+          <h1 className="font-serif text-5xl font-light leading-[1.1] tracking-tight text-white sm:text-7xl lg:text-8xl">
+            Precision <br /> 
+            <span className="italic">Meets</span> Purpose
           </h1>
 
-          <p className="mt-6 max-w-lg text-lg text-white/80">
-            For the modern counsel who demands excellence. Our master tailors
-            bring the showroom to your chambers with our exclusive Home
-            Measurement service.
-          </p>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.8 }}
+            className="mt-8 mx-auto max-w-xl text-lg font-light leading-relaxed text-white/90"
+          >
+            Exquisite bespoke tailoring for the modern legal professional. 
+            Experience our master-crafted garments in the comfort of your own chambers.
+          </motion.p>
 
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Button
-              size="lg"
-              className="bg-accent-yellow text-black hover:bg-accent-yellow/90"
-              asChild
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.2 }}
+            className="mt-12 flex flex-col items-center justify-center gap-6 sm:flex-row"
+          >
+            <Link 
+              href="/#home-fitting"
+              className="group relative px-8 py-4 text-sm font-medium uppercase tracking-widest text-black transition-all"
             >
-              <Link href="/#home-fitting">Book Home Measurement</Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 hover:text-white"
-              asChild
+              <div className="absolute inset-0 bg-accent-yellow transition-transform duration-300 group-hover:scale-105" />
+              <span className="relative z-10">Book a Fitting</span>
+            </Link>
+            
+            <Link 
+              href="/shop"
+              className="group flex items-center gap-2 text-sm font-medium uppercase tracking-widest text-white transition-opacity hover:opacity-80"
             >
-              <Link href="/shop">Explore Collection</Link>
-            </Button>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, delay: 0.3 }}
-          className="hidden justify-center lg:flex"
-        >
-          <div className="relative h-[500px] w-[500px]">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 rounded-full border border-accent-yellow/30"
-            />
-            <motion.div
-              animate={{ rotate: -360 }}
-              transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-4 rounded-full border border-white/20"
-            />
-            <div className="absolute inset-8 rounded-full bg-accent-yellow/90 shadow-2xl" />
-            <div className="absolute inset-12 overflow-hidden rounded-full">
-              <Image
-                src="/short-haired-man-business-suit-carrying-two-registers.jpg"
-                alt="Professional in business suit"
-                fill
-                sizes="(max-width: 1024px) 0px, 400px"
-                quality={80}
-                className="object-cover"
-              />
-            </div>
-          </div>
+              <span>Explore Collection</span>
+              <span className="text-xl transition-transform duration-300 group-hover:translate-x-2">→</span>
+            </Link>
+          </motion.div>
         </motion.div>
       </div>
+
+      {/* Elegant scroll indicator */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2, duration: 1 }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2"
+      >
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-white/50">Scroll</span>
+          <div className="h-12 w-[1px] bg-gradient-to-b from-white/50 to-transparent" />
+        </div>
+      </motion.div>
     </section>
   );
 }

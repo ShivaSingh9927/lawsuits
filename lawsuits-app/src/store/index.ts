@@ -139,3 +139,25 @@ export const useFilterStore = create<FilterState>()((set) => ({
       sortBy: "newest",
     }),
 }));
+
+interface RecentlyViewedState {
+  items: string[]; // array of product IDs
+  addItem: (productId: string) => void;
+  clearRecentlyViewed: () => void;
+}
+
+export const useRecentlyViewedStore = create<RecentlyViewedState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      addItem: (productId) => {
+        const items = get().items;
+        // Keep unique items, moved to front
+        const filtered = items.filter((id) => id !== productId);
+        set({ items: [productId, ...filtered].slice(0, 10) });
+      },
+      clearRecentlyViewed: () => set({ items: [] }),
+    }),
+    { name: "lawsuits-recently-viewed" }
+  )
+);
