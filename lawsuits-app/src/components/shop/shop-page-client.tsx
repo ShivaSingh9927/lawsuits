@@ -276,13 +276,13 @@ export function ShopPageClient() {
           <div className="flex items-center gap-16">
             <Sheet>
               <SheetTrigger
-                render={
-                  <button className="flex items-center gap-4 text-sm uppercase tracking-[0.4em] transition-opacity hover:opacity-70 font-semibold">
-                    <SlidersHorizontal className="h-5 w-5 stroke-[1px]" />
-                    Filter Archives
-                  </button>
-                }
-              />
+                asChild
+              >
+                <button className="flex items-center gap-4 text-sm uppercase tracking-[0.4em] transition-opacity hover:opacity-70 font-semibold">
+                  <SlidersHorizontal className="h-5 w-5 stroke-[1px]" />
+                  Filter Archives
+                </button>
+              </SheetTrigger>
               <SheetContent side="left" className="w-[400px] bg-[#FDFCFB]">
                 <SheetHeader className="mb-12 text-left">
                   <SheetTitle className="font-serif text-4xl font-light">Refine</SheetTitle>
@@ -328,7 +328,7 @@ export function ShopPageClient() {
 
           <div className="flex items-center gap-8">
             <span className="hidden text-xs uppercase tracking-[0.4em] text-muted-foreground/60 md:block font-medium">Sort :</span>
-            <Select value={sortBy} onValueChange={(v: string | null) => setSortBy(v ?? "newest")}>
+            <Select value={sortBy} onValueChange={(v: string ) => setSortBy(v ?? "newest")}>
               <SelectTrigger className="w-56 border-0 bg-transparent p-0 text-xs uppercase tracking-[0.3em] focus:ring-0 font-semibold">
                 <SelectValue />
               </SelectTrigger>
@@ -372,7 +372,7 @@ export function ShopPageClient() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-x-6 gap-y-16 md:grid-cols-2">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-16">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

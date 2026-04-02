@@ -103,11 +103,11 @@ export function Header() {
 
             <Sheet>
               <SheetTrigger
-                render={
-                  <Button variant="ghost" size="icon" className="md:hidden text-zinc-100" />
-                }
+                asChild
               >
-                <Menu className="h-6 w-6" />
+                <Button variant="ghost" size="icon" className="md:hidden text-zinc-100">
+                  <Menu className="h-6 w-6" />
+                </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80 bg-zinc-950 border-white/5">
                 <SheetHeader>
