@@ -97,6 +97,8 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [images, setImages] = useState<{ url: string; file?: File }[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -148,6 +150,66 @@ export default function AdminPage() {
     fetchCategories();
   }, []);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    setUploading(true);
+
+    const newImages: { url: string; file?: File }[] = [];
+
+    for (const file of Array.from(files)) {
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      newImages.push({ url: previewUrl, file });
+    }
+
+    setImages([...images, ...newImages]);
+    setUploading(false);
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = images.filter((_, i) => i !== index);
+    setImages(newImages);
+  };
+
+  const uploadImagesToStorage = async (productId: string) => {
+    const uploadedUrls: string[] = [];
+
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      if (img.file) {
+        const fileExt = img.file.name.split(".").pop();
+        const fileName = `${productId}/${Date.now()}-${i}.${fileExt}`;
+
+        const { error } = await supabase.storage
+          .from("product-images")
+          .upload(fileName, img.file);
+
+        if (!error) {
+          const { data: urlData } = supabase.storage
+            .from("product-images")
+            .getPublicUrl(fileName);
+          uploadedUrls.push(urlData.publicUrl);
+        }
+      } else {
+        uploadedUrls.push(img.url);
+      }
+    }
+
+    // Save to product_images table
+    if (uploadedUrls.length > 0) {
+      const imageRecords = uploadedUrls.map((url, i) => ({
+        product_id: productId,
+        url: url,
+        alt: formData.name,
+        position: i,
+        is_primary: i === 0,
+      }));
+
+      await supabase.from("product_images").insert(imageRecords);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -193,6 +255,11 @@ export default function AdminPage() {
         await supabase.from("product_variants").insert(variants);
       }
 
+      // Upload images
+      if (images.length > 0) {
+        await uploadImagesToStorage(product.id);
+      }
+
       alert("Product added successfully!");
       setDialogOpen(false);
       resetForm();
@@ -217,6 +284,7 @@ export default function AdminPage() {
       is_featured: false,
       sizes: [{ size: "38R", stock: "10" }, { size: "40R", stock: "15" }, { size: "42R", stock: "10" }],
     });
+    setImages([]);
     setEditingProduct(null);
   };
 
@@ -293,6 +361,62 @@ export default function AdminPage() {
                     rows={3}
                   />
                 </div>
+
+                {/* Image Upload */}
+                <div className="col-span-2">
+                  <Label>Product Images</Label>
+                  <div className="mt-2 rounded-lg border-2 border-dashed border-border p-6 text-center">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <label htmlFor="image-upload" className="cursor-pointer">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="rounded-full bg-muted p-3">
+                          <Plus className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Click to upload images
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG up to 5MB
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Image Previews */}
+                  {images.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      {images.map((img, index) => (
+                        <div key={index} className="relative h-24 w-24 overflow-hidden rounded-lg border">
+                          <img
+                            src={img.url}
+                            alt={`Preview ${index + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-white"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                          {index === 0 && (
+                            <span className="absolute bottom-0 left-0 right-0 bg-accent-yellow py-0.5 text-center text-[10px] font-medium text-black">
+                              Primary
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <Label>Category</Label>
                   <Select
