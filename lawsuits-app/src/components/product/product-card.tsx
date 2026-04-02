@@ -69,12 +69,12 @@ export function ProductCard({ product, className, priority = false }: ProductCar
         {/* Subtle Luxury Badges */}
         <div className="absolute left-6 top-6 z-20 flex flex-col gap-2">
           {hasDiscount && (
-            <span className="bg-black px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-white">
+            <span className="bg-black px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] text-white font-semibold">
               Limited
             </span>
           )}
           {product.category?.name === "Bespoke" && (
-            <span className="border border-black/10 bg-white/50 px-3 py-1 text-[10px] uppercase tracking-[0.2em] backdrop-blur-md">
+            <span className="border border-black/10 bg-white/50 px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] backdrop-blur-md font-semibold">
               Atelier
             </span>
           )}
@@ -82,7 +82,7 @@ export function ProductCard({ product, className, priority = false }: ProductCar
 
         <button
           className={cn(
-            "absolute right-6 top-6 z-20 h-5 w-5 transition-all duration-500",
+            "absolute right-6 top-6 z-20 h-6 w-6 transition-all duration-500",
             hovered ? "opacity-100" : "opacity-0"
           )}
           onClick={(e) => {
@@ -100,7 +100,7 @@ export function ProductCard({ product, className, priority = false }: ProductCar
         >
           <Heart
             className={cn(
-              "h-4 w-4 transition-colors",
+              "h-5 w-5 transition-colors",
               wishlisted ? "fill-black text-black" : "text-black/30 hover:text-black"
             )}
           />
@@ -108,43 +108,43 @@ export function ProductCard({ product, className, priority = false }: ProductCar
 
         <div
           className={cn(
-            "absolute inset-x-0 bottom-0 z-20 p-6 transition-all duration-700",
+            "absolute inset-x-0 bottom-0 z-20 p-4 md:p-8 transition-all duration-700",
             hovered ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
           )}
         >
           <Link
             href={`/product/${product.slug}`}
-            className="flex w-full items-center justify-center bg-black py-4 text-[10px] uppercase tracking-[0.4em] text-white transition-opacity hover:opacity-90"
+            className="flex w-full items-center justify-center bg-black py-4 md:py-5 text-[10px] md:text-xs uppercase tracking-[0.4em] text-white transition-opacity hover:opacity-90 font-semibold"
           >
             Explore Detail
           </Link>
         </div>
       </div>
 
-      <div className="mt-8 space-y-2">
+      <div className="mt-10 space-y-3">
         <div className="flex items-start justify-between">
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <Link href={`/product/${product.slug}`}>
-              <h3 className="font-serif text-xl tracking-tight text-foreground transition-colors group-hover:text-accent-yellow">
+              <h3 className="font-serif text-lg md:text-2xl tracking-tight text-foreground transition-colors group-hover:text-accent-yellow">
                 {product.name}
               </h3>
             </Link>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/60">
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground/70 font-medium">
               {product.category?.name || "Bespoke Collection"}
             </p>
           </div>
           <div className="text-right">
-            <span className="font-serif text-lg font-light tracking-tighter">
+            <span className="font-serif text-lg md:text-xl font-light tracking-tighter text-foreground">
               ₹{lowestPrice.toLocaleString()}
             </span>
             {hasDiscount && (
-              <p className="text-xs text-muted-foreground/40 line-through">
+              <p className="text-[10px] md:text-sm text-muted-foreground/40 line-through">
                 ₹{product.compare_at_price?.toLocaleString()}
               </p>
             )}
           </div>
         </div>
-        <div className="h-[1px] w-0 bg-accent-yellow transition-all duration-700 group-hover:w-full" />
+        <div className="h-[2px] w-0 bg-accent-yellow transition-all duration-700 group-hover:w-full" />
       </div>
     </motion.div>
   );

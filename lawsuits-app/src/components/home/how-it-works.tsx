@@ -27,13 +27,13 @@ const steps = [
 export function HowItWorks() {
   return (
     <section className="bg-[#1C2333] py-32 text-white overflow-hidden">
-      <div className="mx-auto max-w-7xl px-8 lg:px-12">
+      <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
         <div className="mb-24 flex flex-col items-center text-center">
           <motion.span
             initial={{ opacity: 0, letterSpacing: "0.2em" }}
             whileInView={{ opacity: 1, letterSpacing: "0.4em" }}
             viewport={{ once: true }}
-            className="mb-6 block text-xs font-medium uppercase tracking-[0.4em] text-accent-yellow bg-accent-yellow/10 px-4 py-1"
+            className="mb-6 block text-sm font-semibold uppercase tracking-[0.4em] text-accent-yellow bg-accent-yellow/10 px-6 py-2"
           >
             The Dress Outfitters
           </motion.span>
@@ -42,13 +42,13 @@ export function HowItWorks() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
-            className="font-serif text-4xl font-light tracking-tight sm:text-5xl"
+            className="font-serif text-5xl font-light tracking-tight sm:text-6xl"
           >
             How it works
           </motion.h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-20 lg:grid-cols-3">
           {steps.map((step, index) => (
             <motion.div
               key={step.title}
@@ -58,13 +58,13 @@ export function HowItWorks() {
               transition={{ delay: index * 0.2, duration: 1 }}
               className="flex flex-col items-center text-center"
             >
-              <div className="mb-10 flex h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-white/5 transition-transform hover:scale-110">
-                <step.icon className="h-10 w-10 stroke-[1px] text-accent-yellow" />
+              <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-full border border-white/10 bg-white/5 transition-transform hover:scale-110">
+                <step.icon className="h-12 w-12 stroke-[1px] text-accent-yellow" />
               </div>
-              <h3 className="mb-6 font-serif text-2xl font-light tracking-tight">
+              <h3 className="mb-6 font-serif text-3xl font-light tracking-tight">
                 {step.title}
               </h3>
-              <p className="text-[13px] font-light leading-relaxed text-white/60">
+              <p className="text-base font-light leading-relaxed text-white/70">
                 {step.description}
               </p>
             </motion.div>

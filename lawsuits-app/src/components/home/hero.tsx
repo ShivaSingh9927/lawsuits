@@ -3,6 +3,7 @@ import React, { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -11,13 +12,22 @@ export function Hero() {
     offset: ["start start", "end start"],
   });
 
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   return (
     <section 
       ref={containerRef}
-      className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background"
+      className={cn(
+        "relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background transition-all duration-700",
+        !mounted && "opacity-0"
+      )}
     >
       {/* Background Image Container */}
       <div className="absolute inset-0 z-0">
@@ -35,46 +45,42 @@ export function Hero() {
         </div>
       </div>
 
-      <div className="relative z-10 mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-        <motion.div
-          style={{ opacity }}
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <motion.span
-            initial={{ opacity: 0, letterSpacing: "0.2em" }}
-            animate={{ opacity: 1, letterSpacing: "0.5em" }}
-            transition={{ duration: 1.5, delay: 0.2 }}
-            className="mb-6 block text-xs font-medium uppercase tracking-[0.5em] text-accent-yellow"
+      <div className="relative mx-auto flex h-full max-w-screen-2xl flex-col justify-center px-12 lg:px-32">
+        <div className="max-w-4xl space-y-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="space-y-4"
           >
-            The Art of the Suit
-          </motion.span>
+            <span className="text-sm font-semibold uppercase tracking-[0.5em] text-accent-yellow drop-shadow-sm">
+              Established Excellence
+            </span>
+            <h1 className="font-serif text-6xl font-light leading-[1.1] tracking-tight text-white sm:text-7xl lg:text-9xl">
+              THE<br />
+              <span className="italic">Dress</span> Outfitters
+            </h1>
+          </motion.div>
 
-          <h1 className="font-serif text-5xl font-light leading-[1.1] tracking-tight text-white sm:text-7xl lg:text-8xl">
-            Precision <br /> 
-            <span className="italic">Meets</span> Purpose
-          </h1>
-
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.8 }}
-            className="mt-8 mx-auto max-w-xl text-lg font-light leading-relaxed text-white/90"
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="max-w-2xl text-lg font-light leading-relaxed text-white/90 drop-shadow-sm sm:text-xl"
           >
-            Exquisite bespoke tailoring for the modern legal professional. 
-            Experience our master-crafted garments in the comfort of your own chambers.
+            Defining the apex of professional attire for the modern advocate. 
+            Excellence in every stitch, power in every profile.
           </motion.p>
 
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.2 }}
-            className="mt-12 flex flex-col items-center justify-center gap-6 sm:flex-row"
+            className="mt-12 flex flex-col items-center justify-start gap-8 sm:flex-row"
           >
             <Link 
               href="/#home-fitting"
-              className="group relative px-8 py-4 text-sm font-medium uppercase tracking-widest text-black transition-all"
+              className="group relative px-10 py-5 text-sm font-semibold uppercase tracking-[0.2em] text-black transition-all"
             >
               <div className="absolute inset-0 bg-accent-yellow transition-transform duration-300 group-hover:scale-105" />
               <span className="relative z-10">Book a Fitting</span>
@@ -82,13 +88,13 @@ export function Hero() {
             
             <Link 
               href="/shop"
-              className="group flex items-center gap-2 text-sm font-medium uppercase tracking-widest text-white transition-opacity hover:opacity-80"
+              className="group flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-opacity hover:opacity-80"
             >
               <span>Explore Collection</span>
-              <span className="text-xl transition-transform duration-300 group-hover:translate-x-2">→</span>
+              <span className="text-2xl transition-transform duration-300 group-hover:translate-x-3">→</span>
             </Link>
           </motion.div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Elegant scroll indicator */}

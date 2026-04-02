@@ -50,7 +50,7 @@ export function HomeFittingForm() {
 
   return (
     <section id="home-fitting" className="bg-background py-32">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
         <div className="grid grid-cols-1 gap-20 lg:grid-cols-2">
           <motion.div 
             initial={{ opacity: 0, x: -30 }}

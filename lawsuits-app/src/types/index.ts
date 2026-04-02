@@ -49,6 +49,7 @@ export interface Category {
   description: string;
   image_url: string;
   parent_id: string | null;
+  product_count?: number;
 }
 
 export interface User {

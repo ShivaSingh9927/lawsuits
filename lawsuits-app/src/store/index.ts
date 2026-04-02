@@ -62,7 +62,7 @@ export const useCartStore = create<CartState>()(
       qualifiesForFreeFitting: () => get().getSubtotal() >= 5000,
       amountForFreeFitting: () => Math.max(0, 5000 - get().getSubtotal()),
     }),
-    { name: "lawsuits-cart" }
+    { name: "dress-outfitters-cart" }
   )
 );
 
@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>()(
       setMeasurements: (measurements) => set({ measurements }),
       isLoggedIn: () => !!get().user,
     }),
-    { name: "lawsuits-auth" }
+    { name: "dress-outfitters-auth" }
   )
 );
 
@@ -109,7 +109,7 @@ export const useWishlistStore = create<WishlistState>()(
       isWishlisted: (productId) =>
         get().items.some((i) => i.product_id === productId),
     }),
-    { name: "lawsuits-wishlist" }
+    { name: "dress-outfitters-wishlist" }
   )
 );
 
@@ -158,6 +158,6 @@ export const useRecentlyViewedStore = create<RecentlyViewedState>()(
       },
       clearRecentlyViewed: () => set({ items: [] }),
     }),
-    { name: "lawsuits-recently-viewed" }
+    { name: "dress-outfitters-recently-viewed" }
   )
 );

@@ -9,7 +9,7 @@ export function FeaturedProducts() {
 
   return (
     <section className="bg-[#FDFCFB] py-32">
-      <div className="mx-auto max-w-7xl px-8 lg:px-12">
+      <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
         <div className="mb-20 flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
           <div className="space-y-4">
             <motion.p
@@ -42,7 +42,7 @@ export function FeaturedProducts() {
           </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 gap-x-12 gap-y-24 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-16 md:grid-cols-2 lg:grid-cols-3 md:gap-x-12 md:gap-y-24">
           {featuredProducts.map((product, index) => (
             <ProductCard 
               key={product.id} 

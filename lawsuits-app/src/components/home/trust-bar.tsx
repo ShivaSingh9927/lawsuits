@@ -13,7 +13,7 @@ const firms = [
 export function TrustBar() {
   return (
     <section className="bg-background py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
         <motion.p 
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}

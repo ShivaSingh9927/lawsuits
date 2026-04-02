@@ -5,9 +5,8 @@ import { Footer } from "@/components/layout/footer";
 import { CartSidebar } from "@/components/cart/cart-sidebar";
 
 export const metadata: Metadata = {
-  title: "Suits - Precision Tailoring for the Modern Counsel",
-  description:
-    "Bespoke suits and formal wear for legal professionals. Book home measurement service with our master tailors.",
+  title: "The Dress Outfitters | Precision Tailoring for the Modern Advocate",
+  description: "Exquisite legal attire, handcrafted for the modern professional. Discover our collection of suits, gowns, and accessories designed for excellence.",
 };
 
 export default function RootLayout({

@@ -9,13 +9,13 @@ import { categories } from "@/lib/data";
 export function CategoryGrid() {
   return (
     <section className="bg-white py-32 overflow-hidden border-y border-border/40">
-      <div className="mx-auto max-w-7xl px-8 lg:px-12">
-        <div className="mb-20 flex flex-col items-center text-center">
+      <div className="mx-auto max-w-screen-2xl px-12 lg:px-32 text-center items-center">
+        <div className="mb-24 flex flex-col items-center text-center">
           <motion.span
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-4 block text-xs uppercase tracking-[0.4em] text-accent-yellow bg-accent-yellow/10 px-4 py-1.5 font-medium"
+            className="mb-6 block text-sm uppercase tracking-[0.4em] text-accent-yellow bg-accent-yellow/10 px-6 py-2 font-semibold"
           >
             Legal Attire
           </motion.span>
@@ -24,7 +24,7 @@ export function CategoryGrid() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
-            className="font-serif text-4xl font-light tracking-tight sm:text-5xl"
+            className="font-serif text-5xl font-light tracking-tight sm:text-6xl"
           >
             Advocate Dress Products
           </motion.h2>
@@ -35,7 +35,7 @@ export function CategoryGrid() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 1, staggerChildren: 0.1 }}
-          className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5"
+          className="grid grid-cols-2 gap-12 sm:grid-cols-3 lg:grid-cols-5"
         >
           {categories.map((category, index) => (
             <motion.div
@@ -49,7 +49,7 @@ export function CategoryGrid() {
                 href={`/shop?category=${encodeURIComponent(category.slug)}`}
                 className="group flex flex-col items-center"
               >
-                <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted transition-transform duration-700 group-hover:-translate-y-2">
+                <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted transition-transform duration-700 group-hover:-translate-y-3">
                   <Image
                     src={category.image_url || "/placeholder-category.jpg"}
                     alt={category.name}
@@ -60,12 +60,12 @@ export function CategoryGrid() {
                   <div className="absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/5" />
                 </div>
                 
-                <div className="mt-8 text-center">
-                  <h3 className="font-serif text-lg tracking-tight text-foreground transition-colors group-hover:text-accent-yellow">
+                <div className="mt-10 text-center">
+                  <h3 className="font-serif text-xl tracking-tight text-foreground transition-colors group-hover:text-accent-yellow">
                     {category.name}
                   </h3>
-                  <p className="mt-2 text-xs uppercase tracking-[0.1em] text-muted-foreground/60">
-                    1 products
+                  <p className="mt-3 text-sm uppercase tracking-[0.1em] text-muted-foreground/60">
+                    {category.product_count} products
                   </p>
                 </div>
               </Link>
