@@ -178,7 +178,7 @@ export function ShopPageClient() {
       if (sortBy === "price-desc") return b.base_price - a.base_price;
       if (sortBy === "newest")
         return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
         );
       return 0;
     });

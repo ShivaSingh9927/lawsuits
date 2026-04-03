@@ -97,7 +97,6 @@ export async function sendFittingRequest(data: FittingEmailData) {
   }
 }
 
-// RESTORED: Critical for shop order confirmations
 export async function sendOrderConfirmation(to: string, data: OrderEmailData) {
   const transporter = getTransporter();
   if (!transporter) return { success: false, error: "Configuration missing." };

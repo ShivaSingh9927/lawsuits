@@ -7,7 +7,7 @@ export interface Product {
   category_id: string;
   base_price: number;
   compare_at_price: number | null;
-  cost_per_item: number;
+  cost_per_item?: number;
   fabric: string;
   fit: "slim" | "modern" | "classic";
   color: string;
@@ -16,17 +16,17 @@ export interface Product {
   category: Category;
   is_visible: boolean;
   is_featured: boolean;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface ProductImage {
   id: string;
   product_id: string;
   url: string;
-  thumbnail_url: string;
-  medium_url: string;
+  thumbnail_url?: string;
+  medium_url?: string;
   alt: string;
   position: number;
   is_primary: boolean;
