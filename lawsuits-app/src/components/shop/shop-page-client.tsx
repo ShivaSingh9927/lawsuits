@@ -49,6 +49,7 @@ export function ShopPageClient() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category");
+  const searchQuery = searchParams.get("search");
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     initialCategory
@@ -76,12 +77,12 @@ export function ShopPageClient() {
     } else {
       params.delete("category");
     }
+    // Remove search when category changes to avoid confusion
+    params.delete("search");
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleClearFilters = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("category");
     router.push(pathname, { scroll: false });
     setSelectedFit(null);
     setSelectedFabric(null);
@@ -92,33 +93,81 @@ export function ShopPageClient() {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams();
-        if (selectedCategory) params.set("category", selectedCategory);
-        if (selectedFit) params.set("fit", selectedFit);
-        if (sortBy) params.set("sort", sortBy);
-        params.set("limit", "100");
+        const { createBrowserClient } = await import("@supabase/ssr");
+        const supabase = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
 
-        const res = await fetch(`/api/products?${params.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.products?.length > 0) {
-            setAllProducts(data.products);
-            setLoading(false);
-            return;
-          }
+        let query = supabase.from("products").select("*, category:categories(*), images:product_images(*), variants:product_variants(*)").is("deleted_at", null).eq("is_visible", true);
+
+        if (selectedFit) query = query.eq("fit", selectedFit);
+        if (searchQuery) query = query.ilike("name", `%${searchQuery}%`);
+        
+        switch (sortBy) {
+          case "price-asc": query = query.order("base_price", { ascending: true }); break;
+          case "price-desc": query = query.order("base_price", { ascending: false }); break;
+          case "oldest": query = query.order("created_at", { ascending: true }); break;
+          default: query = query.order("created_at", { ascending: false });
         }
-      } catch {
-        // API not available
+
+        const { data, error } = await query.limit(100);
+
+        if (!error && data && data.length > 0) {
+          setAllProducts(data);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Browser Supabase Fetch Error:", err);
       }
       setAllProducts(mockProducts);
       setLoading(false);
     };
 
     fetchProducts();
-  }, [selectedCategory, selectedFit, sortBy]);
+  }, [selectedCategory, selectedFit, sortBy, searchQuery]);
+
+  // Build a lookup: URL slug -> category name (from mockCategories which have correct URL slugs)
+  const slugToName: Record<string, string> = {};
+  mockCategories.forEach(c => { slugToName[c.slug] = c.name; });
 
   const filteredProducts = allProducts
     .filter((p) => p.is_visible && !p.deleted_at)
+    .filter((p) => {
+      if (selectedCategory) {
+        const cat = (p as any).category;
+        const isComboProduct = p.name.toLowerCase().match(/combo|set|piece|package/) || 
+                               p.description?.toLowerCase().match(/combo|set|piece|package/);
+        
+        // Special handling: "combos" category shows package deal products
+        if (selectedCategory === "combos") {
+          return !!isComboProduct;
+        }
+        
+        // For Men's Legal Attire, exclude combo/package products
+        if (selectedCategory === "mens-legal-attire" && isComboProduct) {
+          return false;
+        }
+        
+        if (cat) {
+          // Look up the expected category name from URL slug
+          const expectedName = slugToName[selectedCategory];
+          if (expectedName) {
+            return cat.name === expectedName;
+          }
+          // Direct slug match as fallback
+          if (cat.slug === selectedCategory) return true;
+        }
+        // Fallback for mock data (category_id based)
+        const mockCat = mockCategories.find(c => c.slug === selectedCategory);
+        if (mockCat) {
+          return p.category_id === mockCat.id;
+        }
+        return false;
+      }
+      return true;
+    })
     .filter((p) => {
       if (selectedFabric) return p.fabric === selectedFabric;
       return true;
@@ -133,6 +182,25 @@ export function ShopPageClient() {
         );
       return 0;
     });
+
+  // Dynamic Page Title Logic
+  const getPageTitle = () => {
+    if (searchQuery) return `RESULTS FOR "${searchQuery.toUpperCase()}"`;
+    if (selectedCategory) {
+      if (selectedCategory === "mens-legal-attire") return "Men's Collection";
+      if (selectedCategory === "womens-legal-attire") return "Women's Collection";
+      if (selectedCategory === "accessories") return "Accessories Collection";
+      if (selectedCategory === "combos") return "Package Deals";
+      
+      const category = categories.find(c => c.slug === selectedCategory);
+      return category ? `${category.name} Collection` : "The Collection";
+    }
+    return "The Collection";
+  };
+
+  const pageTitleParts = getPageTitle().split(" ");
+  const lastWord = pageTitleParts.length > 1 ? pageTitleParts.pop() : "";
+  const firstPart = pageTitleParts.join(" ");
 
   const activeFiltersCount =
     (selectedCategory ? 1 : 0) +
@@ -252,7 +320,7 @@ export function ShopPageClient() {
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             className="font-serif text-6xl font-light tracking-tight md:text-8xl"
           >
-            Distinctive <span className="italic text-accent-yellow">Tailoring</span>
+            {firstPart} <span className="italic text-accent-yellow">{lastWord}</span>
           </motion.h1>
         </div>
 

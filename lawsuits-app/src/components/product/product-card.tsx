@@ -31,10 +31,8 @@ export function ProductCard({
 
   const primaryImage = product.images?.find((img) => img.is_primary) || product.images?.[0];
   const secondaryImage = product.images?.[1] || primaryImage;
-  const lowestPrice = product.variants?.reduce(
-    (min, v) => (v.price < min ? v.price : min),
-    Infinity
-  ) ?? product.base_price;
+  const variantMin = product.variants?.reduce((min, v) => (v.price < min ? v.price : min), Infinity);
+  const lowestPrice = (variantMin !== undefined && variantMin !== Infinity) ? variantMin : product.base_price;
   const hasDiscount = product.compare_at_price && product.compare_at_price > lowestPrice;
 
   return (
@@ -48,8 +46,8 @@ export function ProductCard({
       onMouseLeave={() => setHovered(false)}
     >
       <div className="relative aspect-[3/4] overflow-hidden bg-[#FDFCFB]">
-        <Link href={`/product/${product.slug}`}>
-          <div className="absolute inset-0 z-10 transition-colors group-hover:bg-black/5" />
+        <Link href={`/product/${product.slug}`} className="relative block w-full h-full">
+          <div className="absolute inset-0 z-10 transition-colors group-hover:bg-black/5 pointer-events-none" />
           <Image
             src={primaryImage?.url || "/product-image/demo.webp"}
             alt={product.name}

@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
+import dns from "node:dns";
+
+// Completely bypass intermittent IPv6 network hangs in Next.js Server Components
+dns.setDefaultResultOrder("ipv4first");
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["@supabase/ssr", "@supabase/supabase-js"],
   images: {
-    qualities: [75, 90, 100],
+    unoptimized: true,
+    qualities: [75, 80, 90, 100],
     remotePatterns: [
       {
         protocol: "https",
@@ -11,6 +17,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "**.hetzner.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
       },
     ],
   },

@@ -1,5 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import dns from "node:dns";
+
+dns.setDefaultResultOrder("ipv4first");
 
 export async function createClient() {
   const cookieStore = await cookies();

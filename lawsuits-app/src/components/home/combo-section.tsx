@@ -18,8 +18,9 @@ export function ComboSection() {
         const data = await res.json();
         const filtered = (data.products || []).filter((p: Product) => 
           p.category?.name === "Package Deals" || 
-          p.name.toLowerCase().includes("piece") ||
-          p.slug.includes("package")
+          p.category?.slug === "package-deals" ||
+          p.name.toLowerCase().match(/piece|set|combo|package/) ||
+          p.description?.toLowerCase().match(/piece|set|combo|package/)
         );
         setCombos(filtered);
       } catch (error) {
@@ -51,7 +52,7 @@ export function ComboSection() {
                 Designed for maximum impact and seamless coordination.
              </p>
           </div>
-          <Link href="/shop?category=Package+Deals" className="group flex items-center gap-6 text-[11px] uppercase tracking-[0.5em] text-white font-black transition-all hover:text-accent-yellow">
+          <Link href="/shop?category=combos" className="group flex items-center gap-6 text-[11px] uppercase tracking-[0.5em] text-white font-black transition-all hover:text-accent-yellow">
              Explore All Packages
              <div className="relative flex h-12 w-12 items-center justify-center border border-white/20 rounded-full transition-all duration-500 group-hover:border-accent-yellow group-hover:bg-accent-yellow">
                 <ArrowRight className="h-4 w-4 transition-transform duration-500 group-hover:text-black group-hover:translate-x-1 text-white" />

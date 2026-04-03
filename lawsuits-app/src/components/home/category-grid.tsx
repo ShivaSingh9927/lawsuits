@@ -5,6 +5,12 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Category } from "@/types";
 
+const CATEGORY_IMAGES: Record<string, string> = {
+  "accessories": "/Category Images/LA-2026.png",
+  "mens-legal-attire": "/Category Images/MLA-2026.jpg", // Check your Supabase slug for Men
+  "womens-legal-attire": "/Category Images/WLA-2026.jpeg", // Check your Supabase slug for Women
+  "package-deals": "/Category Images/PKD-2026.jpg", // Check your Supabase slug for Packages
+};
 export function CategoryGrid() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);

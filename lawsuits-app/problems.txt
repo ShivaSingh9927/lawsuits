@@ -1,0 +1,2 @@
+1. measuement profile after login page should have sizes as per our database.
+2. save measuement button is not working.

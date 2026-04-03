@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Mail, Phone, MapPin } from "lucide-react";
+import Image from "next/image"; // Add this line
 
 export function Footer() {
   const [subscribed, setSubscribed] = React.useState(false);
@@ -19,14 +20,22 @@ export function Footer() {
       <div className="mx-auto max-w-screen-2xl px-6 py-16 sm:px-12 sm:py-24 lg:px-32">
         <div className="grid grid-cols-1 gap-12 sm:gap-16 lg:grid-cols-4">
           <div className="space-y-8">
-            <h3 className="font-serif text-3xl font-light tracking-[0.2em] text-black">
-              THE DRESS OUTFITTERS<span className="text-black">.</span>
-            </h3>
-            <p className="max-w-xs text-base font-light leading-relaxed text-black/70">
-              Crafting the finest legal attire for the modern advocate. Precision, 
-              tradition, and excellence in every stitch.
-            </p>
-          </div>
+  {/* Replacing h3 with Logo */}
+  <Link href="/" className="inline-block group relative">
+    <Image 
+          src="/TDO-black-logo-transp-01.webp" 
+          alt="THE DRESS OUTFITTERS" 
+          width={180} 
+          height={50} 
+          className="h-12 md:h-16 w-auto" // Removed 'invert' because footer is light
+        />
+        <div className="absolute -bottom-2 left-0 h-[3px] w-0 bg-black transition-all duration-500 group-hover:w-full" />
+      </Link>
+      <p className="max-w-xs text-base font-light leading-relaxed text-black/70">
+        Crafting the finest legal attire for the modern advocate. Precision, 
+        tradition, and excellence in every stitch.
+      </p>
+    </div>
 
           <div>
             <h4 className="mb-8 text-sm font-semibold uppercase tracking-[0.3em] text-black">Contact</h4>
@@ -37,7 +46,7 @@ export function Footer() {
               </li>
               <li className="flex items-start gap-4">
                 <Phone className="mt-1 h-5 w-5 text-accent-yellow/60" />
-                <span className="text-base font-light text-muted-foreground">+91 77779-55002</span>
+                <span className="text-base font-light text-muted-foreground">+91 7777955002</span>
               </li>
               <li className="flex items-start gap-4">
                 <MapPin className="mt-1 h-5 w-5 text-black/40 shrink-0" />

@@ -1,6 +1,5 @@
 "use client";
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,9 +7,71 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Ruler, Package, Heart, LogOut, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { User, Ruler, Package, Heart, LogOut, ChevronRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function AccountPage() {
+  const [measurements, setMeasurements] = useState<any>({
+    neck: "",
+    chest: "",
+    waist: "",
+    hips: "",
+    inseam: "",
+    sleeve: "",
+    shoulder: "",
+    notes: ""
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    const fetchMeasurements = async () => {
+      try {
+        const res = await fetch("/api/measurements");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.measurements) {
+            setMeasurements(data.measurements);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching measurements:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMeasurements();
+  }, []);
+
+  const handleSaveMeasurements = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/measurements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(measurements)
+      });
+
+      if (res.ok) {
+        setMessage({ type: "success", text: "Measurements saved successfully." });
+      } else {
+        const data = await res.json();
+        setMessage({ type: "error", text: data.error || "Failed to save measurements." });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "An error occurred while saving." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setMeasurements((prev: any) => ({ ...prev, [field]: value }));
+  };
+
   return (
     <div className="bg-[#FDFCFB] min-h-screen pt-40 pb-20 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -53,38 +114,83 @@ export default function AccountPage() {
               <h2 className="font-serif text-2xl font-light text-black">
                 Measurement Profile
               </h2>
-              <Badge className="bg-zinc-100 text-zinc-600 rounded-none border-none uppercase tracking-widest text-[9px] font-black px-3 py-1">Not Verified</Badge>
+              <Badge className={cn(
+                "rounded-none border-none uppercase tracking-widest text-[9px] font-black px-3 py-1",
+                measurements.is_verified_by_tailor 
+                  ? "bg-green-100 text-green-600" 
+                  : "bg-zinc-100 text-zinc-600"
+              )}>
+                {measurements.is_verified_by_tailor ? "Verified by Tailor" : "Not Verified"}
+              </Badge>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                { label: "Neck", unit: "cm" },
-                { label: "Chest", unit: "cm" },
-                { label: "Waist", unit: "cm" },
-                { label: "Hips", unit: "cm" },
-                { label: "Inseam", unit: "cm" },
-                { label: "Sleeve", unit: "cm" },
-                { label: "Shoulder", unit: "cm" },
-              ].map(({ label, unit }) => (
-                <div key={label}>
-                  <Label>{label} ({unit})</Label>
-                  <Input type="number" placeholder={`Enter ${label.toLowerCase()}`} />
+            {loading ? (
+              <div className="flex justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-accent-yellow" />
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    { label: "Neck", key: "neck" },
+                    { label: "Chest", key: "chest" },
+                    { label: "Waist", key: "waist" },
+                    { label: "Hips", key: "hips" },
+                    { label: "Inseam", key: "inseam" },
+                    { label: "Sleeve", key: "sleeve" },
+                    { label: "Shoulder", key: "shoulder" },
+                  ].map(({ label, key }) => (
+                    <div key={label}>
+                      <Label htmlFor={key}>{label} (cm)</Label>
+                      <Input 
+                        id={key}
+                        type="number" 
+                        step="0.01"
+                        placeholder={`Enter ${label.toLowerCase()}`} 
+                        value={measurements[key] || ""}
+                        onChange={(e) => handleInputChange(key, e.target.value)}
+                        className="rounded-none border-black/10 focus:border-accent-yellow transition-colors mt-1"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="mt-6">
-              <Label>Notes</Label>
-              <textarea
-                className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                rows={3}
-                placeholder="Any specific preferences or notes for the tailor..."
-              />
-            </div>
+                <div className="mt-8">
+                  <Label htmlFor="notes">Professional Tailoring Notes</Label>
+                  <textarea
+                    id="notes"
+                    className="mt-2 w-full rounded-none border border-black/10 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-accent-yellow transition-all"
+                    rows={4}
+                    placeholder="Any specific preferences or notes for the tailor..."
+                    value={measurements.notes || ""}
+                    onChange={(e) => handleInputChange("notes", e.target.value)}
+                  />
+                </div>
 
-            <Button className="mt-12 bg-accent-yellow text-black hover:bg-accent-yellow/90 rounded-none h-14 px-10 uppercase tracking-[0.3em] text-[10px] font-black shadow-xl shadow-accent-yellow/10">
-              Save Measurements
-            </Button>
+                {message && (
+                  <div className={cn(
+                    "mt-8 p-4 flex items-center gap-3 text-xs uppercase tracking-widest font-bold",
+                    message.type === "success" ? "bg-green-50 text-green-700 border border-green-100" : "bg-red-50 text-red-700 border border-red-100"
+                  )}>
+                    {message.type === "success" ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                    {message.text}
+                  </div>
+                )}
+
+                <Button 
+                  onClick={handleSaveMeasurements}
+                  disabled={saving}
+                  className="mt-12 bg-black text-white hover:bg-zinc-800 rounded-none h-14 px-10 uppercase tracking-[0.3em] text-[10px] font-black shadow-xl"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="mr-3 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : "Save Measurements Profile"}
+                </Button>
+              </>
+            )}
           </div>
         </TabsContent>
 

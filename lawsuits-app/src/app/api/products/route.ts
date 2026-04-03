@@ -65,21 +65,31 @@ export async function GET(request: NextRequest) {
   const to = from + limit - 1;
   query = query.range(from, to);
 
-  const { data, error, count } = await query;
+  console.log(`[API /api/products] Executing Supabase query for ${limit} items...`);
+  const startTime = Date.now();
+  
+  try {
+    const { data, error, count } = await query;
+    console.log(`[API /api/products] Supabase query returned in ${Date.now() - startTime}ms. Error: ${error?.message || 'None'}, Data: ${data?.length || 0} items`);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("[API /api/products] Error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      products: data,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
+    });
+  } catch (err: any) {
+    console.error(`[API /api/products] CRITICAL FATAL EXCEPTION after ${Date.now() - startTime}ms:`, err.message);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
-
-  return NextResponse.json({
-    products: data,
-    pagination: {
-      page,
-      limit,
-      total: count,
-      totalPages: Math.ceil((count || 0) / limit),
-    },
-  });
 }
 
 // POST /api/products - Create product (admin)

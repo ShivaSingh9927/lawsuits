@@ -43,7 +43,7 @@ export function Hero() {
           />
           {/* Deep dark overlay for cinematic legibility */}
           <div className="absolute inset-0 bg-black/5 backdrop-blur-[1px]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/2" />
+          <div className="absolute inset-0" />
         </div>
       </div>
 
@@ -58,7 +58,7 @@ export function Hero() {
             <span className="text-[0.7rem] font-bold uppercase tracking-[0.4em] text-accent-yellow drop-shadow-sm sm:text-sm sm:tracking-[0.5em]">
               Established Excellence
             </span>
-            <h1 className="font-serif text-[2.75rem] font-light leading-[0.9] tracking-tight text-white sm:text-7xl lg:text-9xl">
+            <h1 className="font-serif text-[2rem] font-light leading-[0.9] tracking-tight text-white sm:text-5xl lg:text-7xl">
               THE DRESS<br />
               Outfitters
             </h1>
@@ -86,7 +86,7 @@ export function Hero() {
               className="group relative px-8 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-black transition-all"
             >
               <div className="absolute inset-0 bg-accent-yellow rounded-full transition-transform duration-300 group-hover:scale-105" />
-              <span className="relative z-10 text-black transition-colors">Book a Fitting</span>
+              <span className="relative z-10 text-black transition-colors">Book In Home Trial</span>
             </Link>
             
             <Link 
@@ -108,7 +108,7 @@ export function Hero() {
         className="absolute bottom-10 left-1/2 -translate-x-1/2"
       >
         <div className="flex flex-col items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">Scroll</span>
+          <span className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold"></span>
           <div className="h-12 w-[1px] bg-gradient-to-b from-white/20 to-transparent" />
         </div>
       </motion.div>

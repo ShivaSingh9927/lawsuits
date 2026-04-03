@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,15 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Check, ArrowRight, ArrowLeft } from "lucide-react";
-
-const suitCategories = [
-  "Three-Piece Suit",
-  "Two-Piece Suit",
-  "Tuxedo",
-  "Corporate Daily",
-  "Wedding Suit",
-];
+import { Check, ArrowRight, Plus, Minus, Trash2 } from "lucide-react";
+import { Product } from "@/types";
 
 const timeSlots = [
   "9:00 AM - 12:00 PM",
@@ -31,26 +24,79 @@ export function HomeFittingForm() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [formData, setFormData] = useState({
-    category: "",
-    date: "",
-    timeSlot: "",
     name: "",
     email: "",
     phone: "",
     address: "",
+    date: "",
+    timeSlot: "",
+    requestedProducts: [
+      { productId: "", size: "" },
+      { productId: "", size: "" },
+      { productId: "", size: "" },
+      { productId: "", size: "" },
+      { productId: "", size: "" },
+      { productId: "", size: "" },
+    ],
   });
+  
+  // Import mockProducts for fallback
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("/api/products?limit=100");
+        if (response.ok) {
+          const data = await response.json();
+          setAllProducts(data.products || []);
+        } else {
+          // Fallback to mock data if API fails
+          import("@/lib/data").then(module => {
+            setAllProducts(module.products);
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+        // Fallback to mock data on error
+        import("@/lib/data").then(module => {
+          setAllProducts(module.products);
+        });
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const handleProductChange = (index: number, field: "productId" | "size", value: string) => {
+    const updatedProducts = [...formData.requestedProducts];
+    updatedProducts[index] = { ...updatedProducts[index], [field]: value };
+    setFormData({ ...formData, requestedProducts: updatedProducts });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
+    // Filter out empty product selections
+    const filledProducts = formData.requestedProducts.filter(p => p.productId);
+    if (filledProducts.length === 0) {
+      setError("Please select at least one product.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/fitting", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          category: filledProducts.map(p => {
+             const prod = allProducts.find(ap => ap.id === p.productId);
+             return `${prod?.name} (Size: ${p.size || "N/A"})`;
+          }).join(", "),
+        }),
       });
 
       const result = await response.json();
@@ -70,29 +116,28 @@ export function HomeFittingForm() {
   return (
     <section id="home-fitting" className="bg-background py-32">
       <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
-        <div className="grid grid-cols-1 gap-20 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-20 xl:grid-cols-5">
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
-            className="flex flex-col justify-center"
+            className="xl:col-span-2 flex flex-col justify-center"
           >
-            <span className="text-[10px] uppercase tracking-[0.4em] text-accent-yellow">Personal Appointment</span>
+            <span className="text-[10px] uppercase tracking-[0.4em] text-accent-yellow">Premium Experience</span>
             <h2 className="mt-6 font-serif text-4xl font-light leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              The <span className="italic">At-Home</span> <br /> Atelier
+              In-home trial <br /> <span className="italic">within tri-city</span>
             </h2>
             <p className="mt-8 max-w-md text-lg font-light leading-relaxed text-muted-foreground/80">
-              Our Master Tailor brings the showroom to your chambers. Experience
-              premium bespoke tailoring without leaving your professional sanctuary.
+              Select up to 6 products and our Master Tailor will bring them to your doorstep for a professional fitting session.
             </p>
             
             <div className="mt-12 space-y-6">
               {[
-                "Expert measurement at your doorstep",
-                "Touch & feel premium fabrics",
-                "Legacy of master craftsmanship",
-                "Complimentary style consultation",
+                "Personalized try-on session at home",
+                "Wide selection of legal attire",
+                "On-the-spot adjustments and advice",
+                "No obligation to purchase",
               ].map((feature, i) => (
                 <motion.div 
                   key={i} 
@@ -116,7 +161,7 @@ export function HomeFittingForm() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="relative overflow-hidden bg-[#EAE0D5]/20 p-10 backdrop-blur-sm border border-black/5"
+            className="xl:col-span-3 relative overflow-hidden bg-[#EAE0D5]/20 p-8 md:p-12 backdrop-blur-sm border border-black/5 rounded-2xl"
           >
             <AnimatePresence mode="wait">
               {submitted ? (
@@ -124,156 +169,176 @@ export function HomeFittingForm() {
                   key="success"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex h-full min-h-[400px] flex-col items-center justify-center text-center"
+                  className="flex h-full min-h-[500px] flex-col items-center justify-center text-center"
                 >
-                  <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent-yellow/10 text-accent-yellow">
-                    <Check className="h-8 w-8" />
+                  <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-accent-yellow/10 text-accent-yellow">
+                    <Check className="h-10 w-10" />
                   </div>
-                  <h3 className="font-serif text-3xl font-light">Invitation Received</h3>
-                  <p className="mt-4 text-muted-foreground">
-                    Our customer care team will coordinate with you shortly to finalize your fitting appointment.
+                  <h3 className="font-serif text-3xl font-light italic">Request Secured</h3>
+                  <p className="mt-4 text-muted-foreground max-w-xs">
+                    Our concierge will reach out via phone to finalize your trial schedule within 24 hours.
                   </p>
                   <Button 
                     variant="link" 
-                    className="mt-8 uppercase tracking-widest text-[10px]"
+                    className="mt-12 uppercase tracking-[0.3em] text-[10px] font-bold"
                     onClick={() => setSubmitted(false)}
                   >
-                    Send another request
+                    Modify or submit new request
                   </Button>
                 </motion.div>
               ) : (
                 <motion.form 
                   key="form"
                   onSubmit={handleSubmit} 
-                  className="space-y-12"
+                  className="space-y-16"
                 >
-                  <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
-                    {/* Style Selection */}
-                    <div className="space-y-6">
-                      <h3 className="font-serif text-xl tracking-tight text-black">1. Style Selection</h3>
-                      <div className="space-y-4 text-left">
-                        <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Category</Label>
-                        <Select
-                          required
-                          value={formData.category}
-                          onValueChange={(v) => setFormData({ ...formData, category: v ?? "" })}
-                        >
-                          <SelectTrigger className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus:ring-0">
-                            <SelectValue placeholder="Choose preference" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {suitCategories.map((cat) => (
-                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                  {/* Step 1: Product Selection */}
+                  <div className="space-y-10">
+                    <div className="flex items-center justify-between border-b border-black/5 pb-4">
+                      <h3 className="font-serif text-2xl tracking-tight text-black italic">1. Select Products</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                      {formData.requestedProducts.map((p, idx) => (
+                        <div key={idx} className="space-y-4">
+                          <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Product {idx + 1}</Label>
+                          <div className="flex gap-4">
+                            <div className="flex-1">
+                              <Select
+                                value={p.productId}
+                                onValueChange={(v) => handleProductChange(idx, "productId", v || "")}
+                              >
+                                <SelectTrigger className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus:ring-0 rounded-none h-10 font-medium">
+                                  <SelectValue placeholder="SELECT ITEM">
+                                    {p.productId 
+                                      ? allProducts.find((prod) => prod.id === p.productId)?.name 
+                                      : "SELECT ITEM"}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px]">
+                                  {allProducts.map((prod) => (
+                                    <SelectItem key={prod.id} value={prod.id} className="text-xs">
+                                      {prod.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="w-24">
+                              <Input
+                                placeholder="SIZE"
+                                value={p.size}
+                                onChange={(e) => handleProductChange(idx, "size", e.target.value)}
+                                className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 rounded-none h-10 font-bold uppercase placeholder:font-normal"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 2: Location & Scheduling */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                    <div className="space-y-10">
+                      <h3 className="font-serif text-2xl tracking-tight text-black italic border-b border-black/5 pb-4">2. Logistics</h3>
+                      <div className="space-y-8">
+                        <div className="space-y-3">
+                          <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Location <span className="text-zinc-400 capitalize">(Optional)</span></Label>
+                          <Input
+                            className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 rounded-none"
+                            placeholder="Home, Office or Chambers"
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                           <div className="space-y-3">
+                              <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Trial Date</Label>
+                              <Input
+                                required
+                                type="date"
+                                className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 rounded-none h-10"
+                                value={formData.date}
+                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                              />
+                            </div>
+                            <div className="space-y-3">
+                              <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Window</Label>
+                              <Select
+                                required
+                                value={formData.timeSlot}
+                                onValueChange={(v) => setFormData({ ...formData, timeSlot: v || "" })}
+                              >
+                                <SelectTrigger className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus:ring-0 rounded-none h-10">
+                                  <SelectValue placeholder="TIME" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {timeSlots.map((slot) => (
+                                    <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Location */}
-                    <div className="space-y-6">
-                      <h3 className="font-serif text-xl tracking-tight text-black">2. Location</h3>
-                      <div className="space-y-4 text-left">
-                        <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Fitting Address</Label>
-                        <Input
-                          required
-                          className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus-visible:ring-0"
-                          placeholder="Chambers or residence"
-                          value={formData.address}
-                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Scheduling */}
-                    <div className="space-y-6 lg:col-span-2">
-                      <h3 className="font-serif text-xl tracking-tight text-black">3. Scheduling</h3>
-                      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-                        <div className="space-y-4 text-left">
-                          <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Date</Label>
-                          <Input
-                            required
-                            type="date"
-                            className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus-visible:ring-0"
-                            value={formData.date}
-                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-4 text-left">
-                          <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Time Slot</Label>
-                          <Select
-                            required
-                            value={formData.timeSlot}
-                            onValueChange={(v) => setFormData({ ...formData, timeSlot: v ?? "" })}
-                          >
-                            <SelectTrigger className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus:ring-0">
-                              <SelectValue placeholder="Select time" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {timeSlots.map((slot) => (
-                                <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Personal Details */}
-                    <div className="space-y-6 lg:col-span-2">
-                      <h3 className="font-serif text-xl tracking-tight text-black">4. Personal Details</h3>
-                      <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-                        <div className="space-y-1 text-left">
-                          <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Full Name</Label>
-                          <Input
-                            required
-                            className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus-visible:ring-0"
-                            placeholder="Name, Esq."
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-1 text-left">
-                          <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Email</Label>
-                          <Input
-                            required
-                            type="email"
-                            className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus-visible:ring-0"
-                            placeholder="counsel@chambers.com"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-1 text-left">
-                          <Label className="text-[10px] uppercase tracking-widest text-black/60 font-bold">Phone</Label>
-                          <Input
-                            required
-                            type="tel"
-                            className="border-0 border-b border-black/10 bg-transparent px-0 text-base focus-visible:ring-0"
-                            placeholder="+91 00000 00000"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          />
-                        </div>
-                      </div>
+                    <div className="space-y-10">
+                       <h3 className="font-serif text-2xl tracking-tight text-black italic border-b border-black/5 pb-4">3. Personal Details</h3>
+                       <div className="space-y-8">
+                          <div className="space-y-3">
+                             <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Full Name</Label>
+                             <Input
+                               required
+                               className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 rounded-none"
+                               placeholder="Counsel Name"
+                               value={formData.name}
+                               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                             />
+                          </div>
+                          <div className="space-y-3">
+                             <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Contact Email</Label>
+                             <Input
+                               required
+                               type="email"
+                               className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 rounded-none"
+                               placeholder="counsel@chambers.com"
+                               value={formData.email}
+                               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                             />
+                          </div>
+                          <div className="space-y-3">
+                             <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Phone Number</Label>
+                             <Input
+                               required
+                               type="tel"
+                               className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 rounded-none"
+                               placeholder="+91 XXXXX XXXXX"
+                               value={formData.phone}
+                               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                             />
+                          </div>
+                       </div>
                     </div>
                   </div>
 
                   {error && (
-                    <div className="text-xs text-destructive mt-4">{error}</div>
+                    <div className="p-4 bg-destructive/5 text-[10px] uppercase tracking-widest text-destructive text-center font-bold">{error}</div>
                   )}
 
                   <div className="pt-8">
                     <button
                       type="submit"
                       disabled={loading}
-                      className="group relative flex h-14 w-full items-center justify-center bg-black text-[10px] font-medium uppercase tracking-[0.4em] text-white transition-all hover:bg-black/90 disabled:opacity-50"
+                      className="group relative flex h-16 w-full items-center justify-center bg-black text-[11px] font-bold uppercase tracking-[0.5em] text-white transition-all hover:bg-black/90 disabled:opacity-50"
                     >
-                      <span className="relative z-10 flex items-center gap-4">
-                        {loading ? "Sending Invitation..." : "Send Invitation"}
-                        {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-2" />}
+                      <span className="relative z-10 flex items-center gap-6">
+                        {loading ? "PROCESSING REQUEST..." : "REQUEST TRIAL SESSION"}
+                        {!loading && <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-3" />}
                       </span>
                     </button>
+                    <p className="mt-4 text-[9px] text-center uppercase tracking-widest text-zinc-400 font-medium">Valid for tri-city area only (Chandigarh, Mohali, Panchkula)</p>
                   </div>
                 </motion.form>
               )}

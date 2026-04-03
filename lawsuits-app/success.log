@@ -1,0 +1,30 @@
+◇ injecting env (1) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+🚀 Starting project repopulation (FAST BATCH MODE)...
+🧹 Clearing existing database data...
+🚨 Network Error in DELETE product_images: fetch failed
+🚨 Network Error in DELETE product_variants: fetch failed
+🚨 Network Error in DELETE products: fetch failed
+🚨 Network Error in DELETE categories: fetch failed
+✅ Clean slate achieved.
+📁 Batch importing categories...
+🚨 Error [409] in POST categories: {
+  "code": "23505",
+  "details": "Key (slug)=(Men's Legal Attire) already exists.",
+  "hint": null,
+  "message": "duplicate key value violates unique constraint \"categories_slug_key\""
+}
+👔 Batch importing products...
+🚨 Error [409] in POST products: {
+  "code": "23505",
+  "details": "Key (slug)=(Dress Coat) already exists.",
+  "hint": null,
+  "message": "duplicate key value violates unique constraint \"products_slug_key\""
+}
+🔢 Batch importing variants & images...
+🔎 Debug: Category Result Type: object, IsArray: false
+🔎 Debug: Product Result Type: object, IsArray: false
+🔎 Debug: Category Map Keys: 0
+🔎 Debug: Product Map Keys: 0
+
+✨ REPOPULATION COMPLETE!
+📊 Totals: 4 Categories, 24 Products, 0 Variants, 0 Images.
