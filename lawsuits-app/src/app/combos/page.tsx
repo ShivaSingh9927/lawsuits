@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { CategoryHeader } from "@/components/shop/category-header";
+
 
 async function getCombos() {
   const supabase = await createClient();

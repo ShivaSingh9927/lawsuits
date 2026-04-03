@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { XCircle, RefreshCw, Mail, Phone, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function FailedPage() {
+function FailedPageContent() {
   const searchParams = useSearchParams();
   const reason = searchParams.get("reason") || "The payment transaction was not successfully completed.";
   const [mounted, setMounted] = useState(false);
@@ -88,3 +88,12 @@ export default function FailedPage() {
     </main>
   );
 }
+
+export default function FailedPage() {
+  return (
+    <Suspense fallback={null}>
+      <FailedPageContent />
+    </Suspense>
+  );
+}
+
