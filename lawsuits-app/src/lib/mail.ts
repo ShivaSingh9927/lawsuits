@@ -1,12 +1,34 @@
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.APP_PASSWORD,
-  },
+const transporter = nodemailer.createTransport(
+  process.env.SMTP_HOST 
+    ? {
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || "587"),
+        secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports
+        auth: {
+          user: process.env.SMTP_USER || process.env.EMAIL,
+          pass: process.env.SMTP_PASS || process.env.APP_PASSWORD,
+        },
+      }
+    : {
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL,
+          pass: process.env.APP_PASSWORD,
+        },
+      }
+);
+
+// Verify connection on startup to catch configuration errors early
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("SMTP Configuration Error:", error);
+  } else {
+    console.log("SMTP Server is ready to take our messages");
+  }
 });
+
 
 export interface OrderEmailData {
   orderNumber: string;

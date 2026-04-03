@@ -25,18 +25,21 @@ export async function POST(req: Request) {
     });
 
     if (result.success) {
+      console.log(`✅ Fitting request sent successfully to ${email}`);
       return NextResponse.json({ message: "Fitting request sent successfully" });
     } else {
+      console.error("❌ Failed to send fitting request:", result.error);
       return NextResponse.json(
         { error: "Failed to send fitting request. Please try again." },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error("Fitting API Error:", error);
+    console.error("💥 Fitting API Uncaught Error:", error);
     return NextResponse.json(
       { error: "An unexpected error occurred." },
       { status: 500 }
     );
   }
 }
+
