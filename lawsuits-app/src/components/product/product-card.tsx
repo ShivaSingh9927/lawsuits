@@ -14,9 +14,17 @@ interface ProductCardProps {
   product: Product;
   className?: string;
   priority?: boolean;
+  onDark?: boolean;
+  ctaText?: string;
 }
 
-export function ProductCard({ product, className, priority = false }: ProductCardProps) {
+export function ProductCard({ 
+  product, 
+  className, 
+  priority = false, 
+  onDark = false,
+  ctaText = "Select Options"
+}: ProductCardProps) {
   const [hovered, setHovered] = useState(false);
   const { isWishlisted, addItem, removeItem } = useWishlistStore();
   const wishlisted = isWishlisted(product.id);
@@ -43,7 +51,7 @@ export function ProductCard({ product, className, priority = false }: ProductCar
         <Link href={`/product/${product.slug}`}>
           <div className="absolute inset-0 z-10 transition-colors group-hover:bg-black/5" />
           <Image
-            src={primaryImage?.url || "/placeholder-suit.jpg"}
+            src={primaryImage?.url || "/product-image/demo.webp"}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -55,7 +63,7 @@ export function ProductCard({ product, className, priority = false }: ProductCar
             )}
           />
           <Image
-            src={secondaryImage?.url || primaryImage?.url || "/placeholder-suit.jpg"}
+            src={secondaryImage?.url || primaryImage?.url || "/product-image/demo.webp"}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -116,7 +124,7 @@ export function ProductCard({ product, className, priority = false }: ProductCar
             href={`/product/${product.slug}`}
             className="flex w-full items-center justify-center bg-black py-4 md:py-5 text-[10px] md:text-xs uppercase tracking-[0.4em] text-white transition-opacity hover:opacity-90 font-semibold"
           >
-            Select Options
+            {ctaText}
           </Link>
         </div>
       </div>
@@ -125,20 +133,29 @@ export function ProductCard({ product, className, priority = false }: ProductCar
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="space-y-1.5 flex-1">
             <Link href={`/product/${product.slug}`}>
-              <h3 className="font-serif text-lg md:text-2xl tracking-tight text-white transition-colors group-hover:text-accent-yellow">
+              <h3 className={cn(
+                "font-serif text-lg md:text-2xl tracking-tight transition-colors group-hover:text-amber-800",
+                onDark ? "text-white" : "text-black"
+              )}>
                 {product.name}
               </h3>
             </Link>
-            <p className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-white/50 font-medium">
+            <p className={cn(
+              "text-[10px] sm:text-xs uppercase tracking-[0.3em] font-bold",
+              onDark ? "text-zinc-400" : "text-zinc-500"
+            )}>
               {product.category?.name || "Bespoke Collection"}
             </p>
           </div>
           <div className="text-left sm:text-right shrink-0">
-            <span className="font-serif text-lg md:text-xl font-light tracking-tighter text-white">
+            <span className={cn(
+              "font-serif text-lg md:text-xl font-light tracking-tighter",
+              onDark ? "text-white" : "text-black"
+            )}>
               ₹{lowestPrice.toLocaleString()}
             </span>
             {hasDiscount && (
-              <p className="text-[10px] md:text-sm text-white/30 line-through">
+              <p className="text-[10px] md:text-sm text-zinc-300 line-through font-light">
                 ₹{product.compare_at_price?.toLocaleString()}
               </p>
             )}

@@ -18,9 +18,19 @@ import { useCartStore } from "@/store";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navItems = [
-  { name: "Collection", href: "/shop" },
-  { name: "Atelier", href: "/atelier" },
-  { name: "Heritage", href: "/heritage" },
+  { 
+    name: "Collection", 
+    href: "/shop",
+    dropdown: [
+      { name: "Men's Legal Attire", href: "/shop?category=mens-legal-attire" },
+      { name: "Women's Legal Attire", href: "/shop?category=womens-legal-attire" },
+      { name: "Accessories", href: "/shop?category=accessories" },
+      { name: "Combo Packages", href: "/combos" },
+      { name: "Package Deals", href: "/shop?category=package-deals" },
+    ]
+  },
+  { name: "About Us", href: "/about" },
+  { name: "Contact Us", href: "/contact" },
   { name: "Appointments", href: "/checkout" },
 ];
 
@@ -28,6 +38,7 @@ export function Header() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const { items } = useCartStore();
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
@@ -43,7 +54,7 @@ export function Header() {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 px-6 md:px-12 py-6 bg-[#0F0A07] border-b border-white/5"
+      className="fixed top-0 left-0 right-0 z-50 px-6 md:px-12 py-4 bg-black border-b border-white/5"
     >
       <div className="mx-auto max-w-screen-2xl">
         <div className="flex items-center justify-between">
@@ -58,7 +69,7 @@ export function Header() {
                 alt="THE DRESS OUTFITTERS" 
                 width={160} 
                 height={45} 
-                className="h-8 md:h-10 w-auto invert brightness-200" 
+                className="h-8 md:h-10 w-auto invert" 
               />
               <div className="absolute -bottom-2 left-0 h-[1px] w-0 bg-accent-yellow transition-all duration-500 group-hover:w-full" />
             </Link> 
@@ -67,24 +78,63 @@ export function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-10">
               {navItems.map((item) => (
-                <Link
+                <div 
                   key={item.name}
-                  href={item.href}
-                  className={cn(
-                    "relative text-[10px] uppercase tracking-[0.3em] font-bold transition-all duration-300",
-                    pathname === item.href 
-                      ? "text-accent-yellow" 
-                      : "text-zinc-400 hover:text-white"
-                  )}
+                  className="relative group"
+                  onMouseEnter={() => item.dropdown && setActiveDropdown(item.name)}
+                  onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  {item.name}
-                  {pathname === item.href && (
-                    <motion.div
-                      layoutId="nav-underline"
-                      className="absolute -bottom-2 left-0 right-0 h-[1px] bg-accent-yellow"
-                    />
-                  )}
-                </Link>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "relative flex items-center gap-1 text-[10px] uppercase tracking-[0.3em] font-bold transition-all duration-300 py-2",
+                      pathname === item.href 
+                        ? "text-accent-yellow" 
+                        : "text-zinc-400 hover:text-white"
+                    )}
+                  >
+                    {item.name}
+                    {item.dropdown && (
+                      <ChevronRight className={cn(
+                        "h-3 w-3 transition-transform duration-300",
+                        activeDropdown === item.name ? "rotate-90" : ""
+                      )} />
+                    )}
+                    {(pathname === item.href || (item.dropdown && item.dropdown.some(d => pathname === d.href))) && (
+                      <motion.div
+                        layoutId="nav-underline"
+                        className="absolute -bottom-1 left-0 right-0 h-[1px] bg-accent-yellow"
+                      />
+                    )}
+                  </Link>
+
+                  {/* Luxury Dropdown */}
+                  <AnimatePresence>
+                    {item.dropdown && activeDropdown === item.name && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute left-0 top-full pt-4 min-w-[240px]"
+                      >
+                        <div className="bg-black border border-white/5 p-6 backdrop-blur-xl shadow-2xl">
+                          <div className="flex flex-col gap-4">
+                            {item.dropdown.map((subItem) => (
+                              <Link
+                                key={subItem.name}
+                                href={subItem.href}
+                                className="group/item flex items-center justify-between text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-500 hover:text-white transition-colors"
+                              >
+                                {subItem.name}
+                                <div className="h-[1px] w-0 bg-accent-yellow transition-all duration-300 group-hover/item:w-4" />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               ))}
             </nav>
           </div>
@@ -93,11 +143,11 @@ export function Header() {
             <div className="hidden lg:flex items-center gap-6 text-[10px] uppercase tracking-[0.2em] text-zinc-500 mr-4 font-bold">
               <div className="flex items-center gap-2">
                 <MapPin className="h-3 w-3 text-accent-yellow" />
-                <span>Sector 1, Chandigarh, Punjab - 160001</span>
+                <span className="text-zinc-400">Sector 1, Chandigarh, Punjab - 160001</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-3 w-3 text-accent-yellow" />
-                <span>+91 77779-55002</span>
+                <span className="text-zinc-400">+91 77779-55002</span>
               </div>
             </div>
 
@@ -141,39 +191,56 @@ export function Header() {
                 </Button>
               </SheetTrigger>
 
-              <SheetContent side="right" className="w-80 bg-white border-black/5">
-                <SheetHeader className="text-left border-b border-black/5 pb-8">
-                  <SheetTitle className="font-serif text-3xl font-light tracking-[0.1em] text-black italic">Menu</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col h-full py-12">
-                  <div className="flex flex-col gap-8">
-                    {navItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "flex items-center justify-between text-sm uppercase tracking-[0.2em] font-bold transition-colors py-2 border-b border-black/5",
-                          pathname === item.href ? "text-accent-yellow" : "text-black/70 hover:text-black"
-                        )}
-                      >
-                        {item.name}
-                        <ChevronRight className="h-4 w-4 opacity-30" />
-                      </Link>
-                    ))}
+              <SheetContent side="right" className="w-80 bg-black border-l border-white/10 p-0 overflow-hidden">
+                <div className="flex flex-col h-full">
+                  <SheetHeader className="text-left border-b border-white/10 p-8">
+                    <SheetTitle className="font-serif text-3xl font-light tracking-[0.1em] text-white italic">Menu</SheetTitle>
+                  </SheetHeader>
+                  
+                  <div className="flex-1 flex flex-col p-8 overflow-y-auto">
+                    <div className="flex flex-col gap-6">
+                      {navItems.map((item) => (
+                        <div key={item.name} className="flex flex-col gap-4">
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              "flex items-center justify-between text-sm uppercase tracking-[0.2em] font-bold transition-colors py-4 border-b border-white/5",
+                              pathname === item.href ? "text-accent-yellow" : "text-zinc-400 hover:text-white"
+                            )}
+                          >
+                            {item.name}
+                            {!item.dropdown && <ChevronRight className="h-4 w-4 text-accent-yellow" />}
+                          </Link>
+                          {item.dropdown && (
+                            <div className="flex flex-col gap-4 pl-4 border-l border-white/10 ml-2 mt-2">
+                              {item.dropdown.map((sub) => (
+                                <Link
+                                  key={sub.name}
+                                  href={sub.href}
+                                  className="text-xs uppercase tracking-[0.15em] font-medium text-zinc-500 hover:text-white transition-colors"
+                                >
+                                  {sub.name}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   
-                  <div className="mt-auto space-y-8 pt-12 border-t border-black/5">
+                  <div className="space-y-8 p-8 border-t border-white/10 bg-white/5">
                       <div className="space-y-6">
-                          <div className="flex items-start gap-4 text-black/70">
+                          <div className="flex items-start gap-4 text-zinc-400">
                               <MapPin className="h-4 w-4 text-accent-yellow mt-1 shrink-0" />
                               <div className="flex flex-col gap-1">
-                                <span className="text-[10px] uppercase tracking-widest font-bold text-black leading-tight">Punjab and Haryana High Court</span>
-                                <span className="text-[10px] uppercase tracking-widest font-medium">Sector 1, Chandigarh, Punjab - 160001</span>
+                                <span className="text-[10px] uppercase tracking-widest font-bold text-white leading-tight">Punjab and Haryana High Court</span>
+                                <span className="text-[10px] uppercase tracking-widest font-medium text-zinc-500">Sector 1, Chandigarh, Punjab - 160001</span>
                               </div>
                           </div>
-                          <div className="flex items-center gap-4 text-black/70">
+                          <div className="flex items-center gap-4 text-zinc-400">
                               <Phone className="h-4 w-4 text-accent-yellow" />
-                              <span className="text-[10px] uppercase tracking-widest font-bold text-black">+91 77779-55002</span>
+                              <span className="text-[10px] uppercase tracking-widest font-bold text-white">+91 77779-55002</span>
                           </div>
                       </div>
                   </div>

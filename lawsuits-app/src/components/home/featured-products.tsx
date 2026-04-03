@@ -1,16 +1,39 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
-import { products } from "@/lib/data";
+import { Product } from "@/types";
 
 export function FeaturedProducts() {
-  const featuredProducts = products.filter((p) => p.is_featured);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const res = await fetch("/api/products?featured=true");
+        const data = await res.json();
+        setFeaturedProducts(data.products || []);
+      } catch (error) {
+        console.error("Error fetching featured products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeatured();
+  }, []);
+
+  if (loading) {
+      return <div className="bg-[#1A1512] py-32 h-[400px] flex items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent-yellow border-t-transparent" />
+      </div>;
+  }
 
   return (
     <section className="bg-[#1A1512] py-32 border-y border-white/5">
       <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
-        <div className="mb-20 flex flex-col items-center text-center space-y-6">
+        <div className="mb-20 flex flex-col items-center text-center space-y-6" id="best-products">
           <motion.span
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -33,7 +56,7 @@ export function FeaturedProducts() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.4 }}
-            className="max-w-2xl text-sm font-light leading-relaxed text-zinc-400"
+            className="max-w-2xl text-sm font-light leading-relaxed text-white/90"
           >
             A collection of our most distinguished silhouettes, 
             handcrafted for the modern advocate who demands nothing less than perfection.
@@ -41,12 +64,19 @@ export function FeaturedProducts() {
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-16 md:grid-cols-2 lg:grid-cols-4 md:gap-x-12 md:gap-y-24">
-          {featuredProducts.map((product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-            />
-          ))}
+          {featuredProducts.length > 0 ? (
+            featuredProducts.slice(0, 8).map((product) => (
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                onDark={true}
+              />
+            ))
+          ) : (
+            <div className="col-span-full py-20 text-center text-zinc-500 font-light italic opacity-50">
+                Discovering your unique collection...
+            </div>
+          )}
         </div>
 
         
@@ -56,10 +86,10 @@ export function FeaturedProducts() {
           viewport={{ once: true }}
           className="mt-40 flex justify-center"
         >
-          <button className="group flex items-center gap-6 text-[10px] uppercase tracking-[0.6em] transition-opacity hover:opacity-70">
-            View All Collections
-            <span className="h-[1px] w-12 bg-foreground transition-all duration-500 group-hover:w-20" />
-          </button>
+          <Link href="/shop" className="group relative px-12 py-5 text-[11px] font-black uppercase tracking-[0.5em] text-black transition-all">
+            <div className="absolute inset-0 bg-accent-yellow rounded-none transition-transform duration-300 group-hover:scale-105" />
+            <span className="relative z-10">Explore Full Collection</span>
+          </Link>
         </motion.div>
       </div>
     </section>

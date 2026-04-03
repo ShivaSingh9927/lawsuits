@@ -31,12 +31,12 @@ export function CartSidebar() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-background shadow-xl"
+            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-[#FDFCFB] shadow-2xl border-l border-black/5"
           >
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
               <div className="flex items-center gap-2">
-                <ShoppingBag className="h-5 w-5" />
-                <h2 className="font-serif text-lg font-semibold">Your Cart</h2>
+                <ShoppingBag className="h-5 w-5 text-black" />
+                <h2 className="font-serif text-lg font-semibold text-black tracking-tight">Your Cart</h2>
               </div>
               <Button variant="ghost" size="icon" onClick={toggleCart}>
                 <X className="h-5 w-5" />
@@ -44,8 +44,8 @@ export function CartSidebar() {
             </div>
 
             {!qualifiesForFreeFitting() && (
-              <div className="border-b border-border bg-accent-yellow/10 px-6 py-3">
-                <p className="text-sm">
+              <div className="border-b border-black/5 bg-accent-yellow/5 px-6 py-4">
+                <p className="text-xs uppercase tracking-widest text-zinc-600 font-bold">
                   Add ₹{amountForFreeFitting().toLocaleString()} more for{" "}
                   <span className="font-semibold text-accent-yellow">free Home Fitting</span>
                 </p>
@@ -100,8 +100,8 @@ export function CartSidebar() {
                       </div>
                       <div className="flex flex-1 flex-col justify-between">
                         <div>
-                          <h3 className="text-sm font-medium">{item.product.name}</h3>
-                          <p className="text-xs text-muted-foreground">
+                          <h3 className="text-sm font-serif text-black">{item.product.name}</h3>
+                          <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
                             Size: {item.variant.size}
                           </p>
                         </div>
@@ -131,7 +131,7 @@ export function CartSidebar() {
                               <Plus className="h-3 w-3" />
                             </Button>
                           </div>
-                          <p className="text-sm font-semibold">
+                          <p className="text-sm font-bold text-black font-mono">
                             ₹{(item.variant.price * item.quantity).toLocaleString()}
                           </p>
                         </div>
@@ -153,15 +153,15 @@ export function CartSidebar() {
             {items.length > 0 && (
               <div className="border-t border-border px-6 py-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Subtotal</span>
-                  <span className="font-serif text-xl font-bold">
+                  <span className="text-xs uppercase tracking-widest text-zinc-500 font-bold">Subtotal</span>
+                  <span className="font-serif text-2xl font-light text-black">
                     ₹{subtotal.toLocaleString()}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Shipping & taxes calculated at checkout
                 </p>
-                <Button className="mt-4 w-full" size="lg" asChild>
+                <Button className="mt-4 w-full h-14 rounded-none bg-black text-white hover:bg-black/90 uppercase tracking-[0.3em] text-[10px] font-bold" asChild>
                   <Link href="/checkout">
                     Proceed to Checkout
                     <ArrowRight className="ml-2 h-4 w-4" />

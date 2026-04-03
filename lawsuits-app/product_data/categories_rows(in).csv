@@ -1,0 +1,5 @@
+id,name,slug,description,image_url,parent_id,position,is_visible,created_at
+MLA-2026,Men's Legal Attire,Men's Legal Attire,"Coat, Gown, Waistcoat, Pant, and Shirt",,,1,TRUE,2026-04-01 18:56:13.814053+00
+WLA-2026,Women's Legal Attire,Women's Legal Attire,"Coat, Gown, Waistcoat, Pant, and Shirt",,,2,TRUE,2026-04-01 18:56:13.814053+00
+LA-2026,Accessories,Accessories,"Neckbands, Socks, Belts, and Ties",,,3,TRUE,2026-04-01 18:56:13.814053+00
+PKD-2026,Package Deals,Package Deals,"2-piece, 3-piece",,,4,TRUE,2026-04-01 18:56:13.814053+00

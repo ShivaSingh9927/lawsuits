@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Phone, MapPin, Globe, Share2, MessageCircle } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram, Facebook, MessageCircle, Link2 } from "lucide-react";
 
 export function Footer() {
   const [subscribed, setSubscribed] = React.useState(false);
@@ -54,9 +54,9 @@ export function Footer() {
             <ul className="space-y-4">
               {[
                 { name: "Collection", href: "/shop" },
-                { name: "Atelier", href: "/#home-fitting" },
-                { name: "Heritage", href: "/shop?category=suits" },
-                { name: "Contact", href: "mailto:thedressoutfitters@gmail.com" }
+                { name: "About Us", href: "/about" },
+                { name: "Contact Us", href: "/contact" },
+                { name: "Your Orders", href: "/orders" }
               ].map((item) => (
                 <li key={item.name}>
                   <Link href={item.href} className="text-base font-light text-black/70 transition-colors hover:text-black">
@@ -102,13 +102,16 @@ export function Footer() {
               <Link href="#" className="hover:text-accent-yellow transition-colors">Terms</Link>
             </div>
             <div className="flex gap-6 border-t sm:border-t-0 sm:border-l border-border/20 pt-8 sm:pt-0 sm:pl-12">
-            <Link href="https://instagram.com" target="_blank">
-              <Globe className="h-5 w-5 cursor-pointer hover:text-accent-yellow transition-colors" />
+            <Link href="https://www.instagram.com/the_dress_outfitters?igsh=MTRqdjk4NnpjZnJlZA==" target="_blank" rel="noopener noreferrer">
+              <Instagram className="h-5 w-5 cursor-pointer hover:text-accent-yellow transition-colors" />
             </Link>
-            <Link href="https://facebook.com" target="_blank">
-              <Share2 className="h-5 w-5 cursor-pointer hover:text-accent-yellow transition-colors" />
+            <Link href="https://www.linkedin.com/company/the-dress-outfitters/" target="_blank" rel="noopener noreferrer">
+              <Link2 className="h-5 w-5 cursor-pointer hover:text-accent-yellow transition-colors" />
             </Link>
-            <Link href="https://whatsapp.com" target="_blank">
+            <Link href="https://facebook.com/thedressoutfitters" target="_blank" rel="noopener noreferrer">
+              <Facebook className="h-5 w-5 cursor-pointer hover:text-accent-yellow transition-colors" />
+            </Link>
+            <Link href="https://wa.me/918239021006" target="_blank" rel="noopener noreferrer">
               <MessageCircle className="h-5 w-5 cursor-pointer hover:text-accent-yellow transition-colors" />
             </Link>
             </div>

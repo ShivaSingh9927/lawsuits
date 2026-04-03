@@ -37,12 +37,13 @@ export function Hero() {
             alt="Tailored Suit Detail"
             fill
             priority
-            quality={100}
+            quality={80}
             className="object-cover object-center opacity"
             sizes="100vw"
           />
-          {/* Black blur gradient at bottom */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-white/30" />
+          {/* Deep dark overlay for cinematic legibility */}
+          <div className="absolute inset-0 bg-black/5 backdrop-blur-[1px]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/2" />
         </div>
       </div>
 
@@ -54,7 +55,7 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.7 }}
             className="space-y-4"
           >
-            <span className="text-[0.7rem] font-bold uppercase tracking-[0.4em] text-white/60 drop-shadow-sm sm:text-sm sm:tracking-[0.5em]">
+            <span className="text-[0.7rem] font-bold uppercase tracking-[0.4em] text-accent-yellow drop-shadow-sm sm:text-sm sm:tracking-[0.5em]">
               Established Excellence
             </span>
             <h1 className="font-serif text-[2.75rem] font-light leading-[0.9] tracking-tight text-white sm:text-7xl lg:text-9xl">
@@ -67,7 +68,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="max-w-2xl text-sm font-light leading-relaxed text-white/80 drop-shadow-sm sm:text-xl"
+            className="max-w-2xl text-sm font-medium leading-relaxed text-zinc-200 drop-shadow-sm sm:text-xl"
           >
             Defining the apex of professional attire for the modern advocate. 
             Excellence in every stitch, power in every profile.
@@ -85,7 +86,7 @@ export function Hero() {
               className="group relative px-8 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-black transition-all"
             >
               <div className="absolute inset-0 bg-accent-yellow rounded-full transition-transform duration-300 group-hover:scale-105" />
-              <span className="relative z-10 text-white transition-colors">Book a Fitting</span>
+              <span className="relative z-10 text-black transition-colors">Book a Fitting</span>
             </Link>
             
             <Link 
@@ -93,7 +94,7 @@ export function Hero() {
               className="group flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-opacity hover:opacity-80"
             >
               <span>Explore Collection</span>
-              <span className="text-2xl transition-transform duration-300 group-hover:translate-x-3">→</span>
+              <span className="text-2xl transition-transform duration-300 group-hover:translate-x-3 text-accent-yellow">→</span>
             </Link>
           </motion.div>
         </div>
@@ -107,8 +108,8 @@ export function Hero() {
         className="absolute bottom-10 left-1/2 -translate-x-1/2"
       >
         <div className="flex flex-col items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.3em] text-white/50">Scroll</span>
-          <div className="h-12 w-[1px] bg-gradient-to-b from-white/50 to-transparent" />
+          <span className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">Scroll</span>
+          <div className="h-12 w-[1px] bg-gradient-to-b from-white/20 to-transparent" />
         </div>
       </motion.div>
     </section>

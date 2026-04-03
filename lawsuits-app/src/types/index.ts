@@ -2,6 +2,7 @@ export interface Product {
   id: string;
   name: string;
   slug: string;
+  sku: string;
   description: string;
   category_id: string;
   base_price: number;
@@ -104,10 +105,16 @@ export interface Order {
   tax: number;
   total: number;
   coupon_id: string | null;
-  shipping_address: UserAddress;
-  billing_address: UserAddress;
+  shipping_name: string;
+  shipping_phone: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_state: string;
+  shipping_postal_code: string;
+  shipping_country: string;
   payment_method: string;
   payment_status: PaymentStatus;
+  user?: { email: string };
   razorpay_order_id: string | null;
   razorpay_payment_id: string | null;
   notes: string | null;
@@ -211,6 +218,7 @@ export interface AdminLog {
 export type OrderStatus =
   | "pending"
   | "confirmed"
+  | "tailoring"
   | "processing"
   | "shipped"
   | "delivered"

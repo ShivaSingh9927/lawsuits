@@ -34,8 +34,17 @@ interface RazorpayOptions {
   description: string;
   order_id: string;
   handler: (response: RazorpayResponse) => void;
-  prefill: { name: string; email: string; contact: string };
-  theme: { color: string };
+  modal?: {
+    ondismiss?: () => void;
+  };
+  prefill?: {
+    name?: string;
+    email?: string;
+    contact?: string;
+  };
+  theme?: {
+    color?: string;
+  };
 }
 
 interface RazorpayInstance {
@@ -186,25 +195,33 @@ function CheckoutContent() {
         description: `Order ${orderData.order.order_number}`,
         order_id: razorpayData.orderId,
         handler: async function (response: RazorpayResponse) {
-          // Verify payment
-          const verifyRes = await fetch("/api/razorpay/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature,
-              order_id: orderData.order.id,
-            }),
-          });
+          try {
+            const verifyRes = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                order_id: orderData.order.id,
+              }),
+            });
 
-          const verifyData = await verifyRes.json();
-          if (verifyData.success) {
-            setOrderNumber(orderData.order.order_number);
-            setOrderComplete(true);
-            clearCart();
-          } else {
-            alert("Payment verification failed");
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok) {
+              clearCart();
+              router.push(`/checkout/success?order_id=${orderData.order.order_number}`);
+            } else {
+              router.push(`/checkout/failed?reason=${encodeURIComponent(verifyData.error || "Verification failed")}`);
+            }
+          } catch (err) {
+            console.error("Verification error:", err);
+            router.push("/checkout/failed?reason=Verification terminal error");
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
           }
         },
         prefill: {
@@ -226,35 +243,6 @@ function CheckoutContent() {
     setLoading(false);
   };
 
-  if (orderComplete) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", duration: 0.5 }}
-        >
-          <CheckCircle className="mx-auto h-24 w-24 text-green-500" />
-        </motion.div>
-        <h1 className="mt-6 font-serif text-3xl font-bold">Order Confirmed!</h1>
-        <p className="mt-2 text-lg text-muted-foreground">
-          Order number: <span className="font-semibold text-foreground">{orderNumber}</span>
-        </p>
-        <p className="mt-4 max-w-md text-sm text-muted-foreground">
-          Thank you for your order. Our team will contact you shortly to confirm
-          your home fitting appointment.
-        </p>
-        <div className="mt-8 flex gap-4">
-          <Button asChild>
-            <Link href="/account">View Orders</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/shop">Continue Shopping</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   if (items.length === 0) {
     return (

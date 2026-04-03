@@ -8,71 +8,52 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Ruler, Package, Heart, LogOut } from "lucide-react";
-
-const mockOrders = [
-  {
-    id: "ORD-001",
-    date: "2024-03-15",
-    status: "delivered",
-    total: 45000,
-    items: [{ name: "The Barrister's Charcoal Three-Piece", size: "40R", qty: 1 }],
-  },
-  {
-    id: "ORD-002",
-    date: "2024-04-01",
-    status: "processing",
-    total: 38500,
-    items: [
-      { name: "The Solicitor's Navy Two-Piece", size: "42R", qty: 1 },
-      { name: "Silk Navy Tie", size: "Standard", qty: 1 },
-    ],
-  },
-];
+import { User, Ruler, Package, Heart, LogOut, ChevronRight } from "lucide-react";
 
 export default function AccountPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="bg-[#FDFCFB] min-h-screen pt-40 pb-20 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-bold">The Lawyer&apos;s Vault</h1>
-          <p className="mt-1 text-muted-foreground">
+          <h1 className="font-serif text-3xl font-bold text-black tracking-tight underline underline-offset-8 decoration-accent-yellow/30">The Lawyer&apos;s Vault</h1>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-bold">
             Welcome back, Counselor
           </p>
         </div>
-        <Button variant="outline">
-          <LogOut className="mr-2 h-4 w-4" />
+        <Button variant="outline" className="border-black/10 text-black hover:bg-black/5 uppercase tracking-widest text-[10px] font-black h-12 px-6">
+          <LogOut className="mr-3 h-4 w-4" />
           Sign Out
         </Button>
       </div>
 
       <Tabs defaultValue="measurements">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="measurements">
+        <TabsList className="grid w-full grid-cols-4 bg-black/5 rounded-none h-16 p-1">
+          <TabsTrigger value="measurements" className="rounded-none data-[state=active]:bg-white data-[state=active]:text-black text-[10px] uppercase tracking-widest font-black">
             <Ruler className="mr-2 h-4 w-4" />
             Measurements
           </TabsTrigger>
-          <TabsTrigger value="orders">
+          <TabsTrigger value="orders" className="rounded-none data-[state=active]:bg-white data-[state=active]:text-black text-[10px] uppercase tracking-widest font-black">
             <Package className="mr-2 h-4 w-4" />
             Orders
           </TabsTrigger>
-          <TabsTrigger value="wishlist">
+          <TabsTrigger value="wishlist" className="rounded-none data-[state=active]:bg-white data-[state=active]:text-black text-[10px] uppercase tracking-widest font-black">
             <Heart className="mr-2 h-4 w-4" />
             Wishlist
           </TabsTrigger>
-          <TabsTrigger value="profile">
+          <TabsTrigger value="profile" className="rounded-none data-[state=active]:bg-white data-[state=active]:text-black text-[10px] uppercase tracking-widest font-black">
             <User className="mr-2 h-4 w-4" />
             Profile
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="measurements" className="mt-6">
-          <div className="rounded-lg border border-border p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="font-serif text-xl font-semibold">
+          <div className="rounded-none border border-black/5 bg-white p-8 md:p-12 shadow-sm">
+            <div className="mb-10 flex items-center justify-between">
+              <h2 className="font-serif text-2xl font-light text-black">
                 Measurement Profile
               </h2>
-              <Badge variant="secondary">Not Verified</Badge>
+              <Badge className="bg-zinc-100 text-zinc-600 rounded-none border-none uppercase tracking-widest text-[9px] font-black px-3 py-1">Not Verified</Badge>
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -101,64 +82,23 @@ export default function AccountPage() {
               />
             </div>
 
-            <Button className="mt-6 bg-accent-yellow text-black hover:bg-accent-yellow/90">
+            <Button className="mt-12 bg-accent-yellow text-black hover:bg-accent-yellow/90 rounded-none h-14 px-10 uppercase tracking-[0.3em] text-[10px] font-black shadow-xl shadow-accent-yellow/10">
               Save Measurements
             </Button>
           </div>
         </TabsContent>
 
         <TabsContent value="orders" className="mt-6">
-          <div className="space-y-4">
-            {mockOrders.map((order) => (
-              <div
-                key={order.id}
-                className="rounded-lg border border-border p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">{order.id}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(order.date).toLocaleDateString("en-IN", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                  <Badge
-                    variant={
-                      order.status === "delivered" ? "default" : "secondary"
-                    }
-                    className="capitalize"
-                  >
-                    {order.status}
-                  </Badge>
-                </div>
-
-                <Separator className="my-4" />
-
-                <div className="space-y-2">
-                  {order.items.map((item, i) => (
-                    <div key={i} className="flex justify-between text-sm">
-                      <span>
-                        {item.name} ({item.size}) × {item.qty}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <Separator className="my-4" />
-
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">
-                    Total: ₹{order.total.toLocaleString()}
-                  </span>
-                  <Button variant="outline" size="sm">
-                    Re-order this Fit
-                  </Button>
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg border border-dashed border-border/40 bg-black/[0.01]">
+            <Package className="h-12 w-12 text-muted-foreground/20 mb-6" />
+            <h2 className="font-serif text-2xl font-light italic">Your Order Archive</h2>
+            <p className="mt-2 text-sm text-muted-foreground/60 uppercase tracking-widest max-w-xs">Access your complete history of commissions and tailoring.</p>
+            <Button className="mt-10 bg-black text-white hover:bg-black/9 group rounded-none h-14 px-10 uppercase tracking-[0.3em] text-[11px] font-black" asChild>
+              <Link href="/account/orders">
+                View Detailed History
+                <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
           </div>
         </TabsContent>
 
@@ -198,6 +138,7 @@ export default function AccountPage() {
           </div>
         </TabsContent>
       </Tabs>
+    </div>
     </div>
   );
 }

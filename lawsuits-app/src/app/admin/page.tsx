@@ -42,7 +42,17 @@ import {
   Eye,
   EyeOff,
   X,
+  ClipboardList,
+  CreditCard,
+  Truck,
+  CheckCircle2,
+  FileText,
+  User as UserIcon,
+  ShoppingBag,
+  History,
+  MoreHorizontal
 } from "lucide-react";
+import { Order, OrderStatus, PaymentStatus } from "@/types";
 
 interface Product {
   id: string;
@@ -99,6 +109,11 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploading, setUploading] = useState(false);
   const [images, setImages] = useState<{ url: string; file?: File }[]>([]);
+  
+  // Orders State
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -128,26 +143,44 @@ export default function AdminPage() {
   };
 
   const fetchCategories = async () => {
+    // ... categories fetch ...
+  };
+
+  const fetchOrders = async () => {
     try {
-      const res = await fetch("/api/products");
-      // Fetch categories from supabase directly
-      const { data } = await supabase
-        .from("categories")
-        .select("*")
-        .order("position");
-      if (data) setCategories(data);
-    } catch {
-      setCategories([
-        { id: "a1b2c3d4-0001-0001-0001-000000000001", name: "Suits", slug: "suits" },
-        { id: "a1b2c3d4-0001-0001-0001-000000000002", name: "Shirts", slug: "shirts" },
-        { id: "a1b2c3d4-0001-0001-0001-000000000003", name: "Accessories", slug: "accessories" },
-      ]);
+      const res = await fetch("/api/admin/orders");
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.orders || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch admin orders:", err);
+    }
+  };
+
+  const updateOrderStatus = async (orderId: string, status: OrderStatus, paymentStatus?: PaymentStatus) => {
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, status, paymentStatus })
+      });
+      if (res.ok) {
+        fetchOrders(); // Refresh
+        if (selectedOrder?.id === orderId) {
+          const updated = await res.json();
+          setSelectedOrder(updated.order);
+        }
+      }
+    } catch (err) {
+      alert("Failed to update status");
     }
   };
 
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    fetchOrders();
   }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -294,6 +327,27 @@ export default function AdminPage() {
       .update({ is_visible: !product.is_visible })
       .eq("id", product.id);
     fetchProducts();
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "confirmed": return "text-green-600 bg-green-50 border-green-100";
+      case "processing": return "text-blue-600 bg-blue-50 border-blue-100";
+      case "tailoring": return "text-purple-600 bg-purple-50 border-purple-100 font-serif italic";
+      case "shipped": return "text-indigo-600 bg-indigo-50 border-indigo-100";
+      case "delivered": return "text-green-700 bg-green-100 border-green-200";
+      case "cancelled": return "text-red-600 bg-red-50 border-red-100";
+      default: return "text-yellow-600 bg-yellow-50 border-yellow-100";
+    }
+  };
+
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case "captured": return "text-green-600 bg-green-50 border-green-100";
+      case "authorized": return "text-blue-600 bg-blue-50 border-blue-100";
+      case "failed": return "text-red-600 bg-red-50 border-red-100";
+      default: return "text-yellow-600 bg-yellow-50 border-yellow-100";
+    }
   };
 
   const deleteProduct = async (product: Product) => {
@@ -599,11 +653,87 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="products">
-        <TabsList>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments</TabsTrigger>
+        <TabsList className="bg-black/5 rounded-none p-1 h-14 mb-8">
+          <TabsTrigger value="products" className="rounded-none data-[state=active]:bg-white data-[state=active]:text-black text-[10px] uppercase tracking-widest font-black">
+             <Package className="mr-2 h-3.5 w-3.5" />
+             Products
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="rounded-none data-[state=active]:bg-white data-[state=active]:text-black text-[10px] uppercase tracking-widest font-black">
+             <ClipboardList className="mr-2 h-3.5 w-3.5" />
+             Orders
+          </TabsTrigger>
+          <TabsTrigger value="appointments" className="rounded-none data-[state=active]:bg-white data-[state=active]:text-black text-[10px] uppercase tracking-widest font-black">
+             <Calendar className="mr-2 h-3.5 w-3.5" />
+             Appointments
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="rounded-none data-[state=active]:bg-white data-[state=active]:text-black text-[10px] uppercase tracking-widest font-black">
+             <BarChart3 className="mr-2 h-3.5 w-3.5" />
+             Analytics
+          </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="orders" className="mt-6">
+           <div className="rounded-lg border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ORDER</TableHead>
+                    <TableHead>CUSTOMER</TableHead>
+                    <TableHead>DATE</TableHead>
+                    <TableHead>TOTAL</TableHead>
+                    <TableHead>PAYMENT</TableHead>
+                    <TableHead>FULFILLMENT</TableHead>
+                    <TableHead className="text-right">ACTION</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="py-20 text-center text-muted-foreground/50 italic font-serif">
+                         The archive is currently empty.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    orders.map((order) => (
+                      <TableRow key={order.id} className="group hover:bg-black/[0.01]">
+                        <TableCell className="font-bold text-[11px] tracking-widest uppercase">#{order.order_number}</TableCell>
+                        <TableCell>
+                           <div className="flex flex-col">
+                              <span className="font-bold text-sm">{(order as any).user?.full_name || "N/A"}</span>
+                              <span className="text-[10px] text-muted-foreground tracking-wider uppercase">{(order as any).user?.email}</span>
+                           </div>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </TableCell>
+                        <TableCell className="font-serif italic text-base font-medium">₹{order.total.toLocaleString()}</TableCell>
+                        <TableCell>
+                           <Badge className={`rounded-none border-none py-1 px-3 text-[9px] font-black uppercase tracking-widest ${getPaymentStatusColor(order.payment_status)}`}>
+                             {order.payment_status}
+                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                           <Badge className={`rounded-none border py-1 px-3 text-[9px] font-black uppercase tracking-widest ${getStatusColor(order.status)}`}>
+                             {order.status}
+                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                           <Button 
+                             variant="ghost" 
+                             size="sm" 
+                             className="rounded-none hover:bg-accent-yellow/10"
+                             onClick={() => { setSelectedOrder(order); setOrderDialogOpen(true); }}
+                           >
+                             <MoreHorizontal className="h-4 w-4" />
+                           </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+           </div>
+        </TabsContent>
         <TabsContent value="products" className="mt-6">
           <div className="mb-4">
             <Input
@@ -762,6 +892,153 @@ export default function AdminPage() {
           </div>
         </TabsContent>
       </Tabs>
+      {/* Order Details Dialog */}
+      <Dialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-none border-none p-0 bg-[#FDFCFB]">
+           {selectedOrder && (
+             <div className="flex flex-col md:flex-row h-full">
+                {/* Left Panel: Invoice & Items */}
+                <div className="flex-1 p-10 border-r border-border/10">
+                   <div className="flex items-center justify-between mb-12">
+                      <div className="space-y-4">
+                         <h2 className="font-serif text-3xl font-light italic text-accent-yellow">Commission Receipt</h2>
+                         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Reference #{selectedOrder.order_number}</p>
+                      </div>
+                      <Badge className={`rounded-none border-none py-2 px-4 text-[10px] font-black uppercase tracking-widest ${getStatusColor(selectedOrder.status)}`}>
+                        {(selectedOrder as Order).status}
+                      </Badge>
+                   </div>
+
+                   <div className="space-y-8 mb-16">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 border-b border-border/10 pb-4 mb-8">Ensemble Items</h3>
+                      {selectedOrder.items?.map((item) => (
+                        <div key={item.id} className="flex gap-8 group">
+                           <div className="h-24 w-16 bg-black/5 rounded-none relative overflow-hidden shrink-0">
+                              {item.image_url ? (
+                                <Image src={item.image_url} alt={item.product_name} fill className="object-cover" />
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center opacity-10"><ShoppingBag className="h-6 w-6" /></div>
+                              )}
+                           </div>
+                           <div className="flex-1 py-1">
+                              <div className="flex justify-between items-start">
+                                 <h4 className="font-bold text-sm uppercase tracking-widest">{item.product_name}</h4>
+                                 <p className="font-serif italic text-lg">₹{item.net_price.toLocaleString()}</p>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-2">Selection: {item.variant_size} × {item.quantity}</p>
+                           </div>
+                        </div>
+                      ))}
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-12 pt-12 border-t border-border/10">
+                      <div>
+                         <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 mb-6">Advocate Logistics</h4>
+                         <div className="space-y-2 text-xs font-medium uppercase tracking-[0.1em]">
+                            <p className="font-black">{(selectedOrder as Order).shipping_name}</p>
+                            <p>{(selectedOrder as Order).shipping_address}</p>
+                            <p>{(selectedOrder as Order).shipping_city}, {(selectedOrder as Order).shipping_state} {(selectedOrder as Order).shipping_postal_code}</p>
+                         </div>
+                      </div>
+                      <div>
+                         <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 mb-6">Investment Summary</h4>
+                         <div className="space-y-3">
+                            <div className="flex justify-between text-xs uppercase tracking-widest font-black opacity-40">
+                               <span>Subtotal</span>
+                               <span>₹{(selectedOrder as Order).subtotal.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-xs uppercase tracking-widest font-black text-accent-yellow">
+                               <span>GST (18%)</span>
+                               <span>₹{(selectedOrder as Order).tax.toLocaleString()}</span>
+                            </div>
+                            <Separator className="my-2 bg-border/10" />
+                            <div className="flex justify-between text-xl font-serif italic text-foreground pt-2">
+                               <span>Total Commission</span>
+                               <span>₹{(selectedOrder as Order).total.toLocaleString()}</span>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                {/* Right Panel: Workflow Controls */}
+                <div className="w-full md:w-80 bg-white p-10 flex flex-col justify-between">
+                   <div className="space-y-12">
+                      <div>
+                         <div className="flex items-center gap-3 mb-8">
+                            <History className="h-4 w-4 text-accent-yellow" />
+                            <h3 className="text-[11px] font-black uppercase tracking-[0.3em]">Workflow Control</h3>
+                         </div>
+                         
+                         <div className="space-y-8">
+                            <div className="space-y-3">
+                               <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Fulfillment Status</Label>
+                               <Select 
+                                 value={selectedOrder.status} 
+                                 onValueChange={(v) => v && updateOrderStatus((selectedOrder as Order).id, v as OrderStatus)}
+                               >
+                                  <SelectTrigger className="rounded-none border-border/20 text-[10px] font-black tracking-widest uppercase h-12">
+                                     <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-none border-none shadow-2xl">
+                                     <SelectItem value="pending">PENDING</SelectItem>
+                                     <SelectItem value="confirmed">CONFIRMED</SelectItem>
+                                     <SelectItem value="tailoring" className="font-serif italic capitalize">Tailoring</SelectItem>
+                                     <SelectItem value="processing">PROCESSING</SelectItem>
+                                     <SelectItem value="shipped">SHIPPED</SelectItem>
+                                     <SelectItem value="delivered">DELIVERED</SelectItem>
+                                     <SelectItem value="cancelled">CANCELLED</SelectItem>
+                                  </SelectContent>
+                               </Select>
+                            </div>
+
+                            <div className="space-y-3">
+                               <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Payment Status</Label>
+                               <Select 
+                                 value={selectedOrder.payment_status} 
+                                 onValueChange={(v) => v && updateOrderStatus((selectedOrder as Order).id, (selectedOrder as any).status, v as PaymentStatus)}
+                               >
+                                  <SelectTrigger className="rounded-none border-border/20 text-[10px] font-black tracking-widest uppercase h-12">
+                                     <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-none border-none shadow-2xl">
+                                     <SelectItem value="pending">PENDING</SelectItem>
+                                     <SelectItem value="authorized">AUTHORIZED</SelectItem>
+                                     <SelectItem value="captured">CAPTURED</SelectItem>
+                                     <SelectItem value="failed">FAILED</SelectItem>
+                                     <SelectItem value="refunded">REFUNDED</SelectItem>
+                                  </SelectContent>
+                               </Select>
+                            </div>
+                         </div>
+                      </div>
+
+                      {selectedOrder.appointment && (
+                        <div className="rounded-sm border border-accent-yellow/20 bg-accent-yellow/5 p-6 space-y-4">
+                           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-accent-yellow">
+                              <Calendar className="h-3 w-3" />
+                              Fitting Scheduled
+                           </div>
+                           <p className="text-xs font-bold font-serif italic text-foreground opacity-80">
+                              {new Date((selectedOrder.appointment as any).scheduled_date).toLocaleDateString('en-IN', { weekday: 'long', month: 'short', day: 'numeric' })}
+                           </p>
+                           <p className="text-[10px] font-black uppercase tracking-widest opacity-40">{(selectedOrder.appointment as any).time_slot}</p>
+                        </div>
+                      )}
+                   </div>
+
+                   <Button 
+                     variant="outline" 
+                     className="w-full rounded-none h-14 uppercase tracking-[0.2em] text-[10px] font-black border-border/20 hover:bg-black/5"
+                     onClick={() => setOrderDialogOpen(false)}
+                   >
+                      CLOSE INSPECTOR
+                   </Button>
+                </div>
+             </div>
+           )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

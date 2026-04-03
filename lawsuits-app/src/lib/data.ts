@@ -6,7 +6,7 @@ export const categories: Category[] = [
     name: "Advocate Suits",
     slug: "suits",
     description: "Premium tailored suits for the legal profession",
-    image_url: "/advocate_dress_coat.webp",
+    image_url: "/product-image/demo.webp",
     parent_id: null,
   },
   {
@@ -14,7 +14,7 @@ export const categories: Category[] = [
     name: "Gowns & Robes",
     slug: "gowns",
     description: "Distinguished legal gowns and robes",
-    image_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp",
+    image_url: "/product-image/demo.webp",
     parent_id: null,
   },
   {
@@ -22,7 +22,7 @@ export const categories: Category[] = [
     name: "Formal Pants",
     slug: "pants",
     description: "Professional formal trousers",
-    image_url: "/hunters-race-MYbhN8KaaEc-unsplash.webp",
+    image_url: "/product-image/demo.webp",
     parent_id: null,
   },
   {
@@ -30,7 +30,7 @@ export const categories: Category[] = [
     name: "Premium Shirts",
     slug: "shirts",
     description: "Crisp white and formal shirts",
-    image_url: "/pexels-unique-bash-creative-1927464998-34850161.webp",
+    image_url: "/product-image/demo.webp",
     parent_id: null,
   },
   {
@@ -38,7 +38,7 @@ export const categories: Category[] = [
     name: "Legal Vests",
     slug: "vests",
     description: "Formal waistcoats and vests",
-    image_url: "/pexels-pavel-danilyuk-8112126.webp",
+    image_url: "/product-image/demo.webp",
     parent_id: null,
   },
   {
@@ -46,7 +46,7 @@ export const categories: Category[] = [
     name: "Atelier Accessories",
     slug: "accessories",
     description: "Essential legal accessories",
-    image_url: "/pexels-karola-g-7876289.webp",
+    image_url: "/product-image/demo.webp",
     parent_id: null,
   },
 ];
@@ -56,6 +56,7 @@ export const products: Product[] = [
     id: "prod-1",
     name: "The Barrister's Charcoal Three-Piece",
     slug: "barristers-charcoal-three-piece",
+    sku: "BAR-CH",
     description: "A refined three-piece suit crafted from Super 120s Italian wool. Perfect for courtroom appearances and boardroom meetings. Features a half-canvas construction for superior drape and durability.",
     category_id: "cat-1",
     base_price: 45000,
@@ -71,8 +72,8 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[0],
     images: [
-      { id: "img-1-1", product_id: "prod-1", url: "/hunters-race-MYbhN8KaaEc-unsplash.webp", thumbnail_url: "/hunters-race-MYbhN8KaaEc-unsplash.webp", medium_url: "/hunters-race-MYbhN8KaaEc-unsplash.webp", alt: "Charcoal three-piece suit front view", position: 0, is_primary: true },
-      { id: "img-1-2", product_id: "prod-1", url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", thumbnail_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", medium_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", alt: "Charcoal three-piece suit back view", position: 1, is_primary: false },
+      { id: "img-1-1", product_id: "prod-1", url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: "Charcoal three-piece suit front view", position: 0, is_primary: true },
+      { id: "img-1-2", product_id: "prod-1", url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: "Charcoal three-piece suit back view", position: 1, is_primary: false },
     ],
     variants: [
       { id: "var-1-0", product_id: "prod-1", sku: "BAR-CH-36", size: "36", stock_quantity: 5, price: 45000, compare_at_price: 55000, is_out_of_stock: false },
@@ -86,6 +87,7 @@ export const products: Product[] = [
     id: "prod-2",
     name: "The Solicitor's Navy Two-Piece",
     slug: "solicitors-navy-two-piece",
+    sku: "SOL-NV",
     description: "A timeless navy two-piece suit made from Merino wool blend. Features a modern fit with clean lines and a soft shoulder. Ideal for daily professional wear.",
     category_id: "cat-1",
     base_price: 35000,
@@ -101,8 +103,8 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[0],
     images: [
-      { id: "img-2-1", product_id: "prod-2", url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", thumbnail_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", medium_url: "/nussbaum-law-IOvsEAEjnDE-unsplash.webp", alt: "Navy two-piece suit", position: 0, is_primary: true },
-      { id: "img-2-2", product_id: "prod-2", url: "/pexels-pavel-danilyuk-8112126.webp", thumbnail_url: "/pexels-pavel-danilyuk-8112126.webp", medium_url: "/pexels-pavel-danilyuk-8112126.webp", alt: "Navy two-piece suit detail", position: 1, is_primary: false },
+      { id: "img-2-1", product_id: "prod-2", url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: "Navy two-piece suit", position: 0, is_primary: true },
+      { id: "img-2-2", product_id: "prod-2", url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: "Navy two-piece suit detail", position: 1, is_primary: false },
     ],
     variants: [
       { id: "var-2-0", product_id: "prod-2", sku: "SOL-NV-36", size: "36", stock_quantity: 10, price: 35000, compare_at_price: null, is_out_of_stock: false },
@@ -115,6 +117,7 @@ export const products: Product[] = [
     id: "prod-3",
     name: "The Advocate's Black Tuxedo",
     slug: "advocates-black-tuxedo",
+    sku: "ADV-BK",
     description: "An elegant black tuxedo with satin lapels for formal galas and award ceremonies. Made from premium Super 130s wool. Features a classic fit with a single-button closure.",
     category_id: "cat-1",
     base_price: 65000,
@@ -130,7 +133,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[0],
     images: [
-      { id: "img-3-1", product_id: "prod-3", url: "/pexels-ekaterina-bolovtsova-6077961.webp", thumbnail_url: "/pexels-ekaterina-bolovtsova-6077961.webp", medium_url: "/pexels-ekaterina-bolovtsova-6077961.webp", alt: "Black tuxedo", position: 0, is_primary: true },
+      { id: "img-3-1", product_id: "prod-3", url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: "Black tuxedo", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-3-0", product_id: "prod-3", sku: "ADV-BK-36", size: "36", stock_quantity: 3, price: 65000, compare_at_price: 75000, is_out_of_stock: false },
@@ -142,6 +145,7 @@ export const products: Product[] = [
     id: "prod-4",
     name: "The Silk Navy Tie",
     slug: "silk-navy-tie",
+    sku: "TIE-NV",
     description: "A premium silk tie in deep navy with subtle diagonal stripes. Handcrafted from 100% mulberry silk. Width: 8cm. Made in Italy.",
     category_id: "cat-6",
     base_price: 3500,
@@ -157,7 +161,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[5],
     images: [
-      { id: "img-4-1", product_id: "prod-4", url: "/pexels-karola-g-7876289.webp", thumbnail_url: "/pexels-karola-g-7876289.webp", medium_url: "/pexels-karola-g-7876289.webp", alt: "Silk navy tie", position: 0, is_primary: true },
+      { id: "img-4-1", product_id: "prod-4", url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: "Silk navy tie", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-4-1", product_id: "prod-4", sku: "TIE-NV-STD", size: "Standard", stock_quantity: 25, price: 3500, compare_at_price: 4500, is_out_of_stock: false },
@@ -167,6 +171,7 @@ export const products: Product[] = [
     id: "prod-5",
     name: "The Queen's Counsel Cream Shirt",
     slug: "queens-counsel-cream-shirt",
+    sku: "QCC-CR",
     description: "A luxurious Egyptian cotton dress shirt in cream. Features a semi-spread collar and French cuffs. Perfect for pairing with dark suits.",
     category_id: "cat-4",
     base_price: 8500,
@@ -182,7 +187,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[3],
     images: [
-      { id: "img-5-1", product_id: "prod-5", url: "/pexels-unique-bash-creative-1927464998-34850161.webp", thumbnail_url: "/pexels-unique-bash-creative-1927464998-34850161.webp", medium_url: "/pexels-unique-bash-creative-1927464998-34850161.webp", alt: "Cream dress shirt", position: 0, is_primary: true },
+      { id: "img-5-1", product_id: "prod-5", url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: "Cream dress shirt", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-5-1", product_id: "prod-5", sku: "QCC-CR-S", size: "S", stock_quantity: 8, price: 8500, compare_at_price: null, is_out_of_stock: false },
@@ -194,6 +199,7 @@ export const products: Product[] = [
     id: "prod-6",
     name: "The Judge's Burgundy Three-Piece",
     slug: "judges-burgundy-three-piece",
+    sku: "JBG-BG",
     description: "A distinguished burgundy three-piece suit for those who command attention. Crafted from Italian Super 140s wool with a subtle sheen.",
     category_id: "cat-1",
     base_price: 55000,
@@ -209,7 +215,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[0],
     images: [
-      { id: "img-6-1", product_id: "prod-6", url: "/pexels-pavel-danilyuk-8112126.webp", thumbnail_url: "/pexels-pavel-danilyuk-8112126.webp", medium_url: "/pexels-pavel-danilyuk-8112126.webp", alt: "Burgundy three-piece suit", position: 0, is_primary: true },
+      { id: "img-6-1", product_id: "prod-6", url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: "Burgundy three-piece suit", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-6-1", product_id: "prod-6", sku: "JBG-BG-38", size: "38", stock_quantity: 4, price: 55000, compare_at_price: 65000, is_out_of_stock: false },
@@ -222,6 +228,7 @@ export const products: Product[] = [
     id: "prod-7",
     name: "Silver Cufflink Set",
     slug: "silver-cufflink-set",
+    sku: "CF-SV",
     description: "Sterling silver cufflinks with a minimalist square design. Presented in a premium gift box. Weight: 12g each.",
     category_id: "cat-6",
     base_price: 5500,
@@ -237,7 +244,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[5],
     images: [
-      { id: "img-7-1", product_id: "prod-7", url: "/pexels-karola-g-7876289.webp", thumbnail_url: "/pexels-karola-g-7876289.webp", medium_url: "/pexels-karola-g-7876289.webp", alt: "Silver cufflink set", position: 0, is_primary: true },
+      { id: "img-7-1", product_id: "prod-7", url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: "Silver cufflink set", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-7-1", product_id: "prod-7", sku: "CF-SV-STD", size: "Standard", stock_quantity: 30, price: 5500, compare_at_price: null, is_out_of_stock: false },
@@ -247,6 +254,7 @@ export const products: Product[] = [
     id: "prod-8",
     name: "Leather Belt - Classic Black",
     slug: "leather-belt-classic-black",
+    sku: "BLT-BK",
     description: "Full-grain leather dress belt with a brushed silver buckle. Width: 3.5cm. Made in Italy.",
     category_id: "cat-6",
     base_price: 4500,
@@ -262,7 +270,7 @@ export const products: Product[] = [
     deleted_at: null,
     category: categories[5],
     images: [
-      { id: "img-8-1", product_id: "prod-8", url: "/pexels-karola-g-7876289.webp", thumbnail_url: "/pexels-karola-g-7876289.webp", medium_url: "/pexels-karola-g-7876289.webp", alt: "Black leather belt", position: 0, is_primary: true },
+      { id: "img-8-1", product_id: "prod-8", url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: "Black leather belt", position: 0, is_primary: true },
     ],
     variants: [
       { id: "var-8-1", product_id: "prod-8", sku: "BLT-BK-32", size: "32", stock_quantity: 12, price: 4500, compare_at_price: 5500, is_out_of_stock: false },

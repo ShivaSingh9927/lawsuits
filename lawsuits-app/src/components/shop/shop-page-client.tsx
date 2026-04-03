@@ -160,8 +160,8 @@ export function ShopPageClient() {
               className={cn(
                 "block w-full text-left text-base tracking-widest transition-all",
                 selectedCategory === cat.slug
-                  ? "font-semibold text-foreground translate-x-2"
-                  : "text-muted-foreground/60 hover:text-foreground"
+                  ? "font-semibold text-black translate-x-2"
+                  : "text-zinc-500 hover:text-black"
               )}
             >
               {cat.name}
@@ -184,8 +184,8 @@ export function ShopPageClient() {
               className={cn(
                 "block w-full text-left text-base capitalize tracking-widest transition-all",
                 selectedFit === fit
-                  ? "font-semibold text-foreground translate-x-2"
-                  : "text-muted-foreground/60 hover:text-foreground"
+                  ? "font-semibold text-black translate-x-2"
+                  : "text-zinc-500 hover:text-black"
               )}
             >
               {fit}
@@ -199,7 +199,7 @@ export function ShopPageClient() {
       <div>
         <h3 className="mb-8 text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">Value</h3>
         <div className="space-y-8">
-          <div className="flex items-center justify-between text-xs tracking-widest text-muted-foreground font-medium">
+          <div className="flex items-center justify-between text-xs tracking-widest text-zinc-600 font-bold">
             <span>₹{priceRange[0].toLocaleString()}</span>
             <span>₹{priceRange[1].toLocaleString()}+</span>
           </div>
@@ -213,7 +213,7 @@ export function ShopPageClient() {
                 onChange={(e) =>
                   setPriceRange([Number(e.target.value), priceRange[1]])
                 }
-                className="h-12 border-0 border-b border-border/40 bg-transparent px-0 text-sm focus-visible:ring-0 font-medium"
+                className="h-12 border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 font-bold text-black"
               />
             </div>
             <div className="flex-1 space-y-2">
@@ -225,7 +225,7 @@ export function ShopPageClient() {
                 onChange={(e) =>
                   setPriceRange([priceRange[0], Number(e.target.value)])
                 }
-                className="h-12 border-0 border-b border-border/40 bg-transparent px-0 text-sm focus-visible:ring-0 font-medium"
+                className="h-12 border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 font-bold text-black"
               />
             </div>
           </div>
@@ -236,13 +236,13 @@ export function ShopPageClient() {
 
   return (
     <main className="bg-[#FDFCFB] min-h-screen">
-      <div className="mx-auto max-w-screen-2xl px-12 lg:px-32 py-10">
+      <div className="mx-auto max-w-[1800px] px-8 lg:px-12 pt-24 pb-10">
         {/* Cinematic Header */}
-        <div className="mb-32 flex flex-col items-center text-center space-y-8">
+        <div className="mb-0 flex flex-col items-center text-center space-y-6">
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-sm uppercase tracking-[0.5em] text-accent-yellow font-semibold"
+            className="text-[10px] uppercase tracking-[0.6em] text-accent-yellow font-bold"
           >
             The Collection
           </motion.p>
@@ -254,21 +254,6 @@ export function ShopPageClient() {
           >
             Distinctive <span className="italic text-accent-yellow">Tailoring</span>
           </motion.h1>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="h-[1.5px] w-32 bg-accent-yellow/40"
-          />
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="max-w-2xl text-lg font-light leading-relaxed text-muted-foreground/80"
-          >
-            Explore our curated range of professional attire, 
-            where every piece is an intersection of heritage and modern power.
-          </motion.p>
         </div>
 
         {/* Toolbar */}
@@ -296,7 +281,7 @@ export function ShopPageClient() {
             <div className="hidden items-center gap-6 md:flex">
                 {activeFiltersCount > 0 && (
                   <>
-                    <span className="text-xs uppercase tracking-widest text-muted-foreground/60 font-medium">Active:</span>
+                    <span className="text-xs uppercase tracking-widest text-zinc-400 font-bold">Active:</span>
                     <div className="flex gap-6">
                       {selectedCategory && (
                         <button 
@@ -327,7 +312,7 @@ export function ShopPageClient() {
           </div>
 
           <div className="flex items-center gap-8">
-            <span className="hidden text-xs uppercase tracking-[0.4em] text-muted-foreground/60 md:block font-medium">Sort :</span>
+            <span className="hidden text-xs uppercase tracking-[0.4em] text-zinc-400 md:block font-bold">Sort :</span>
             <Select value={sortBy} onValueChange={(v: string | null) => setSortBy(v ?? "newest")}>
               <SelectTrigger className="w-56 border-0 bg-transparent p-0 text-xs uppercase tracking-[0.3em] focus:ring-0 font-semibold">
                 <SelectValue />
@@ -348,8 +333,7 @@ export function ShopPageClient() {
         </div>
 
         <div className="flex gap-24">
-          {/* Desktop Filters Sidebar */}
-          <aside className="hidden w-80 flex-shrink-0 lg:block border-r border-border/20 pr-12">
+          <aside className="hidden w-80 flex-shrink-0 lg:block border-r border-border/20 pr-12 sticky top-32 h-fit">
             <FiltersContent />
           </aside>
 
@@ -361,7 +345,7 @@ export function ShopPageClient() {
             ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-48 text-center">
                 <h3 className="font-serif text-4xl font-light text-foreground/40">Void of Results</h3>
-                <p className="mt-6 text-sm tracking-widest text-muted-foreground/60">
+                <p className="mt-6 text-sm tracking-widest text-zinc-500 font-medium">
                   Your current criteria remains unfulfilled.
                 </p>
                 <button 
@@ -372,7 +356,7 @@ export function ShopPageClient() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-x-6 gap-y-16">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-16">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

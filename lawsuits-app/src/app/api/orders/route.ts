@@ -58,13 +58,20 @@ export async function POST(request: NextRequest) {
   const orderItems = [];
 
   for (const item of items) {
-    const { data: variant } = await admin
+    // Fetch variant with product and its primary image
+    const { data: variant, error: variantError } = await admin
       .from("product_variants")
-      .select("*, product:products(*)")
+      .select(`
+        *,
+        product:products(
+          *,
+          images:product_images(*)
+        )
+      `)
       .eq("id", item.variant_id)
       .single();
 
-    if (!variant || variant.is_out_of_stock || variant.stock_quantity < item.quantity) {
+    if (variantError || !variant || variant.is_out_of_stock || variant.stock_quantity < item.quantity) {
       return NextResponse.json(
         { error: `Item ${variant?.product?.name || "unknown"} is out of stock` },
         { status: 400 }
@@ -74,22 +81,28 @@ export async function POST(request: NextRequest) {
     const itemTotal = variant.price * item.quantity;
     subtotal += itemTotal;
 
+    // Find primary image URL or fallback to first image
+    const primaryImage = (variant.product as any).images?.find((img: any) => img.is_primary)?.url || 
+                         (variant.product as any).images?.[0]?.url || 
+                         "/product-image/demo.webp";
+
     orderItems.push({
       product_id: variant.product_id,
       variant_id: variant.id,
-      product_name: variant.product.name,
+      product_name: (variant.product as any).name,
       variant_size: variant.size,
       unit_price: variant.price,
       quantity: item.quantity,
       discount_amount: 0,
       net_price: itemTotal,
-      image_url: "",
+      image_url: primaryImage,
     });
   }
 
   // Apply coupon
   let discountTotal = 0;
   let couponId = null;
+  let currentCoupon = null;
 
   if (coupon_code) {
     const { data: coupon } = await admin
@@ -112,6 +125,7 @@ export async function POST(request: NextRequest) {
           discountTotal = coupon.value;
         }
         couponId = coupon.id;
+        currentCoupon = coupon;
       }
     }
   }
@@ -140,6 +154,7 @@ export async function POST(request: NextRequest) {
       shipping_postal_code: shipping.postalCode,
       shipping_country: "India",
       payment_status: "pending",
+      notes: shipping.notes || null,
     })
     .select()
     .single();
@@ -157,10 +172,10 @@ export async function POST(request: NextRequest) {
   );
 
   // Increment coupon usage
-  if (couponId) {
+  if (couponId && currentCoupon) {
     await admin
       .from("coupons")
-      .update({ current_uses: admin.rpc("increment") })
+      .update({ current_uses: currentCoupon.current_uses + 1 })
       .eq("id", couponId);
 
     await admin.from("order_discounts").insert({
@@ -178,7 +193,7 @@ export async function POST(request: NextRequest) {
       status: "pending",
       scheduled_date: appointment_date,
       time_slot,
-      notes: shipping.notes,
+      notes: shipping.notes || null,
     });
   }
 

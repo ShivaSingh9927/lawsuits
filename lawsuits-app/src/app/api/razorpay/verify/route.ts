@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = await createAdminClient();
+  const { sendOrderConfirmation } = await import("@/lib/mail");
 
   // Update order
   const { data: order, error } = await admin
@@ -38,11 +39,29 @@ export async function POST(request: NextRequest) {
       razorpay_payment_id,
     })
     .eq("id", order_id)
-    .select()
+    .select(`
+      *,
+      items:order_items(*),
+      user:users(email, full_name)
+    `)
     .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  // Send confirmation email
+  try {
+    await sendOrderConfirmation(order.user.email, {
+      orderNumber: order.order_number,
+      customerName: order.shipping_name,
+      totalAmount: order.total,
+      items: order.items,
+      shippingAddress: `${order.shipping_address}, ${order.shipping_city}, ${order.shipping_state} ${order.shipping_postal_code}`,
+    });
+  } catch (emailError) {
+    console.error("Failed to send order confirmation email:", emailError);
+    // Continue despite email error to not break the successful transaction flow
   }
 
   return NextResponse.json({
