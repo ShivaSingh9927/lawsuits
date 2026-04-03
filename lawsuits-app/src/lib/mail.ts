@@ -1,33 +1,45 @@
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport(
-  process.env.SMTP_HOST 
-    ? {
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "587"),
-        secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports
-        auth: {
-          user: process.env.SMTP_USER || process.env.EMAIL,
-          pass: process.env.SMTP_PASS || process.env.APP_PASSWORD,
-        },
-      }
-    : {
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL,
-          pass: process.env.APP_PASSWORD,
-        },
-      }
-);
+function getTransporter() {
+  const user = process.env.SMTP_USER || process.env.EMAIL;
+  const pass = process.env.SMTP_PASS || process.env.APP_PASSWORD;
+  const host = process.env.SMTP_HOST;
+  const port = parseInt(process.env.SMTP_PORT || "587");
 
-// Verify connection on startup to catch configuration errors early
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("SMTP Configuration Error:", error);
-  } else {
-    console.log("SMTP Server is ready to take our messages");
+  if (!user || !pass) {
+    console.error("❌ Email credentials (EMAIL/APP_PASSWORD or SMTP_USER/SMTP_PASS) are missing!");
+    return null;
   }
-});
+
+  return nodemailer.createTransport(
+    host 
+      ? {
+          host,
+          port,
+          secure: port === 465,
+          auth: { user, pass },
+        }
+      : {
+          service: "gmail",
+          auth: { user, pass },
+        }
+  );
+}
+
+// Export a function to verify the SMTP connection at runtime
+export async function verifyMailConnection() {
+  const transporter = getTransporter();
+  if (!transporter) return { success: false, error: "Missing email credentials in environment" };
+  
+  try {
+    await transporter.verify();
+    return { success: true };
+  } catch (err: any) {
+    console.error("SMTP Configuration Error:", err);
+    return { success: false, error: err.message || "Failed to connect to SMTP server" };
+  }
+}
+
 
 
 export interface OrderEmailData {
@@ -54,9 +66,16 @@ export interface FittingEmailData {
 }
 
 export async function sendFittingRequest(data: FittingEmailData) {
+  const transporter = getTransporter();
+  if (!transporter) {
+    return { success: false, error: "Email configuration is incomplete or missing." };
+  }
+
+  const fromAddress = process.env.EMAIL || process.env.SMTP_USER || "noreply@thedressoutfitters.com";
+
   const adminMailOptions = {
-    from: `"Fitting Alert" <${process.env.EMAIL}>`,
-    to: process.env.EMAIL,
+    from: `"Fitting Alert" <${fromAddress}>`,
+    to: fromAddress,
     subject: `📅 NEW FITTING REQUEST - ${data.name}`,
     html: `
       <div style="font-family: sans-serif; padding: 20px; background: #f4f4f4;">
@@ -89,7 +108,7 @@ export async function sendFittingRequest(data: FittingEmailData) {
   };
 
   const userMailOptions = {
-    from: `"The Dress Outfitters" <${process.env.EMAIL}>`,
+    from: `"The Dress Outfitters" <${fromAddress}>`,
     to: data.email,
     subject: `Fitting Request Received - The Dress Outfitters`,
     html: `
@@ -126,9 +145,9 @@ export async function sendFittingRequest(data: FittingEmailData) {
       transporter.sendMail(userMailOptions)
     ]);
     return { success: true };
-  } catch (err) {
+  } catch (err: any) {
     console.error("Fitting Email Error:", err);
-    return { success: false, error: err };
+    return { success: false, error: err.message || "Unknown SMTP error" };
   }
 }
 
@@ -136,6 +155,13 @@ export async function sendOrderConfirmation(
   to: string,
   data: OrderEmailData
 ) {
+  const transporter = getTransporter();
+  if (!transporter) {
+    return { success: false, error: "Email configuration is incomplete or missing." };
+  }
+
+  const fromAddress = process.env.EMAIL || process.env.SMTP_USER || "noreply@thedressoutfitters.com";
+
   const itemsHtml = data.items
     .map(
       (item) => `
@@ -153,7 +179,7 @@ export async function sendOrderConfirmation(
 
   // Email to Customer
   const customerMailOptions = {
-    from: `"The Dress Outfitters" <${process.env.EMAIL}>`,
+    from: `"The Dress Outfitters" <${fromAddress}>`,
     to: to,
     subject: `Order Confirmed: #${data.orderNumber} - The Dress Outfitters`,
     html: `
@@ -211,8 +237,8 @@ export async function sendOrderConfirmation(
 
   // Email to Admin
   const adminMailOptions = {
-    from: `"Store Alert" <${process.env.EMAIL}>`,
-    to: process.env.EMAIL,
+    from: `"Store Alert" <${fromAddress}>`,
+    to: fromAddress,
     subject: `🔔 NEW ORDER - #${data.orderNumber} - ₹${data.totalAmount.toLocaleString()}`,
     html: `
       <div style="font-family: sans-serif; padding: 20px; background: #f4f4f4;">
@@ -245,8 +271,9 @@ export async function sendOrderConfirmation(
       transporter.sendMail(adminMailOptions)
     ]);
     return { success: true };
-  } catch (err) {
+  } catch (err: any) {
     console.error("Order Email Error:", err);
-    return { success: false, error: err };
+    return { success: false, error: err.message || "Unknown SMTP error" };
   }
 }
+
