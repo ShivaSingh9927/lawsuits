@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 export default function AboutPage() {
@@ -41,14 +42,18 @@ export default function AboutPage() {
             </p>
           </motion.div>
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="aspect-[4/5] bg-black/[0.03] border border-black/5 relative overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="aspect-[4/5] relative overflow-hidden group shadow-2xl"
           >
-             <div className="absolute inset-0 bg-gradient-to-t from-[#FDFCFB] to-transparent opacity-60" />
-             <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[10px] uppercase tracking-[1em] text-black/10 -rotate-90">Crafting Excellence</span>
-             </div>
+            <Image 
+              src="/hero_alt.jpg" 
+              alt="Crafting Excellence" 
+              fill 
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-black/10 transition-colors duration-500 group-hover:bg-transparent" />
           </motion.div>
         </section>
       </div>

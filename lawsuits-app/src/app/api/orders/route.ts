@@ -82,9 +82,9 @@ export async function POST(request: NextRequest) {
     subtotal += itemTotal;
 
     // Find primary image URL or fallback to first image
-    const primaryImage = (variant.product as any).images?.find((img: any) => img.is_primary)?.url || 
-                         (variant.product as any).images?.[0]?.url || 
-                         "/product-image/demo.webp";
+    const primaryImage = (variant.product as any).images?.find((img: any) => img.is_primary)?.url ||
+      (variant.product as any).images?.[0]?.url ||
+      "/product-image/demo.webp";
 
     orderItems.push({
       product_id: variant.product_id,

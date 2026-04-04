@@ -7,6 +7,10 @@ import { CartSidebar } from "@/components/cart/cart-sidebar";
 export const metadata: Metadata = {
   title: "The Dress Outfitters | Precision Tailoring for the Modern Advocate",
   description: "Exquisite legal attire, handcrafted for the modern professional. Discover our collection of suits, gowns, and accessories designed for excellence.",
+  icons: {
+    icon: "/favicon-32x32.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({

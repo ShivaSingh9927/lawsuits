@@ -220,7 +220,7 @@ function CheckoutContent() {
           }
         },
         modal: {
-          ondismiss: function() {
+          ondismiss: function () {
             setLoading(false);
           }
         },
@@ -317,11 +317,11 @@ function CheckoutContent() {
                 </div>
                 <div>
                   <Label>Postal Code (6 Digits) *</Label>
-                  <Input 
-                    placeholder="400001" 
-                    value={formData.postalCode} 
-                    onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })} 
-                    required 
+                  <Input
+                    placeholder="400001"
+                    value={formData.postalCode}
+                    onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                    required
                     className={formData.postalCode && !isPincodeValid ? "border-red-500" : ""}
                   />
                   {formData.postalCode && !isPincodeValid && (
