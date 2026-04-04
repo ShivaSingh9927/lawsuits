@@ -13,7 +13,8 @@ interface ProductPageProps {
 export default async function ProductPage({ params }: ProductPageProps) {
   const resolvedParams = await params;
   const slugArray = resolvedParams.slug;
-  const slug = Array.isArray(slugArray) ? slugArray.join(" ") : slugArray || "";
+  const rawSlug = Array.isArray(slugArray) ? slugArray.join(" ") : slugArray || "";
+  const slug = decodeURIComponent(rawSlug);
   console.log("DEBUG: ProductPage hitting with slug:", slug);
   
   // 1. Try static data first for speed (if it exists there)
