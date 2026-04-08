@@ -25,9 +25,9 @@ import {
 import { ChevronDown } from "lucide-react";
 
 const navItems = [
-  { 
-    name: "Collection", 
-    href: "#", 
+  {
+    name: "Collection",
+    href: "#",
     dropdown: [
       { name: "Men's", href: "/shop?category=mens-legal-attire" },
       { name: "Women's", href: "/shop?category=womens-legal-attire" },
@@ -61,11 +61,14 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
       setIsSearchOpen(false);
+      setIsMenuOpen(false);
       setSearchQuery("");
     }
   };
@@ -78,19 +81,19 @@ export function Header() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-12">
             {/* Logo */}
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="group relative z-10 flex items-center"
             >
-              <Image 
-                src="/TDO-black-logo-transp-01.webp" 
-                alt="THE DRESS OUTFITTERS" 
-                width={180} 
-                height={65} 
-                className="h-12 md:h-16 w-auto invert" 
+              <Image
+                src="/TDO-black-logo-transp-01.webp"
+                alt="THE DRESS OUTFITTERS"
+                width={180}
+                height={65}
+                className="h-12 md:h-16 w-auto invert"
               />
               <div className="absolute -bottom-2 left-0 h-[1px] w-0 bg-accent-yellow transition-all duration-500 group-hover:w-full" />
-            </Link> 
+            </Link>
 
 
             {/* Desktop Navigation */}
@@ -113,9 +116,9 @@ export function Header() {
                       <DropdownMenuContent className="bg-black border border-white/10 p-2 min-w-[200px]">
                         {item.dropdown.map((subItem) => (
                           <DropdownMenuItem key={subItem.name} className="p-0 !bg-transparent !focus:bg-zinc-900 cursor-pointer group/sub">
-                            <Link 
-                                href={subItem.href}
-                                className="block w-full px-4 py-3 text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-400 transition-colors group-hover/sub:!text-white group-focus/sub:!text-white hover:!text-white"
+                            <Link
+                              href={subItem.href}
+                              className="block w-full px-4 py-3 text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-400 transition-colors group-hover/sub:!text-white group-focus/sub:!text-white hover:!text-white"
                             >
                               {subItem.name}
                             </Link>
@@ -176,12 +179,12 @@ export function Header() {
               </div>
             </div>
 
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className={cn(
-                "transition-all duration-300",
+                "hidden md:inline-flex transition-all duration-300",
                 isSearchOpen ? "text-accent-yellow bg-white/5" : "text-white hover:bg-white/10"
               )}
             >
@@ -194,11 +197,11 @@ export function Header() {
               </Button>
             </Link>
 
-            <Button 
-                variant="ghost" 
-                size="icon" 
-                className="relative transition-colors text-white hover:bg-white/10"
-                onClick={() => useCartStore.getState().toggleCart()}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative transition-colors text-white hover:bg-white/10"
+              onClick={() => useCartStore.getState().toggleCart()}
             >
               <ShoppingBag className="h-5 w-5" />
               <AnimatePresence>
@@ -215,7 +218,7 @@ export function Header() {
               </AnimatePresence>
             </Button>
 
-            <Sheet>
+            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger
                 asChild
               >
@@ -229,7 +232,7 @@ export function Header() {
                   <SheetHeader className="text-left border-b border-white/10 p-8">
                     <SheetTitle className="font-serif text-3xl font-light tracking-[0.1em] text-white italic">Menu</SheetTitle>
                   </SheetHeader>
-                  
+
                   <div className="flex-1 flex flex-col p-8 overflow-y-auto">
                     {/* Mobile Search */}
                     <form onSubmit={handleSearch} className="mb-8 relative">
@@ -243,7 +246,7 @@ export function Header() {
                       />
                     </form>
 
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 text-zinc-400">
                       {navItems.map((item) => (
                         <div key={item.name} className="flex flex-col">
                           {item.dropdown ? (
@@ -270,6 +273,7 @@ export function Header() {
                                       <Link
                                         key={subItem.name}
                                         href={subItem.href}
+                                        onClick={() => setIsMenuOpen(false)}
                                         className="flex items-center justify-between pl-6 pr-4 py-4 text-[10px] uppercase tracking-[0.15em] font-bold text-zinc-500 border-b border-white/5 hover:text-accent-yellow transition-colors"
                                       >
                                         {subItem.name}
@@ -283,6 +287,7 @@ export function Header() {
                           ) : (
                             <Link
                               href={item.href}
+                              onClick={() => setIsMenuOpen(false)}
                               className={cn(
                                 "flex items-center justify-between text-[11px] uppercase tracking-[0.2em] font-bold transition-colors py-5 border-b border-white/5",
                                 pathname === item.href ? "text-accent-yellow" : "text-zinc-400 hover:text-white"
@@ -296,21 +301,21 @@ export function Header() {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-8 p-8 border-t border-white/10 bg-white/5">
-                      <div className="space-y-6">
-                          <div className="flex items-start gap-4 text-zinc-400">
-                              <MapPin className="h-4 w-4 text-accent-yellow mt-1 shrink-0" />
-                              <div className="flex flex-col gap-1">
-                                <span className="text-[10px] uppercase tracking-widest font-bold text-white leading-tight">Punjab and Haryana High Court</span>
-                                <span className="text-[10px] uppercase tracking-widest font-medium text-zinc-500">Sector 1, Chandigarh, Punjab - 160001</span>
-                              </div>
-                          </div>
-                          <div className="flex items-center gap-4 text-zinc-400">
-                              <Phone className="h-4 w-4 text-accent-yellow" />
-                              <span className="text-[10px] uppercase tracking-widest font-bold text-white">+91 77779-55002</span>
-                          </div>
+                    <div className="space-y-6">
+                      <div className="flex items-start gap-4 text-zinc-400">
+                        <MapPin className="h-4 w-4 text-accent-yellow mt-1 shrink-0" />
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] uppercase tracking-widest font-bold text-white leading-tight">Punjab and Haryana High Court</span>
+                          <span className="text-[10px] uppercase tracking-widest font-medium text-zinc-500">Sector 1, Chandigarh, Punjab - 160001</span>
+                        </div>
                       </div>
+                      <div className="flex items-center gap-4 text-zinc-400">
+                        <Phone className="h-4 w-4 text-accent-yellow" />
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-white">+91 77779-55002</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </SheetContent>

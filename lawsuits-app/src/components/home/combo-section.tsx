@@ -6,6 +6,8 @@ import { ProductCard } from "@/components/product/product-card";
 import { Product } from "@/types";
 import { ArrowRight } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 export function ComboSection() {
   const [combos, setCombos] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +34,27 @@ export function ComboSection() {
     fetchCombos();
   }, []);
 
-  if (loading || combos.length === 0) return null;
+  if (loading) {
+    return (
+      <section className="bg-black py-20">
+        <div className="mx-auto max-w-screen-2xl px-6 sm:px-10 lg:px-32">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-6">
+                <Skeleton className="aspect-[3/4] w-full bg-white/5" />
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-3/4 bg-white/5" />
+                  <Skeleton className="h-4 w-1/2 bg-white/5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+  
+  if (combos.length === 0) return null;
 
   return (
     <section className="bg-black py-32 overflow-hidden">
@@ -66,7 +88,6 @@ export function ComboSection() {
               key={product.id} 
               product={product} 
               onDark={true}
-              ctaText="Select Options"
             />
           ))}
         </div>

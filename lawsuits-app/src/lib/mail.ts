@@ -66,6 +66,12 @@ export interface FittingEmailData {
   timeSlot: string;
 }
 
+export interface InquiryEmailData {
+  name: string;
+  email: string;
+  message: string;
+}
+
 export async function sendFittingRequest(data: FittingEmailData) {
   const transporter = getTransporter();
   if (!transporter) return { success: false, error: "Configuration missing." };
@@ -76,7 +82,7 @@ export async function sendFittingRequest(data: FittingEmailData) {
     {
       from: `"TDO Fitting Alert" <${fromAddress}>`,
       to: fromAddress,
-      subject: `📅 NEW FITTING REQUEST - ${data.name}`,
+      subject: `📅 NEW FITTING REQUEST - ${data.name.toUpperCase()}`,
       html: `<h2>New Fitting Inquiry</h2><p><strong>Name:</strong> ${data.name}</p><p><strong>Phone:</strong> ${data.phone}</p><p><strong>Date:</strong> ${data.date} (${data.timeSlot})</p>`
     },
     {
@@ -123,6 +129,53 @@ export async function sendOrderConfirmation(to: string, data: OrderEmailData) {
     return { success: true };
   } catch (err: any) {
     console.error("Order Email Error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function sendInquiryEmail(data: InquiryEmailData) {
+  const transporter = getTransporter();
+  if (!transporter) return { success: false, error: "Configuration missing." };
+
+  const fromAddress = process.env.EMAIL || process.env.SMTP_USER || "thedressoutfitters@gmail.com";
+
+  const adminMailOptions = {
+    from: `"TDO Inquiry" <${fromAddress}>`,
+    to: fromAddress,
+    subject: `💬 NEW CONTACT INQUIRY - ${data.name.toUpperCase()}`,
+    html: `
+      <div style="font-family: sans-serif; padding: 20px; color: #333;">
+        <h2 style="border-bottom: 2px solid #D4AF37; padding-bottom: 10px;">New Contact Inquiry</h2>
+        <p><strong>Name:</strong> ${data.name}</p>
+        <p><strong>Email:</strong> ${data.email}</p>
+        <p><strong>Message:</strong></p>
+        <p style="background: #f9f9f9; padding: 15px; border-radius: 5px;">${data.message}</p>
+      </div>
+    `
+  };
+
+  const userMailOptions = {
+    from: `"The Dress Outfitters" <${fromAddress}>`,
+    to: data.email,
+    subject: `Inquiry Received - The Dress Outfitters`,
+    html: `
+      <div style="font-family: serif; padding: 40px; text-align: center; border: 1px solid #eee;">
+        <h1 style="font-size: 24px;">THE DRESS OUTFITTERS</h1>
+        <p style="font-size: 16px; color: #666; margin-top: 20px;">Dear ${data.name},</p>
+        <p style="font-size: 16px; color: #666;">Thank you for reaching out to us. We have received your inquiry and our concierge will contact you shortly.</p>
+        <div style="margin-top: 40px; border-top: 1px solid #eee; pt-20">
+          <p style="font-size: 12px; color: #999; letter-spacing: 2px;">ESTABLISHED EXCELLENCE</p>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    await transporter.sendMail(adminMailOptions);
+    await transporter.sendMail(userMailOptions);
+    return { success: true };
+  } catch (err: any) {
+    console.error("❌ Inquiry Email Error:", err);
     return { success: false, error: err.message };
   }
 }

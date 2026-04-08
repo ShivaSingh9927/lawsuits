@@ -125,19 +125,19 @@ export function HomeFittingForm() {
             className="xl:col-span-2 flex flex-col justify-center"
           >
             <span className="text-[10px] uppercase tracking-[0.4em] text-accent-yellow">Premium Experience</span>
-            <h2 className="mt-6 font-serif text-4xl font-light leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              In-home trial <br /> <span className="italic">within tri-city</span>
+            <h2 className="mt-6 font-serif text-4xl font-light leading-tight tracking-tight sm:text-5xl lg:text-6xl uppercase">
+              IN-HOME TRIAL <br /> <span className="italic whitespace-nowrap">WITHIN TRI-CITY</span>
             </h2>
-            <p className="mt-8 max-w-md text-lg font-light leading-relaxed text-muted-foreground/80">
+            {/* <p className="mt-8 max-w-md text-xs font-black leading-relaxed text-muted-foreground uppercase tracking-[0.2em] border-l border-accent-yellow/30 pl-6">
               Select up to 6 products and our Master Tailor will bring them to your doorstep for a professional fitting session.
-            </p>
+            </p> */}
             
             <div className="mt-12 space-y-6">
               {[
-                "Personalized try-on session at home",
-                "Wide selection of legal attire",
-                "On-the-spot adjustments and advice",
-                "No obligation to purchase",
+                "PERSONALIZED TRY-ON SESSION AT HOME",
+                "WIDE SELECTION OF LEGAL ATTIRE",
+                "ON-THE-SPOT ADJUSTMENTS AND ADVICE",
+                "NO OBLIGATION TO PURCHASE",
               ].map((feature, i) => (
                 <motion.div 
                   key={i} 
@@ -195,7 +195,7 @@ export function HomeFittingForm() {
                   {/* Step 1: Product Selection */}
                   <div className="space-y-10">
                     <div className="flex items-center justify-between border-b border-black/5 pb-4">
-                      <h3 className="font-serif text-2xl tracking-tight text-black italic">1. Select Products</h3>
+                      <h3 className="font-serif text-2xl tracking-tight text-black italic uppercase">1. SELECT PRODUCTS</h3>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
@@ -241,7 +241,7 @@ export function HomeFittingForm() {
                   {/* Step 2: Location & Scheduling */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
                     <div className="space-y-10">
-                      <h3 className="font-serif text-2xl tracking-tight text-black italic border-b border-black/5 pb-4">2. Logistics</h3>
+                      <h3 className="font-serif text-2xl tracking-tight text-black italic border-b border-black/5 pb-4 uppercase">2. LOGISTICS</h3>
                       <div className="space-y-8">
                         <div className="space-y-3">
                           <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Location <span className="text-zinc-400 capitalize">(Optional)</span></Label>
@@ -285,7 +285,7 @@ export function HomeFittingForm() {
                     </div>
 
                     <div className="space-y-10">
-                       <h3 className="font-serif text-2xl tracking-tight text-black italic border-b border-black/5 pb-4">3. Personal Details</h3>
+                       <h3 className="font-serif text-2xl tracking-tight text-black italic border-b border-black/5 pb-4 uppercase">3. PERSONAL DETAILS</h3>
                        <div className="space-y-8">
                           <div className="space-y-3">
                              <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Full Name</Label>

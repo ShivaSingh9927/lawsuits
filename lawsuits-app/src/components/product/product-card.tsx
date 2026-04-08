@@ -18,12 +18,12 @@ interface ProductCardProps {
   ctaText?: string;
 }
 
-export function ProductCard({ 
-  product, 
-  className, 
-  priority = false, 
+export function ProductCard({
+  product,
+  className,
+  priority = false,
   onDark = false,
-  ctaText = "Select Options"
+  ctaText
 }: ProductCardProps) {
   const [hovered, setHovered] = useState(false);
   const { isWishlisted, addItem, removeItem } = useWishlistStore();
@@ -74,14 +74,9 @@ export function ProductCard({
 
         {/* Subtle Luxury Badges */}
         <div className="absolute left-6 top-6 z-20 flex flex-col gap-2">
-          {hasDiscount && (
-            <span className="bg-black px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] text-white font-semibold">
-              Limited
-            </span>
-          )}
           {product.category?.name === "Bespoke" && (
             <span className="border border-black/10 bg-white/50 px-4 py-1.5 text-[11px] uppercase tracking-[0.2em] backdrop-blur-md font-semibold">
-              Atelier
+              Signature
             </span>
           )}
         </div>
@@ -96,12 +91,12 @@ export function ProductCard({
             wishlisted
               ? removeItem(product.id)
               : addItem({
-                  id: product.id,
-                  user_id: "",
-                  product_id: product.id,
-                  created_at: new Date().toISOString(),
-                  product,
-                });
+                id: product.id,
+                user_id: "",
+                product_id: product.id,
+                created_at: new Date().toISOString(),
+                product,
+              });
           }}
         >
           <Heart
@@ -112,19 +107,21 @@ export function ProductCard({
           />
         </button>
 
-        <div
-          className={cn(
-            "absolute inset-x-0 bottom-0 z-20 p-4 md:p-8 transition-all duration-700",
-            hovered ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-          )}
-        >
-          <Link
-            href={`/product/${product.slug}`}
-            className="flex w-full items-center justify-center bg-black py-4 md:py-5 text-[10px] md:text-xs uppercase tracking-[0.4em] text-white transition-opacity hover:opacity-90 font-semibold"
+        {ctaText && (
+          <div
+            className={cn(
+              "absolute inset-x-0 bottom-0 z-20 p-4 md:p-8 transition-all duration-700",
+              hovered ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            )}
           >
-            {ctaText}
-          </Link>
-        </div>
+            <Link
+              href={`/product/${product.slug}`}
+              className="flex w-full items-center justify-center bg-black py-4 md:py-5 text-[10px] md:text-xs uppercase tracking-[0.4em] text-white transition-opacity hover:opacity-90 font-semibold"
+            >
+              {ctaText}
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="mt-10 space-y-3">

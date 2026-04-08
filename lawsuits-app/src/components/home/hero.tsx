@@ -56,11 +56,11 @@ export function Hero() {
             className="space-y-4"
           >
             <span className="text-[0.7rem] font-bold uppercase tracking-[0.4em] text-accent-yellow drop-shadow-sm sm:text-sm sm:tracking-[0.5em]">
-              Established Excellence
+              ESTABLISHED EXCELLENCE
             </span>
             <h1 className="font-serif text-[2rem] font-light leading-[0.9] tracking-tight text-white sm:text-5xl lg:text-7xl">
               THE DRESS<br />
-              Outfitters
+              OUTFITTERS
             </h1>
           </motion.div>
 
@@ -86,14 +86,14 @@ export function Hero() {
               className="group relative px-8 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-black transition-all"
             >
               <div className="absolute inset-0 bg-accent-yellow rounded-full transition-transform duration-300 group-hover:scale-105" />
-              <span className="relative z-10 text-black transition-colors">Book In Home Trial</span>
+              <span className="relative z-10 text-black transition-colors">BOOK IN-HOME TRIAL</span>
             </Link>
             
             <Link 
               href="/shop"
               className="group flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-opacity hover:opacity-80"
             >
-              <span>Explore Collection</span>
+              <span>EXPLORE COLLECTION</span>
               <span className="text-2xl transition-transform duration-300 group-hover:translate-x-3 text-accent-yellow">→</span>
             </Link>
           </motion.div>

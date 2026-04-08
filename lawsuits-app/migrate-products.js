@@ -11,6 +11,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const CATEGORIES_CSV = path.join(__dirname, 'product_data/categories_rows(in).csv');
 const PRODUCTS_CSV = path.join(__dirname, 'product_data/products_rows 1(in).csv');
 const VARIANTS_CSV = path.join(__dirname, 'product_data/product_variants_rows(in).csv');
+const COMBO_CSV = path.join(__dirname, 'product_data/combo_pack.csv');
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('❌ Error: Supabase credentials missing in .env');
@@ -28,9 +29,14 @@ const IMAGE_EXT_MAP = {
   'TDO-WC-BLK': 'png',
 };
 
-function getImageUrl(id) {
-  const ext = IMAGE_EXT_MAP[id] || 'png';
-  return `${SUPABASE_URL}/storage/v1/object/public/product-images/${id}.${ext}`;
+function getImageUrl(filename) {
+  if (!filename) return null;
+  // If it's already a full URL, return it
+  if (filename.startsWith('http')) return filename;
+  
+  // Clean the filename (remove spaces)
+  const cleanName = filename.trim();
+  return `${SUPABASE_URL}/storage/v1/object/public/product-images/${cleanName}`;
 }
 
 async function supabaseCall(method, table, body = null, params = '') {
@@ -127,8 +133,12 @@ async function migrate() {
         else fit = 'classic';
       }
 
-      // Generate a unique slug by appending the Legacy ID
-      const uniqueSlug = prod.slug || `${prod.name}-${prod.id}`.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      // Generate a unique slug: slugify prod.slug if it exists, else name-id
+      const slugBase = prod.slug || `${prod.name}-${prod.id}`;
+      const uniqueSlug = slugBase.toLowerCase().trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      
       productLegacyToSlug[prod.id.trim()] = uniqueSlug;
 
       productsPayload.push({
@@ -161,9 +171,23 @@ async function migrate() {
     // 4. Link Images and Variants
     console.log('🔢 Batch importing variants & images...');
     
-    // Build variants payload
+    // Build variants payload from multiple CSV sources
     const variantsRaw = fs.readFileSync(VARIANTS_CSV, 'utf-8');
-    const variantRecords = parse(variantsRaw, { columns: true, skip_empty_lines: true, trim: true });
+    const comboRaw = fs.readFileSync(COMBO_CSV, 'utf-8');
+    
+    let variantRecords = [
+      ...parse(variantsRaw, { columns: true, skip_empty_lines: true, trim: true }),
+      ...parse(comboRaw, { columns: true, skip_empty_lines: true, trim: true })
+    ];
+
+    // Fix missing IDs in CSV (inheriting from previous row)
+    let lastId = null;
+    variantRecords = variantRecords.map(v => {
+      if (v.id) lastId = v.id;
+      else if (v.sku) v.id = lastId; // Only fill if we have a SKU but no ID
+      return v;
+    });
+
     const variantsPayload = [];
     const imagesPayload = [];
     
@@ -174,11 +198,28 @@ async function migrate() {
       const legacyId = prodRecord.id.trim();
       const uniqueSlug = productLegacyToSlug[legacyId];
       const productId = productMap[uniqueSlug];
+      const rawImageList = prodRecord.image_list || ""; 
       
-      if (productId) {
+      if (!productId) continue;
+
+      if (rawImageList) {
+        // Option A: Multiple images provided in CSV (comma separated filenames)
+        const images = rawImageList.split(',').map(img => img.trim()).filter(Boolean);
+        images.forEach((imgName, index) => {
+          imagesPayload.push({
+            product_id: productId,
+            url: getImageUrl(imgName),
+            alt: prodRecord.name,
+            is_primary: index === 0,
+            position: index
+          });
+        });
+      } else {
+        // Option B: Fallback to the single image logic using legacy ID naming
+        const ext = IMAGE_EXT_MAP[legacyId] || 'png';
         imagesPayload.push({
           product_id: productId,
-          url: getImageUrl(legacyId),
+          url: getImageUrl(`${legacyId}.${ext}`),
           alt: prodRecord.name,
           is_primary: true,
           position: 0
@@ -191,7 +232,10 @@ async function migrate() {
       
       const legacyId = variant.id.trim();
       const uniqueSlug = productLegacyToSlug[legacyId];
-      if (!uniqueSlug) continue;
+      if (!uniqueSlug) {
+        console.warn(`⚠️ Warning: No product found for variant ${variant.sku} with legacy ID ${legacyId}`);
+        continue;
+      }
 
       const productId = productMap[uniqueSlug];
       if (!productId) continue;
@@ -203,13 +247,17 @@ async function migrate() {
       }
       uniqueSkus.add(cleanedSku);
 
+      // Handle price parsing carefully (remove commas)
+      const price = parseFloat(variant.price?.toString().replace(/,/g, '').replace(/"/g, '')) || 0;
+      const compareAtPrice = variant.compare_at_price ? parseFloat(variant.compare_at_price.toString().replace(/,/g, '').replace(/"/g, '')) : null;
+
       variantsPayload.push({
         product_id: productId,
         sku: cleanedSku,
-        size: variant.size,
+        size: variant.size?.trim() || 'Standard',
         stock_quantity: parseInt(variant.stock_quantity) || 0,
-        price: parseFloat(variant.price.toString().replace(/,/g, '').replace(/"/g, '')) || 0,
-        compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price.toString().replace(/,/g, '')) : null,
+        price: price,
+        compare_at_price: compareAtPrice,
         is_out_of_stock: variant.is_out_of_stock === 'TRUE'
       });
     }

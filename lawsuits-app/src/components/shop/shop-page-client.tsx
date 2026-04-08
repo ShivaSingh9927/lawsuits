@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { ProductCard } from "@/components/product/product-card";
 import { products as mockProducts, categories as mockCategories } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -240,28 +241,6 @@ export function ShopPageClient() {
 
       <div className="h-[1px] w-full bg-border/30" />
 
-      <div>
-        <h3 className="mb-8 text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">The Silhouette</h3>
-        <div className="space-y-5">
-          {fits.map((fit) => (
-            <button
-              key={fit}
-              onClick={() =>
-                setSelectedFit(selectedFit === fit ? null : fit)
-              }
-              className={cn(
-                "block w-full text-left text-base capitalize tracking-widest transition-all",
-                selectedFit === fit
-                  ? "font-semibold text-black translate-x-2"
-                  : "text-zinc-500 hover:text-black"
-              )}
-            >
-              {fit}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="h-[1px] w-full bg-border/30" />
 
       <div>
@@ -271,12 +250,24 @@ export function ShopPageClient() {
             <span>₹{priceRange[0].toLocaleString()}</span>
             <span>₹{priceRange[1].toLocaleString()}+</span>
           </div>
-          <div className="flex gap-6">
+          <div className="mt-8 px-2">
+            <Slider
+              defaultValue={[priceRange[0], priceRange[1]]}
+              max={100000}
+              step={1000}
+              onValueChange={(val: any) => {
+                const value = Array.isArray(val) ? val : [val];
+                setPriceRange([value[0], value[1] || value[0]]);
+              }}
+              className="py-4"
+            />
+          </div>
+          <div className="flex gap-6 mt-8">
             <div className="flex-1 space-y-2">
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">Min</span>
               <Input
                 type="number"
-                placeholder="Min"
+                placeholder="0"
                 value={priceRange[0]}
                 onChange={(e) =>
                   setPriceRange([Number(e.target.value), priceRange[1]])
@@ -288,7 +279,7 @@ export function ShopPageClient() {
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">Max</span>
               <Input
                 type="number"
-                placeholder="Max"
+                placeholder="100000"
                 value={priceRange[1]}
                 onChange={(e) =>
                   setPriceRange([priceRange[0], Number(e.target.value)])
@@ -368,12 +359,6 @@ export function ShopPageClient() {
                         </button>
                       )}
                     </div>
-                    <button
-                      onClick={clearAllFilters}
-                      className="text-xs uppercase tracking-[0.2em] text-foreground underline underline-offset-4 decoration-accent-yellow/50"
-                    >
-                      Reset
-                    </button>
                   </>
                 )}
             </div>

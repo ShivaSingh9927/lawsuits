@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
 import { Product } from "@/types";
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 export function FeaturedProducts() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,9 +27,23 @@ export function FeaturedProducts() {
   }, []);
 
   if (loading) {
-      return <div className="bg-[#1A1512] py-32 h-[400px] flex items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent-yellow border-t-transparent" />
-      </div>;
+    return (
+      <section className="bg-[#1A1512] py-20 border-y border-white/5">
+        <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-6">
+                <Skeleton className="aspect-[3/4] w-full bg-white/5" />
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-3/4 bg-white/5" />
+                  <Skeleton className="h-4 w-1/2 bg-white/5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -40,7 +56,7 @@ export function FeaturedProducts() {
             viewport={{ once: true }}
             className="mb-6 block text-sm uppercase tracking-[0.4em] text-accent-yellow bg-white/5 px-6 py-2 font-semibold"
           >
-            Curated Excellence
+            CURATED EXCELLENCE
           </motion.span>
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -49,7 +65,7 @@ export function FeaturedProducts() {
             transition={{ duration: 1 }}
             className="font-serif text-3xl font-light tracking-tight sm:text-6xl text-white"
           >
-            Best <span className="italic">Products</span>
+            BEST <span className="italic">PRODUCTS</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -88,7 +104,7 @@ export function FeaturedProducts() {
         >
           <Link href="/shop" className="group relative px-12 py-5 text-[11px] font-black uppercase tracking-[0.5em] text-black transition-all">
             <div className="absolute inset-0 bg-accent-yellow rounded-none transition-transform duration-300 group-hover:scale-105" />
-            <span className="relative z-10">Explore Full Collection</span>
+            <span className="relative z-10">EXPLORE FULL COLLECTION</span>
           </Link>
         </motion.div>
       </div>

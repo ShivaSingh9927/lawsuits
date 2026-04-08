@@ -8,7 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { User, Ruler, Package, Heart, LogOut, ChevronRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { User, Ruler, Package, Heart, LogOut, ChevronRight, Loader2, CheckCircle2, AlertCircle, ShoppingBag, Trash2 } from "lucide-react";
+import { useWishlistStore } from "@/store";
+import Image from "next/image";
 
 export default function AccountPage() {
   const [measurements, setMeasurements] = useState<any>({
@@ -21,6 +23,7 @@ export default function AccountPage() {
     shoulder: "",
     notes: ""
   });
+  const { items: wishlistItems, removeItem: removeFromWishlist } = useWishlistStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -209,15 +212,67 @@ export default function AccountPage() {
         </TabsContent>
 
         <TabsContent value="wishlist" className="mt-6">
-          <div className="rounded-lg border border-border p-8 text-center">
-            <Heart className="mx-auto h-12 w-12 text-muted-foreground/30" />
-            <p className="mt-4 font-medium">Your wishlist is empty</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Save items you love for later
-            </p>
-            <Button className="mt-4" asChild>
-              <Link href="/shop">Browse Products</Link>
-            </Button>
+          <div className="rounded-none border border-black/5 bg-white p-8 md:p-12 shadow-sm min-h-[400px]">
+            <div className="mb-10 flex items-center justify-between">
+              <h2 className="font-serif text-2xl font-light text-black">
+                Your Selection Archive
+              </h2>
+              <Badge className="bg-accent-yellow/10 text-accent-yellow rounded-none border-none uppercase tracking-widest text-[9px] font-black px-3 py-1">
+                {wishlistItems.length} Saved Items
+              </Badge>
+            </div>
+
+            {wishlistItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <Heart className="mb-6 h-12 w-12 text-zinc-100" />
+                <p className="font-serif text-xl font-light italic text-zinc-400">Your selection is currently empty</p>
+                <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-bold max-w-xs">
+                  Save distinguished attire to your archive for future commissions.
+                </p>
+                <Button variant="outline" className="mt-10 border-black/10 text-black hover:bg-black/5 uppercase tracking-widest text-[10px] font-black h-12 px-8" asChild>
+                  <Link href="/shop">Explore Collection</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {wishlistItems.map((item) => (
+                  <div key={item.id} className="group relative border border-black/5 overflow-hidden transition-all hover:border-accent-yellow/30">
+                    <Link href={`/product/${item.product.slug}`} className="block aspect-[3/4] relative bg-zinc-50 overflow-hidden">
+                      <Image 
+                        src={item.product.images?.[0]?.url || "/product-image/demo.webp"} 
+                        alt={item.product.name}
+                        fill
+                        className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                      />
+                    </Link>
+                    <div className="p-6">
+                      <h4 className="font-serif text-lg font-light tracking-tight text-black line-clamp-1">{item.product.name}</h4>
+                      <div className="mt-4 flex items-center justify-between">
+                        <span className="font-serif text-lg text-accent-yellow italic">₹{item.product.base_price.toLocaleString()}</span>
+                        <div className="flex gap-2">
+                           <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-zinc-300 hover:text-red-500 transition-colors"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              removeFromWishlist(item.product_id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-300 hover:text-black transition-colors" asChild>
+                            <Link href={`/product/${item.product.slug}`}>
+                              <ChevronRight className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </TabsContent>
 

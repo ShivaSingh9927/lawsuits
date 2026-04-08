@@ -17,16 +17,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const slug = decodeURIComponent(rawSlug);
   console.log("DEBUG: ProductPage hitting with slug:", slug);
   
-  // 1. Try static data first for speed (if it exists there)
-  let product = staticProducts.find((p) => p.slug === slug);
-  
-  // 2. If not found in static data, fetch from Supabase
-  if (!product) {
-    const supabase = await createClient();
-    const decodedSlug = decodeURIComponent(slug);
-    
+  // 1. Try fetching from Supabase first
+  const supabase = await createClient();
+  const decodedSlug = decodeURIComponent(slug);
+  let product: any = null;
+
+  try {
     // First try exact match
-    let { data: dbProduct, error } = await supabase
+    const { data: dbProduct, error } = await supabase
       .from("products")
       .select(`
         *,
@@ -39,8 +37,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
       .eq("is_visible", true)
       .single();
 
-    // If exact match fails, try case-insensitive and hyphen-check
-    if (!dbProduct || error) {
+    if (dbProduct && !error) {
+      product = dbProduct;
+    } else {
+      // If exact match fails, try fuzzy match
       const { data: fuzzyProduct } = await supabase
         .from("products")
         .select(`
@@ -53,15 +53,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
         .is("deleted_at", null)
         .eq("is_visible", true)
         .limit(1)
-        .single();
+        .maybeSingle();
       
-      dbProduct = fuzzyProduct;
+      if (fuzzyProduct) {
+        product = fuzzyProduct;
+      }
     }
+  } catch (err) {
+    console.error("Supabase fetch error:", err);
+  }
 
-    if (dbProduct && !error) {
-      // Basic normalization if needed, or use as is
-      product = dbProduct as any;
-    }
+  // 2. Fallback to static data if not found in database
+  if (!product) {
+    product = staticProducts.find((p) => p.slug === slug);
   }
 
   if (!product) {

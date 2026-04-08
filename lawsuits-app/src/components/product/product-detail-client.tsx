@@ -36,13 +36,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Product, ProductVariant } from "@/types";
-import { useCartStore, useRecentlyViewedStore } from "@/store";
+import { useCartStore, useRecentlyViewedStore, useWishlistStore } from "@/store";
 import { products } from "@/lib/data";
 import { ProductCarousel } from "./product-carousel";
 
 interface ProductDetailClientProps {
   product: Product;
 }
+
+const colorMap: Record<string, string> = {
+  "LG": "Light Grey",
+  "MG": "Grey",
+  "DG": "Dark Grey",
+  "BLK": "Black",
+  "WHT": "White",
+  "BLG": "Broad Lining on Grey",
+  "GRY": "Grey",
+  "DGR": "Dark Grey",
+  "LGR": "Light Grey",
+  "CL": "Charcoal",
+  "NBL": "Navy Blue",
+};
 
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
   // Combo Logic - Broadened detection
@@ -99,6 +113,25 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const topSizes = getDynamicSizes("top");
   const bottomSizes = getDynamicSizes("bottom");
 
+  // Dynamic Color Extraction for non-sized products or products with color variants (like Pant Cloth)
+  const getDynamicColors = () => {
+    if (!product.variants || product.variants.length === 0) return [];
+    const colors = new Set<string>();
+    product.variants.forEach(v => {
+      const parts = v.sku.split('-');
+      const lastPart = parts[parts.length - 1].toUpperCase();
+      if (colorMap[lastPart]) {
+        colors.add(colorMap[lastPart]);
+      } else if (isNaN(Number(lastPart)) && lastPart.length >= 2) {
+        // Fallback: If not in map but looks like a code, use it
+        colors.add(lastPart);
+      }
+    });
+    return Array.from(colors);
+  };
+
+  const colorOptions = getDynamicColors();
+
   // Use the provided demo image as fallback if no images exist
   const displayImages = product.images?.length > 0 
     ? [...product.images] 
@@ -112,7 +145,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
        url: "/advocate_dress_coat.webp",
        thumbnail_url: "/advocate_dress_coat.webp",
        medium_url: "/advocate_dress_coat.webp",
-       alt: "Detail view from Atelier",
+       alt: "Detail view",
        position: 1,
        is_primary: false
     });
@@ -129,7 +162,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   }
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
-    product.variants[0]
+    product.variants?.[0] || { id: 'base', price: product.base_price, compare_at_price: product.compare_at_price, size: 'Standard', stock_quantity: 5 } as any
   );
   const [selectedTopSize, setSelectedTopSize] = useState<string | number>(
     topSizes[0] || (isShirtCombo ? "S" : 40)
@@ -137,10 +170,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [selectedBottomSize, setSelectedBottomSize] = useState<string | number>(
     bottomSizes[0] || 32
   );
+  const [selectedColor, setSelectedColor] = useState<string>(
+    colorOptions[0] || ""
+  );
   const [selectedImage, setSelectedImage] = useState(0);
-  const [wantsHomeFitting, setWantsHomeFitting] = useState(false);
   const { addItem, toggleCart } = useCartStore();
   const { addItem: addRecentlyViewed, items: recentlyViewedIds } = useRecentlyViewedStore();
+  const { isWishlisted, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlistStore();
 
   // Match variant based on combo selections
   // Enhanced Matching Logic for Combo Packages
@@ -190,12 +226,35 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       }
 
       // Final Variant Activation
-      const finalMatched = matched || product.variants[0];
+      // Enhanced Matching: Consider color even in combos if color variations exist
+      let finalMatched = matched || product.variants[0];
+      
+      if (colorOptions.length > 0 && selectedColor) {
+        const colorMatched = product.variants.find(v => {
+          const parts = v.sku.split('-');
+          const lastPart = parts[parts.length - 1].toUpperCase();
+          const matchesColor = colorMap[lastPart] === selectedColor || lastPart === selectedColor;
+          const matchesSize = v.size.includes(String(selectedTopSize)) || v.sku.includes(String(selectedTopSize));
+          return matchesColor && matchesSize;
+        });
+        if (colorMatched) finalMatched = colorMatched;
+      }
+
       if (finalMatched && (!selectedVariant || finalMatched.id !== selectedVariant.id || finalMatched.price !== selectedVariant.price)) {
         setSelectedVariant(finalMatched);
       }
+    } else if (selectedColor) {
+      // Non-combo color matching logic
+      const matched = product.variants.find(v => {
+        const parts = v.sku.split('-');
+        const lastPart = parts[parts.length - 1].toUpperCase();
+        return colorMap[lastPart] === selectedColor || lastPart === selectedColor;
+      });
+      if (matched && matched.id !== selectedVariant?.id) {
+        setSelectedVariant(matched);
+      }
     }
-  }, [selectedTopSize, selectedBottomSize, isCombo, isShirtCombo, product.variants]);
+  }, [selectedTopSize, selectedBottomSize, selectedColor, isCombo, isShirtCombo, product.variants, colorOptions]);
 
   useEffect(() => {
     addRecentlyViewed(product.id);
@@ -227,7 +286,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       <div className="mx-auto max-w-screen-2xl px-6 sm:px-10 py-4 lg:px-20">
         {/* Breadcrumbs */}
         <nav className="mb-6 sm:mb-10 flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
-          <Link href="/" className="hover:text-foreground transition-colors shrink-0">Atelier</Link>
+          <Link href="/" className="hover:text-foreground transition-colors shrink-0">Home</Link>
           <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 stroke-[1px] shrink-0" />
           <Link href="/shop" className="hover:text-foreground transition-colors shrink-0">Collection</Link>
           <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 stroke-[1px] shrink-0" />
@@ -341,7 +400,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                    <span>Available: <span className="text-foreground">{selectedVariant?.stock_quantity || 5}</span></span>
                  </div>
                  <span className="h-3 w-[1px] bg-zinc-200" />
-                 <span>Sold: <span className="text-foreground">42</span></span>
+                 <span>Sold: <span className="text-foreground">{(product.id.charCodeAt(0) + (product.id.charCodeAt(product.id.length-1) || 0)) % 40 + 15}</span></span>
                  <span className="h-3 w-[1px] bg-zinc-200" />
                  <span className="text-accent-yellow">Limited Edition</span>
               </div>
@@ -383,7 +442,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                           { size: "S", chest: 36, waist: 30, hips: 36 },
                           { size: "M", chest: 38, waist: 32, hips: 38 },
                           { size: "L", chest: 40, waist: 34, hips: 40 },
-                          { size: "XL", chest: 42, waist: 36, hips: 42 },
                           { size: "2XL", chest: 44, waist: 38, hips: 44 },
                         ].map((row) => (
                           <TableRow key={row.size} className="border-border/10 hover:bg-black/[0.02]">
@@ -404,10 +462,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                    {/* Top Selection */}
                    <div className="space-y-4">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
-                         {topLabel} : <span className="text-foreground">{selectedTopSize}</span>
+                         {topLabel.toUpperCase()} : <span className="text-foreground">{selectedTopSize}</span>
                       </p>
                       <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
-                         {topSizes.map((size) => (
+                         {topSizes.length > 0 ? topSizes.map((size) => (
                             <button
                                key={size}
                                onClick={() => setSelectedTopSize(size)}
@@ -420,17 +478,21 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                             >
                                {size}
                             </button>
-                         ))}
+                         )) : (
+                            <button className="flex h-10 w-full items-center justify-center border border-black bg-black text-white text-[10px] tracking-widest font-black">
+                               STANDARD
+                            </button>
+                         )}
                       </div>
                    </div>
 
                    {/* Pant Selection */}
                    <div className="space-y-4">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
-                         Pant Size : <span className="text-foreground">{selectedBottomSize}</span>
+                         PANT SIZE : <span className="text-foreground">{selectedBottomSize}</span>
                       </p>
                       <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
-                         {bottomSizes.map((size) => (
+                         {bottomSizes.length > 0 ? bottomSizes.map((size) => (
                             <button
                                key={size}
                                onClick={() => setSelectedBottomSize(size)}
@@ -443,78 +505,134 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                             >
                                {size}
                             </button>
-                         ))}
+                         )) : (
+                            <button className="flex h-10 w-full items-center justify-center border border-black bg-black text-white text-[10px] tracking-widest font-black">
+                               STANDARD
+                            </button>
+                         )}
                       </div>
                    </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-3">
-                  {product.variants.map((variant) => (
-                    <button
-                      key={variant.id}
-                      disabled={variant.is_out_of_stock}
-                      onClick={() => setSelectedVariant(variant)}
-                      className={cn(
-                        "flex h-12 items-center justify-center border text-[10px] tracking-widest transition-all duration-500",
-                        selectedVariant.id === variant.id
-                          ? "border-accent-yellow bg-accent-yellow/5 text-foreground font-bold"
-                          : variant.is_out_of_stock
-                          ? "opacity-20 cursor-not-allowed border-border line-through"
-                          : "border-border hover:border-foreground/40"
+
+                   {/* Color/Variation Selection for Combos */}
+                      {colorOptions.length > 0 && (
+                        <div className="space-y-4 pt-8 border-t border-black/5">
+                          <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
+                            FABRIC SELECTION : <span className="text-foreground">{selectedColor}</span>
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {colorOptions.map((color) => (
+                              <button
+                                key={color}
+                                onClick={() => setSelectedColor(color)}
+                                className={cn(
+                                  "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                                  selectedColor === color
+                                    ? "border-black bg-black text-white shadow-lg"
+                                    : "border-zinc-200 hover:border-black text-zinc-600"
+                                )}
+                              >
+                                {color}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       )}
-                    >
-                      {variant.size}
-                    </button>
-                  ))}
+                 </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Size Selection */}
+                  {product.variants && product.variants.some(v => !isNaN(Number(v.size))) && (
+                    <div className="grid grid-cols-4 gap-3">
+                      {product.variants.map((variant) => (
+                        <button
+                          key={variant.id}
+                          disabled={variant.is_out_of_stock}
+                          onClick={() => setSelectedVariant(variant)}
+                          className={cn(
+                            "flex h-12 items-center justify-center border text-[10px] tracking-widest transition-all duration-500",
+                            selectedVariant?.id === variant.id
+                              ? "border-accent-yellow bg-accent-yellow/5 text-foreground font-bold"
+                              : variant.is_out_of_stock
+                              ? "opacity-20 cursor-not-allowed border-border line-through"
+                              : "border-border hover:border-foreground/40"
+                          )}
+                        >
+                          {variant.size}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Color Selection */}
+                  {colorOptions.length > 0 && (
+                    <div className="space-y-4">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
+                        SELECT VARIATION : <span className="text-foreground text-accent-yellow">{selectedColor}</span>
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {colorOptions.map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => setSelectedColor(color)}
+                            className={cn(
+                              "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                              selectedColor === color
+                                ? "border-black bg-black text-white shadow-lg"
+                                : "border-zinc-200 hover:border-black text-zinc-600"
+                            )}
+                          >
+                            {color}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Atelier Services */}
+            {/* Experience Services */}
             <div className="space-y-8">
-              <div 
-                onClick={() => setWantsHomeFitting(!wantsHomeFitting)}
-                className={cn(
-                  "group flex cursor-pointer items-center justify-between border border-border/20 p-5 rounded-sm transition-all duration-700",
-                  wantsHomeFitting ? "bg-accent-yellow/10 border-accent-yellow/40" : "hover:bg-accent-yellow/5"
-                )}
-              >
-                <div className="flex items-center gap-6">
-                  <div className={cn(
-                    "flex h-6 w-6 items-center justify-center border-2 rounded-full transition-all duration-700",
-                    wantsHomeFitting ? "border-accent-yellow bg-accent-yellow" : "border-border group-hover:border-accent-yellow"
-                  )}>
-                    {wantsHomeFitting && <Check className="h-3 w-3 text-black stroke-[3px]" />}
-                  </div>
-                  <div>
-                    <h3 className="text-xs uppercase tracking-widest text-foreground font-bold leading-none">In-Home Fitting</h3>
-                    <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground/70 font-semibold italic">
-                      +₹999 Premium Curation
-                    </p>
-                  </div>
-                </div>
-              </div>
 
               <div className="flex flex-col gap-4">
                 <Button
                   size="lg"
                   className="w-full h-16 rounded-none bg-accent-yellow text-black hover:bg-accent-yellow/90 uppercase tracking-[0.5em] text-xs font-black shadow-lg"
                   onClick={handleAddToCart}
-                  disabled={selectedVariant.is_out_of_stock}
+                  disabled={selectedVariant?.is_out_of_stock}
                 >
-                   {selectedVariant.is_out_of_stock ? "Exhausted" : "Add to Cart"}
+                   {selectedVariant?.is_out_of_stock ? "Exhausted" : "Add to Cart"}
                 </Button>
 
-                <div className="flex gap-6">
-                   <Button variant="outline" className="flex-1 h-16 rounded-none border-border/30 uppercase tracking-[0.4em] text-xs font-bold hover:bg-black/5 hover:border-foreground transition-all">
-                      <Heart className="mr-3 h-4 w-4 font-bold" />
-                      Add to Archive
-                   </Button>
-                   <Button variant="outline" className="flex-1 h-16 rounded-none border-border/30 uppercase tracking-[0.4em] text-xs font-bold hover:bg-black/5 hover:border-foreground transition-all">
-                      <ShoppingBag className="mr-3 h-4 w-4 font-bold" />
-                      Gift Curation
-                   </Button>
-                </div>
+                 <div className="flex gap-6">
+                    <Button 
+                      variant="outline" 
+                      className={cn(
+                        "flex-1 h-16 rounded-none border-border/30 uppercase tracking-[0.4em] text-xs font-bold transition-all",
+                        isWishlisted(product.id) ? "bg-accent-yellow/5 border-accent-yellow text-accent-yellow" : "hover:bg-black/5 hover:border-foreground"
+                      )}
+                      onClick={() => {
+                        if (isWishlisted(product.id)) {
+                          removeFromWishlist(product.id);
+                        } else {
+                          addToWishlist({
+                            id: product.id,
+                            user_id: "",
+                            product_id: product.id,
+                            created_at: new Date().toISOString(),
+                            product,
+                          });
+                        }
+                      }}
+                    >
+                       <Heart className={cn("mr-3 h-4 w-4", isWishlisted(product.id) && "fill-accent-yellow")} />
+                       {isWishlisted(product.id) ? "Archived" : "Add to Archive"}
+                    </Button>
+                    <Button variant="outline" className="flex-1 h-16 rounded-none border-border/30 uppercase tracking-[0.4em] text-xs font-bold hover:bg-black/5 hover:border-foreground transition-all">
+                       <ShoppingBag className="mr-3 h-4 w-4 font-bold" />
+                       Gift Curation
+                    </Button>
+                 </div>
               </div>
             </div>
 
