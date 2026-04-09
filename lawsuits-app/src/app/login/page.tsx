@@ -36,6 +36,7 @@ function LoginForm() {
           email: formData.email,
           password: formData.password,
           options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
             data: {
               full_name: formData.fullName,
               phone: formData.phone,
