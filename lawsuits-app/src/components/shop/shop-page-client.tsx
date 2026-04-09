@@ -218,24 +218,32 @@ export function ShopPageClient() {
       <div>
         <h3 className="mb-8 text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">Category</h3>
         <div className="space-y-5">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() =>
-                handleCategoryChange(
-                  selectedCategory === cat.slug ? null : cat.slug
-                )
-              }
-              className={cn(
-                "block w-full text-left text-base tracking-widest transition-all",
-                selectedCategory === cat.slug
-                  ? "font-semibold text-black translate-x-2"
-                  : "text-zinc-500 hover:text-black"
-              )}
-            >
-              {cat.name}
-            </button>
-          ))}
+            {categories.map((cat) => {
+              const displayName = 
+                cat.name === "Men's Legal Attire" ? "MEN" :
+                cat.name === "Women's Legal Attire" ? "WOMEN" :
+                cat.name === "Package Deals" ? "COMBOS" :
+                cat.name.toUpperCase();
+                
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() =>
+                    handleCategoryChange(
+                      selectedCategory === cat.slug ? null : cat.slug
+                    )
+                  }
+                  className={cn(
+                    "block w-full text-left text-base tracking-[0.2em] font-bold transition-all",
+                    selectedCategory === cat.slug
+                      ? "text-black translate-x-2"
+                      : "text-zinc-400 hover:text-black"
+                  )}
+                >
+                  {displayName}
+                </button>
+              );
+            })}
         </div>
       </div>
 
@@ -409,7 +417,7 @@ export function ShopPageClient() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-16">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-12 sm:gap-y-16">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

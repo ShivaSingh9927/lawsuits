@@ -29,10 +29,10 @@ const navItems = [
     name: "Collection",
     href: "#",
     dropdown: [
-      { name: "Men's", href: "/shop?category=mens-legal-attire" },
-      { name: "Women's", href: "/shop?category=womens-legal-attire" },
-      { name: "Accessories", href: "/shop?category=accessories" },
-      { name: "Package", href: "/shop?category=combos" },
+      { name: "MEN", href: "/shop?category=mens-legal-attire" },
+      { name: "WOMEN", href: "/shop?category=womens-legal-attire" },
+      { name: "ACCESSORIES", href: "/shop?category=accessories" },
+      { name: "COMBOS", href: "/shop?category=combos" },
     ]
   },
   { name: "About Us", href: "/about" },
@@ -139,45 +139,34 @@ export function Header() {
                   )}
                 </div>
               ))}
-
-              {/* Advanced Search Bar */}
-              <AnimatePresence mode="wait">
-                {isSearchOpen && (
-                  <motion.form
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: "400px", opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    onSubmit={handleSearch}
-                    className="relative flex items-center ml-4"
-                  >
-                    <input
-                      autoFocus
-                      type="text"
-                      placeholder="SEARCH THE ARCHIVES..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-transparent border-b border-accent-yellow/30 py-1 text-[10px] uppercase tracking-[0.3em] font-bold text-white focus:outline-none focus:border-accent-yellow transition-colors placeholder:text-zinc-700"
-                    />
-                    <button type="submit" className="absolute right-0 text-accent-yellow hover:text-white transition-colors">
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </motion.form>
-                )}
-              </AnimatePresence>
             </nav>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-8">
-            <div className="hidden lg:flex items-center gap-6 text-[10px] uppercase tracking-[0.2em] text-zinc-500 mr-4 font-bold">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-3 w-3 text-accent-yellow" />
-                <span className="text-zinc-400">Punjab and Haryana High Court, Sector 1, Chandigarh, Punjab - 160001</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-3 w-3 text-accent-yellow" />
-                <span className="text-zinc-400">+91 7777955002</span>
-              </div>
-            </div>
+          <div className="flex items-center gap-4 md:gap-6">
+            {/* Advanced Search Bar relocated for proximity */}
+            <AnimatePresence mode="wait">
+              {isSearchOpen && (
+                <motion.form
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: "350px", opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  onSubmit={handleSearch}
+                  className="relative flex items-center overflow-hidden"
+                >
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="SEARCH COLLECTION..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-transparent border-b border-accent-yellow/30 py-1 pr-8 text-[10px] uppercase tracking-[0.3em] font-bold text-white focus:outline-none focus:border-accent-yellow transition-colors placeholder:text-zinc-800"
+                  />
+                  <button type="submit" className="absolute right-0 text-accent-yellow hover:text-white transition-colors">
+                    <Search className="h-4 w-4" />
+                  </button>
+                </motion.form>
+              )}
+            </AnimatePresence>
 
             <Button
               variant="ghost"
@@ -299,22 +288,6 @@ export function Header() {
                           )}
                         </div>
                       ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-8 p-8 border-t border-white/10 bg-white/5">
-                    <div className="space-y-6">
-                      <div className="flex items-start gap-4 text-zinc-400">
-                        <MapPin className="h-4 w-4 text-accent-yellow mt-1 shrink-0" />
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] uppercase tracking-widest font-bold text-white leading-tight">Punjab and Haryana High Court</span>
-                          <span className="text-[10px] uppercase tracking-widest font-medium text-zinc-500">Sector 1, Chandigarh, Punjab - 160001</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 text-zinc-400">
-                        <Phone className="h-4 w-4 text-accent-yellow" />
-                        <span className="text-[10px] uppercase tracking-widest font-bold text-white">+91 77779-55002</span>
-                      </div>
                     </div>
                   </div>
                 </div>

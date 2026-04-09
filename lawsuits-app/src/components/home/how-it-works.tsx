@@ -26,7 +26,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section className="bg-[#1C2333] py-32 text-white overflow-hidden">
+    <section className="bg-black py-32 text-white overflow-hidden">
       <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
         <div className="mb-24 flex flex-col items-center text-center">
           <motion.span

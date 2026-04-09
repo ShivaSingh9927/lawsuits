@@ -83,8 +83,7 @@ export function ProductCard({
 
         <button
           className={cn(
-            "absolute right-6 top-6 z-20 h-6 w-6 transition-all duration-500",
-            hovered ? "opacity-100" : "opacity-0"
+            "absolute right-6 top-6 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-black/5 shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
           )}
           onClick={(e) => {
             e.preventDefault();
@@ -102,7 +101,7 @@ export function ProductCard({
           <Heart
             className={cn(
               "h-5 w-5 transition-colors",
-              wishlisted ? "fill-black text-black" : "text-black/30 hover:text-black"
+              wishlisted ? "fill-accent-yellow text-accent-yellow scale-110" : "text-zinc-500"
             )}
           />
         </button>
@@ -124,25 +123,18 @@ export function ProductCard({
         )}
       </div>
 
-      <div className="mt-10 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div className="space-y-1.5 flex-1">
-            <Link href={`/product/${product.slug}`}>
-              <h3 className={cn(
-                "font-serif text-lg md:text-2xl tracking-tight transition-colors group-hover:text-amber-800",
-                onDark ? "text-white" : "text-black"
-              )}>
-                {product.name}
-              </h3>
-            </Link>
-            <p className={cn(
-              "text-[10px] sm:text-xs uppercase tracking-[0.3em] font-bold",
-              onDark ? "text-zinc-400" : "text-zinc-500"
+      <div className="mt-10 space-y-4">
+        <div className="space-y-2">
+          <Link href={`/product/${product.slug}`} className="block">
+            <h3 className={cn(
+              "font-serif text-lg md:text-2xl tracking-tight transition-colors group-hover:text-amber-800 uppercase line-clamp-1",
+              onDark ? "text-white" : "text-black"
             )}>
-              {product.category?.name || "Bespoke Collection"}
-            </p>
-          </div>
-          <div className="text-left sm:text-right shrink-0">
+              {product.name}
+            </h3>
+          </Link>
+          
+          <div className="flex items-baseline gap-3">
             <span className={cn(
               "font-serif text-lg md:text-xl font-light tracking-tighter",
               onDark ? "text-white" : "text-black"
@@ -150,7 +142,7 @@ export function ProductCard({
               ₹{lowestPrice.toLocaleString()}
             </span>
             {hasDiscount && (
-              <p className="text-[10px] md:text-sm text-zinc-300 line-through font-light">
+              <p className="text-[10px] md:text-sm text-zinc-400 line-through font-light">
                 ₹{product.compare_at_price?.toLocaleString()}
               </p>
             )}

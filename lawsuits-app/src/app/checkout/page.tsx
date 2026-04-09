@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ShieldCheck, CheckCircle } from "lucide-react";
+import { ChevronLeft, ShieldCheck, CheckCircle, Minus, Plus, X } from "lucide-react";
 import { useCartStore } from "@/store";
 import { supabase } from "@/lib/supabase/client";
 
@@ -61,7 +61,7 @@ const timeSlots = ["9am-12pm", "12pm-3pm", "3pm-6pm"];
 
 function CheckoutContent() {
   const router = useRouter();
-  const { items, getSubtotal, clearCart } = useCartStore();
+  const { items, getSubtotal, clearCart, updateQuantity, removeItem } = useCartStore();
   const subtotal = getSubtotal();
   const shipping = subtotal >= 5000 ? 0 : 299;
   const tax = Math.round(subtotal * 0.18);
@@ -375,15 +375,43 @@ function CheckoutContent() {
 
             <div className="mt-4 space-y-4">
               {items.map((item) => (
-                <div key={item.variant_id} className="flex gap-3">
-                  <div className="relative h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                <div key={item.variant_id} className="flex gap-4 items-start group">
+                  <div className="relative h-20 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted border border-border">
                     <Image src={item.product.images?.[0]?.url || "/placeholder-suit.jpg"} alt={item.product.name} fill className="object-cover" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.product.name}</p>
-                    <p className="text-xs text-muted-foreground">Size: {item.variant.size} × {item.quantity}</p>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-serif font-semibold">{item.product.name}</p>
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Size: {item.variant.size}</p>
+                      </div>
+                      <button 
+                        onClick={() => removeItem(item.variant_id)}
+                        className="text-muted-foreground hover:text-red-500 transition-colors p-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-2 border border-border rounded-none p-1 bg-white">
+                        <button 
+                          onClick={() => updateQuantity(item.variant_id, Math.max(1, item.quantity - 1))}
+                          className="p-1 hover:bg-zinc-100 transition-colors"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="text-xs w-4 text-center">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.variant_id, item.quantity + 1)}
+                          className="p-1 hover:bg-zinc-100 transition-colors"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <p className="text-sm font-bold">₹{(item.variant.price * item.quantity).toLocaleString()}</p>
+                    </div>
                   </div>
-                  <p className="text-sm font-semibold">₹{(item.variant.price * item.quantity).toLocaleString()}</p>
                 </div>
               ))}
             </div>

@@ -14,9 +14,50 @@ export function FeaturedProducts() {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const res = await fetch("/api/products?featured=true");
-        const data = await res.json();
-        setFeaturedProducts(data.products || []);
+        // Fetch featured products first
+        let res = await fetch("/api/products?featured=true&limit=20");
+        let data = await res.json();
+        let products = data.products || [];
+
+        // If we have few featured products or want more diversity, fetch more and mix
+        if (products.length < 4) {
+          const resAll = await fetch("/api/products?limit=50");
+          const dataAll = await resAll.json();
+          const allProducts = dataAll.products || [];
+          
+          // Use a Map to ensure category diversity
+          const categoryMap = new Map();
+          
+          // First add existing featured products
+          products.forEach((p: Product) => {
+            if (p.category_id) categoryMap.set(p.category_id, [...(categoryMap.get(p.category_id) || []), p]);
+          });
+
+          // Then add from all products to fill gaps
+          allProducts.forEach((p: Product) => {
+            if (p.category_id && !categoryMap.has(p.category_id)) {
+              categoryMap.set(p.category_id, [p]);
+            } else if (p.category_id) {
+              const list = categoryMap.get(p.category_id);
+              if (list.length < 2) list.push(p);
+            }
+          });
+
+          // Flatten and pick top products
+          const diverseList: Product[] = [];
+          const iterators = Array.from(categoryMap.values());
+          let i = 0;
+          while (diverseList.length < 12 && diverseList.length < allProducts.length + products.length) {
+             const list = iterators[i % iterators.length];
+             const item = list.shift();
+             if (item) diverseList.push(item);
+             i++;
+             if (i > 100) break; // safety
+          }
+          products = diverseList;
+        }
+
+        setFeaturedProducts(products);
       } catch (error) {
         console.error("Error fetching featured products:", error);
       } finally {
@@ -63,7 +104,7 @@ export function FeaturedProducts() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
-            className="font-serif text-3xl font-light tracking-tight sm:text-6xl text-white"
+            className="font-serif text-3xl font-light tracking-tight sm:text-6xl text-white uppercase"
           >
             BEST <span className="italic">PRODUCTS</span>
           </motion.h2>
@@ -72,21 +113,28 @@ export function FeaturedProducts() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.4 }}
-            className="max-w-2xl text-sm font-light leading-relaxed text-white/90"
+            className="max-w-2xl text-[10px] uppercase tracking-[0.3em] leading-relaxed text-white/50"
           >
             A collection of our most distinguished silhouettes, 
             handcrafted for the modern advocate who demands nothing less than perfection.
           </motion.p>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-6 gap-y-16 md:grid-cols-2 lg:grid-cols-4 md:gap-x-12 md:gap-y-24">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-16 md:grid-cols-3 lg:grid-cols-4 md:gap-x-12 md:gap-y-24">
           {featuredProducts.length > 0 ? (
-            featuredProducts.slice(0, 8).map((product) => (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
-                onDark={true}
-              />
+            featuredProducts.slice(0, 4).map((product, idx) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+              >
+                <ProductCard 
+                  product={product} 
+                  onDark={true}
+                />
+              </motion.div>
             ))
           ) : (
             <div className="col-span-full py-20 text-center text-zinc-500 font-light italic opacity-50">

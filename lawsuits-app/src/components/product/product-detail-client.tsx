@@ -325,7 +325,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             </div>
 
             {/* Main Stage */}
-            <div className="relative aspect-[3/4] flex-1 overflow-hidden bg-[#F5F3F1] shadow-2xl rounded-sm">
+            <div className="relative aspect-[3/4] flex-1 overflow-hidden bg-[#F5F3F1] shadow-2xl rounded-sm group/main">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={selectedImage}
@@ -345,6 +345,32 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   />
                 </motion.div>
               </AnimatePresence>
+
+              {/* Persistent Wishlist Heart on Main Image */}
+              <button
+                className="absolute right-6 top-6 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-black/5 shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (isWishlisted(product.id)) {
+                    removeFromWishlist(product.id);
+                  } else {
+                    addToWishlist({
+                      id: product.id,
+                      user_id: "",
+                      product_id: product.id,
+                      created_at: new Date().toISOString(),
+                      product,
+                    });
+                  }
+                }}
+              >
+                <Heart
+                  className={cn(
+                    "h-5 w-5 transition-colors",
+                    isWishlisted(product.id) ? "fill-accent-yellow text-accent-yellow scale-110" : "text-zinc-400"
+                  )}
+                />
+              </button>
             </div>
           </div>
 
@@ -394,16 +420,14 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 )}
               </div>
               
-              <div className="mt-6 flex items-center gap-6 text-[10px] uppercase tracking-widest text-zinc-400 font-bold border-t border-zinc-100 pt-6">
-                 <div className="flex items-center gap-2">
-                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                   <span>Available: <span className="text-foreground">{selectedVariant?.stock_quantity || 5}</span></span>
-                 </div>
-                 <span className="h-3 w-[1px] bg-zinc-200" />
-                 <span>Sold: <span className="text-foreground">{(product.id.charCodeAt(0) + (product.id.charCodeAt(product.id.length-1) || 0)) % 40 + 15}</span></span>
-                 <span className="h-3 w-[1px] bg-zinc-200" />
-                 <span className="text-accent-yellow">Limited Edition</span>
-              </div>
+              {(selectedVariant?.stock_quantity || 0) <= 3 && (
+                <div className="mt-6 flex items-center gap-6 text-[10px] uppercase tracking-widest text-zinc-400 font-bold border-t border-zinc-100 pt-6">
+                   <div className="flex items-center gap-2">
+                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                     <span>Available: <span className="text-foreground">{selectedVariant?.stock_quantity}</span></span>
+                   </div>
+                </div>
+              )}
             </motion.div>
 
             <Separator className="bg-border/30" />
@@ -603,36 +627,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 >
                    {selectedVariant?.is_out_of_stock ? "Exhausted" : "Add to Cart"}
                 </Button>
-
-                 <div className="flex gap-6">
-                    <Button 
-                      variant="outline" 
-                      className={cn(
-                        "flex-1 h-16 rounded-none border-border/30 uppercase tracking-[0.4em] text-xs font-bold transition-all",
-                        isWishlisted(product.id) ? "bg-accent-yellow/5 border-accent-yellow text-accent-yellow" : "hover:bg-black/5 hover:border-foreground"
-                      )}
-                      onClick={() => {
-                        if (isWishlisted(product.id)) {
-                          removeFromWishlist(product.id);
-                        } else {
-                          addToWishlist({
-                            id: product.id,
-                            user_id: "",
-                            product_id: product.id,
-                            created_at: new Date().toISOString(),
-                            product,
-                          });
-                        }
-                      }}
-                    >
-                       <Heart className={cn("mr-3 h-4 w-4", isWishlisted(product.id) && "fill-accent-yellow")} />
-                       {isWishlisted(product.id) ? "Archived" : "Add to Archive"}
-                    </Button>
-                    <Button variant="outline" className="flex-1 h-16 rounded-none border-border/30 uppercase tracking-[0.4em] text-xs font-bold hover:bg-black/5 hover:border-foreground transition-all">
-                       <ShoppingBag className="mr-3 h-4 w-4 font-bold" />
-                       Gift Curation
-                    </Button>
-                 </div>
               </div>
             </div>
 
@@ -651,12 +645,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                     className="rounded-none border-b-2 border-transparent px-2 pb-6 text-[10px] sm:text-sm uppercase tracking-[0.4em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-bold"
                   >
                     Textile
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="reviews" 
-                    className="rounded-none border-b-2 border-transparent px-2 pb-6 text-[10px] sm:text-sm uppercase tracking-[0.4em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-bold"
-                  >
-                    Legacy
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -680,14 +668,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   Crafted with precision from <span className="text-black font-bold underline underline-offset-4 decoration-accent-yellow/30">{product.fabric}</span>. This selection represents the pinnacle of 
                   textile engineering, offering a natural drape that matures with the wearer over generations.
                 </p>
-              </TabsContent>
-               <TabsContent value="reviews" className="mt-12">
-                <div className="space-y-6">
-                    <p className="text-base leading-loose tracking-wide text-zinc-800 font-medium border-l-2 border-accent-yellow/40 pl-6 italic">
-                      "The attention to detail in the canvas lining is unparalleled. It feels like a second skin rather than a suit."
-                    </p>
-                    <p className="text-xs uppercase tracking-widest text-zinc-500 font-black">— Patron Recommendation</p>
-                </div>
               </TabsContent>
             </Tabs>
           </div>

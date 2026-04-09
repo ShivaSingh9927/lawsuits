@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { ProductCard } from "@/components/product/product-card";
 import { Product } from "@/types";
 import { ArrowRight } from "lucide-react";
@@ -15,7 +16,7 @@ export function ComboSection() {
   useEffect(() => {
     const fetchCombos = async () => {
       try {
-        // Fetch all products and filter for combos (SKU starting with TDO-PKG)
+        // Fetch products and filter for combos
         const res = await fetch("/api/products?limit=50");
         const data = await res.json();
         const filtered = (data.products || []).filter((p: Product) => 
@@ -57,40 +58,71 @@ export function ComboSection() {
   if (combos.length === 0) return null;
 
   return (
-    <section className="bg-black py-32 overflow-hidden">
+    <section className="bg-black py-32 overflow-hidden border-y border-white/5">
       <div className="mx-auto max-w-screen-2xl px-6 sm:px-10 lg:px-32">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-24">
-          <div className="max-w-3xl space-y-8">
-             <div className="flex items-center gap-4">
-                <span className="h-[1px] w-12 bg-accent-yellow/40" />
-                <span className="text-sm uppercase tracking-[0.5em] text-accent-yellow font-black">Curated Ensembles</span>
-             </div>
-             <h2 className="font-serif text-5xl sm:text-7xl lg:text-8xl text-white font-light tracking-tight leading-[1.1]">
-                Professional <br />
-                <span className="italic text-accent-yellow/90">Combos</span>
-             </h2>
-             <p className="text-lg text-zinc-100 font-medium max-w-xl leading-relaxed">
-                Elevate your presence with our meticulously paired multi-piece sets. 
-                Designed for maximum impact and seamless coordination.
-             </p>
-          </div>
-          <Link href="/shop?category=combos" className="group flex items-center gap-6 text-[11px] uppercase tracking-[0.5em] text-white font-black transition-all hover:text-accent-yellow">
-             Explore All Packages
-             <div className="relative flex h-12 w-12 items-center justify-center border border-white/20 rounded-full transition-all duration-500 group-hover:border-accent-yellow group-hover:bg-accent-yellow">
-                <ArrowRight className="h-4 w-4 transition-transform duration-500 group-hover:text-black group-hover:translate-x-1 text-white" />
-             </div>
-          </Link>
+        <div className="mb-24 flex flex-col items-center text-center space-y-8">
+           <motion.div 
+             initial={{ opacity: 0, y: 10 }}
+             whileInView={{ opacity: 1, y: 0 }}
+             viewport={{ once: true }}
+             className="flex flex-col items-center gap-4"
+           >
+              <span className="text-sm uppercase tracking-[0.4em] text-accent-yellow bg-white/5 px-6 py-2 font-semibold">CURATED ENSEMBLES</span>
+           </motion.div>
+           
+           <motion.h2 
+             initial={{ opacity: 0, y: 20 }}
+             whileInView={{ opacity: 1, y: 0 }}
+             viewport={{ once: true }}
+             transition={{ duration: 1 }}
+             className="font-serif text-4xl sm:text-4xl lg:text-6xl text-white font-light tracking-tight leading-[1.1] uppercase"
+           >
+              PROFESSIONAL <span className="italic text-accent-yellow/90">COMBOS</span>
+           </motion.h2>
+
+           <motion.p 
+             initial={{ opacity: 0 }}
+             whileInView={{ opacity: 1 }}
+             viewport={{ once: true }}
+             transition={{ delay: 0.4 }}
+             className="text-base sm:text-lg text-zinc-100/70 font-light max-w-2xl leading-relaxed uppercase tracking-[0.2em] text-xs sm:text-sm"
+           >
+              Elevate your presence with our meticulously paired multi-piece sets. 
+              Designed for maximum impact and seamless coordination within the court.
+           </motion.p>
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-16 md:grid-cols-2 lg:grid-cols-4 md:gap-x-12 md:gap-y-24">
-          {combos.map((product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              onDark={true}
-            />
+          {combos.map((product, index) => (
+            <motion.div
+              key={product.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <ProductCard 
+                product={product} 
+                onDark={true}
+              />
+            </motion.div>
           ))}
         </div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-40 flex justify-center"
+        >
+          <Link href="/shop?category=combos" className="group relative px-12 py-5 text-[11px] font-black uppercase tracking-[0.5em] text-black transition-all">
+            <div className="absolute inset-0 bg-accent-yellow rounded-none transition-transform duration-300 group-hover:scale-105" />
+            <span className="relative z-10 flex items-center gap-4">
+               EXPLORE ALL PACKAGES
+               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-2" />
+            </span>
+          </Link>
+        </motion.div>
       </div>
     </section>
   );

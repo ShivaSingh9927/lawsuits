@@ -161,7 +161,11 @@ export function CartSidebar() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   Shipping & taxes calculated at checkout
                 </p>
-                <Button className="mt-4 w-full h-14 rounded-none bg-black text-white hover:bg-black/90 uppercase tracking-[0.3em] text-[10px] font-bold" asChild>
+                <Button 
+                  className="mt-4 w-full h-14 rounded-none bg-black text-white hover:bg-black/90 uppercase tracking-[0.3em] text-[10px] font-bold" 
+                  asChild
+                  onClick={toggleCart}
+                >
                   <Link href="/checkout">
                     Proceed to Checkout
                     <ArrowRight className="ml-2 h-4 w-4" />
