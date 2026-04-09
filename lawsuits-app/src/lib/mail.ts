@@ -83,13 +83,46 @@ export async function sendFittingRequest(data: FittingEmailData) {
       from: `"TDO Fitting Alert" <${fromAddress}>`,
       to: fromAddress,
       subject: `📅 NEW FITTING REQUEST - ${data.name.toUpperCase()}`,
-      html: `<h2>New Fitting Inquiry</h2><p><strong>Name:</strong> ${data.name}</p><p><strong>Phone:</strong> ${data.phone}</p><p><strong>Date:</strong> ${data.date} (${data.timeSlot})</p>`
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; color: #333; border: 1px solid #eee;">
+          <h2 style="border-bottom: 2px solid #D4AF37; padding-bottom: 10px; color: #000;">New Fitting Inquiry</h2>
+          <p><strong>Counsel Name:</strong> ${data.name}</p>
+          <p><strong>Phone:</strong> ${data.phone}</p>
+          <p><strong>Email:</strong> ${data.email}</p>
+          <p><strong>Address:</strong> ${data.address || "Not Provided"}</p>
+          <p><strong>Preferred Schedule:</strong> ${data.date} (${data.timeSlot})</p>
+          <div style="margin-top: 20px; padding: 15px; background: #fdfcfb; border-left: 4px solid #D4AF37;">
+            <p style="margin-top: 0; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Requested Products & Sizes:</p>
+            <p style="margin-bottom: 0;">${data.category}</p>
+          </div>
+        </div>
+      `
     },
     {
       from: `"The Dress Outfitters" <${fromAddress}>`,
       to: data.email,
       subject: `Fitting Request Received - The Dress Outfitters`,
-      html: `<div style="font-family: serif; padding: 20px; border: 1px solid #ccc;"><h1>The Dress Outfitters</h1><p>Dear ${data.name}, we have received your fitting request for ${data.date}.</p></div>`
+      html: `
+        <div style="font-family: serif; padding: 40px; text-align: center; border: 1px solid #eee; max-width: 600px; margin: 0 auto;">
+          <h1 style="font-size: 24px; letter-spacing: 4px; color: #000;">THE DRESS OUTFITTERS</h1>
+          <div style="margin: 30px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 20px 0;">
+            <p style="font-size: 18px; font-style: italic; color: #333;">Dear ${data.name},</p>
+            <p style="font-size: 15px; color: #666; line-height: 1.6;">
+              We have received your request for an in-home trial session on <strong>${data.date}</strong> during the <strong>${data.timeSlot}</strong> window.
+            </p>
+            <p style="font-size: 14px; color: #888; margin-top: 10px;">
+              Our Master Tailor will reach out to you shortly at ${data.phone} to finalize the logistics.
+            </p>
+          </div>
+          <div style="text-align: left; padding: 20px; background: #fafafa;">
+            <p style="font-[sans-serif]; font-size: 10px; uppercase; tracking: 2px; color: #999; margin-bottom: 10px;">YOUR SELECTION:</p>
+            <p style="font-size: 13px; color: #444;">${data.category}</p>
+          </div>
+          <div style="margin-top: 40px;">
+            <p style="font-size: 11px; color: #bbb; letter-spacing: 3px; text-transform: uppercase;">Established Excellence</p>
+          </div>
+        </div>
+      `
     }
   ];
 

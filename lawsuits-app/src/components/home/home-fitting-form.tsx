@@ -94,7 +94,8 @@ export function HomeFittingForm() {
           ...formData,
           category: filledProducts.map(p => {
              const prod = allProducts.find(ap => ap.id === p.productId);
-             return `${prod?.name} (Size: ${p.size || "N/A"})`;
+             const productName = prod?.name || "SELECTED PRODUCT";
+             return `${productName.toUpperCase()} (SIZE: ${(p.size || "N/A").toUpperCase()})`;
           }).join(", "),
         }),
       });
