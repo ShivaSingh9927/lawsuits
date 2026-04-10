@@ -303,48 +303,22 @@ export function ShopPageClient() {
 
   return (
     <main className="bg-[#FDFCFB] min-h-screen">
-      <div className="mx-auto max-w-[1800px] px-8 lg:px-12 pt-24 pb-10">
+      <div className="mx-auto max-w-[1800px] px-8 lg:px-12 pt-40 pb-10">
         {/* Cinematic Header */}
-        <div className="mb-0 flex flex-col items-center text-center space-y-6">
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-[10px] uppercase tracking-[0.6em] text-accent-yellow font-bold"
-          >
-            The Collection
-          </motion.p>
+        <div className="mb-12 flex flex-col items-center text-center space-y-6">
           <motion.h1
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="font-serif text-6xl font-light tracking-tight md:text-8xl"
+            className="font-serif text-4xl font-light tracking-normal md:text-6xl"
           >
             {firstPart} <span className="italic text-accent-yellow">{lastWord}</span>
           </motion.h1>
         </div>
 
         {/* Toolbar */}
-        <div className="mb-20 flex flex-wrap items-center justify-between gap-12 border-y border-border/40 py-10">
+        <div className="mb-12 flex flex-wrap items-center justify-between gap-12 border-y border-border/40 py-6">
           <div className="flex items-center gap-16">
-            <Sheet>
-              <SheetTrigger
-                asChild
-              >
-                <button className="flex items-center gap-4 text-sm uppercase tracking-[0.4em] transition-opacity hover:opacity-70 font-semibold">
-                  <SlidersHorizontal className="h-5 w-5 stroke-[1px]" />
-                  Filter Archives
-                </button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[400px] bg-[#FDFCFB]">
-                <SheetHeader className="mb-12 text-left">
-                  <SheetTitle className="font-serif text-4xl font-light">Refine</SheetTitle>
-                </SheetHeader>
-                <FiltersContent />
-              </SheetContent>
-            </Sheet>
-
-            <div className="hidden h-6 w-[1px] bg-border/40 md:block" />
-
             <div className="hidden items-center gap-6 md:flex">
                 {activeFiltersCount > 0 && (
                   <>

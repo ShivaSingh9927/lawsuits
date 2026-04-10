@@ -100,7 +100,7 @@ export function CartSidebar() {
                       </div>
                       <div className="flex flex-1 flex-col justify-between">
                         <div>
-                          <h3 className="text-sm font-serif text-black">{item.product.name}</h3>
+                          <h3 className="text-sm font-serif text-black line-clamp-2">{item.product.name}</h3>
                           <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
                             Size: {item.variant.size}
                           </p>

@@ -143,22 +143,162 @@ export async function sendOrderConfirmation(to: string, data: OrderEmailData) {
   const fromAddress = process.env.EMAIL || process.env.SMTP_USER || "thedressoutfitters@gmail.com";
 
   const adminMailOptions = {
-    from: `"Store Alert" <${fromAddress}>`,
+    from: `"TDO Store Alert" <${fromAddress}>`,
     to: fromAddress,
-    subject: `🔔 NEW ORDER - #${data.orderNumber}`,
-    html: `<h2>New Order Received</h2><p>Customer: ${data.customerName}</p><p>Total: ₹${data.totalAmount}</p>`
+    subject: `🔔 NEW ORDER RECEIVED - #${data.orderNumber}`,
+    html: `
+      <div style="font-family: sans-serif; padding: 20px; color: #333; border: 1px solid #eee;">
+        <h2 style="border-bottom: 2px solid #000; padding-bottom: 10px; color: #000;">Management Alert: New Order</h2>
+        <p><strong>Order Number:</strong> #${data.orderNumber}</p>
+        <p><strong>Customer:</strong> ${data.customerName}</p>
+        <p><strong>Total Amount:</strong> ₹${data.totalAmount.toLocaleString()}</p>
+        <p><strong>Destination:</strong> ${data.shippingAddress}</p>
+        <div style="margin-top: 20px;">
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders" style="background: #000; color: #fff; padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: bold; text-transform: uppercase;">View in Dashboard</a>
+        </div>
+      </div>
+    `
   };
+
+  const itemsHtml = data.items.map(item => `
+    <tr>
+      <td style="padding: 15px 0; border-bottom: 1px solid #f0f0f0;">
+        <div style="font-size: 14px; font-weight: bold; color: #000; text-transform: uppercase; letter-spacing: 1px;">${item.product_name}</div>
+        <div style="font-size: 11px; color: #999; margin-top: 4px; text-transform: uppercase;">Size: ${item.variant_size}</div>
+      </td>
+      <td style="padding: 15px 0; border-bottom: 1px solid #f0f0f0; text-align: center; color: #666; font-size: 14px;">x${item.quantity}</td>
+      <td style="padding: 15px 0; border-bottom: 1px solid #f0f0f0; text-align: right; color: #000; font-weight: bold; font-size: 14px;">₹${(item.unit_price * item.quantity).toLocaleString()}</td>
+    </tr>
+  `).join('');
 
   const userMailOptions = {
     from: `"The Dress Outfitters" <${fromAddress}>`,
     to: to,
-    subject: `Order Confirmed: #${data.orderNumber} - The Dress Outfitters`,
-    html: `<h2>Confirmation of Order</h2><p>Dear ${data.customerName}, your order #${data.orderNumber} is confirmed.</p>`
+    subject: `Order Confirmation: #${data.orderNumber} - The Dress Outfitters`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;700&display=swap');
+        </style>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #fdfcfb; font-family: 'Inter', sans-serif;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#fdfcfb">
+          <tr>
+            <td align="center" style="padding: 40px 0;">
+              <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border: 1px solid #e8e4e1; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                <!-- Header -->
+                <tr>
+                  <td align="center" style="padding: 60px 40px 40px 40px; border-bottom: 1px solid #f0f0f0;">
+                    <h1 style="font-family: 'Playfair Display', serif; font-size: 28px; letter-spacing: 8px; color: #000; margin: 0; font-weight: 400; text-transform: uppercase;">The Dress Outfitters</h1>
+                    <div style="margin-top: 15px; font-size: 10px; letter-spacing: 4px; color: #999; text-transform: uppercase; font-weight: 700;">Established Excellence</div>
+                  </td>
+                </tr>
+
+                <!-- Intro -->
+                <tr>
+                  <td style="padding: 40px 40px 20px 40px;">
+                    <h2 style="font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; font-weight: 400; color: #333; margin: 0;">Dear ${data.customerName},</h2>
+                    <p style="font-size: 14px; line-height: 1.6; color: #666; margin-top: 20px;">
+                      Your commission has been successfully received and is now being processed by our master tailors. We are honored to be part of your professional wardrobe.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Summary Header -->
+                <tr>
+                  <td style="padding: 20px 40px;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background: #fafafa; padding: 20px;">
+                      <tr>
+                        <td>
+                          <div style="font-size: 10px; font-weight: bold; color: #999; text-transform: uppercase; letter-spacing: 2px;">Order Number</div>
+                          <div style="font-size: 16px; color: #000; font-weight: bold; margin-top: 5px;">#${data.orderNumber}</div>
+                        </td>
+                        <td align="right">
+                          <div style="font-size: 10px; font-weight: bold; color: #999; text-transform: uppercase; letter-spacing: 2px;">Date</div>
+                          <div style="font-size: 16px; color: #000; font-weight: bold; margin-top: 5px;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Items Table -->
+                <tr>
+                  <td style="padding: 20px 40px;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <thead>
+                        <tr>
+                          <th align="left" style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #999; padding-bottom: 15px; border-bottom: 2px solid #000;">Item</th>
+                          <th align="center" style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #999; padding-bottom: 15px; border-bottom: 2px solid #000;">Qty</th>
+                          <th align="right" style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #999; padding-bottom: 15px; border-bottom: 2px solid #000;">Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${itemsHtml}
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Totals -->
+                <tr>
+                  <td style="padding: 20px 40px;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td align="right">
+                          <table width="200" border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                              <td style="padding: 5px 0; font-size: 14px; color: #666;">Handling & Delivery</td>
+                              <td align="right" style="padding: 5px 0; font-size: 14px; color: #000;">Complimentary</td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 15px 0; font-size: 18px; font-weight: bold; color: #000; border-top: 1px solid #000;">Total</td>
+                              <td align="right" style="padding: 15px 0; font-size: 18px; font-weight: bold; color: #D4AF37; border-top: 1px solid #000;">₹${data.totalAmount.toLocaleString()}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Shipping Info -->
+                <tr>
+                  <td style="padding: 20px 40px 40px 40px;">
+                    <div style="font-size: 10px; font-weight: bold; color: #999; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Destination</div>
+                    <div style="font-size: 13px; color: #666; line-height: 1.6; background: #fafafa; padding: 20px; border-left: 4px solid #D4AF37;">
+                      ${data.shippingAddress}
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td align="center" style="padding: 40px; background-color: #000; color: #ffffff;">
+                    <div style="font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: #666; margin-bottom: 20px;">Questions Regarding Your Order?</div>
+                    <div style="font-size: 12px; color: #fff;">
+                      Contact our concierge at <a href="mailto:support@thedressoutfitters.com" style="color: #D4AF37; text-decoration: none;">support@thedressoutfitters.com</a>
+                    </div>
+                    <div style="margin-top: 30px; font-size: 9px; color: #444; letter-spacing: 1px;">
+                      &copy; ${new Date().getFullYear()} THE DRESS OUTFITTERS. ALL RIGHTS RESERVED.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `
   };
 
   try {
-    await transporter.sendMail(adminMailOptions);
-    await transporter.sendMail(userMailOptions);
+    const adminResult = await transporter.sendMail(adminMailOptions);
+    const userResult = await transporter.sendMail(userMailOptions);
+    console.log("Emails sent successfully:", { admin: adminResult.messageId, user: userResult.messageId });
     return { success: true };
   } catch (err: any) {
     console.error("Order Email Error:", err);

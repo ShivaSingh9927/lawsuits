@@ -67,7 +67,7 @@ export function ComboSection() {
              viewport={{ once: true }}
              className="flex flex-col items-center gap-4"
            >
-              <span className="text-sm uppercase tracking-[0.4em] text-accent-yellow bg-white/5 px-6 py-2 font-semibold">CURATED ENSEMBLES</span>
+              {/* <span className="text-sm uppercase tracking-[0.4em] text-accent-yellow bg-white/5 px-6 py-2 font-semibold">CURATED ENSEMBLES</span> */}
            </motion.div>
            
            <motion.h2 

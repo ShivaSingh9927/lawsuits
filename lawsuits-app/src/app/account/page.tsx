@@ -11,8 +11,11 @@ import { cn } from "@/lib/utils";
 import { User, Ruler, Package, Heart, LogOut, ChevronRight, Loader2, CheckCircle2, AlertCircle, ShoppingBag, Trash2 } from "lucide-react";
 import { useWishlistStore } from "@/store";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function AccountPage() {
+  const router = useRouter();
   const [measurements, setMeasurements] = useState<any>({
     neck: "",
     chest: "",
@@ -24,13 +27,27 @@ export default function AccountPage() {
     notes: ""
   });
   const { items: wishlistItems, removeItem: removeFromWishlist } = useWishlistStore();
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    phone: ""
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    const fetchMeasurements = async () => {
+    const fetchUserData = async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setProfile({
+            name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || "",
+            email: session.user.email || "",
+            phone: session.user.user_metadata?.phone || ""
+          });
+        }
+
         const res = await fetch("/api/measurements");
         if (res.ok) {
           const data = await res.json();
@@ -39,14 +56,38 @@ export default function AccountPage() {
           }
         }
       } catch (error) {
-        console.error("Error fetching measurements:", error);
+        console.error("Error fetching user data/measurements:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMeasurements();
+    fetchUserData();
   }, []);
+
+  const handleProfileChange = (field: string, value: string) => {
+    setProfile(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { 
+          full_name: profile.name,
+          phone: profile.phone
+        }
+      });
+
+      if (error) throw error;
+      setMessage({ type: "success", text: "Profile updated successfully." });
+    } catch (error: any) {
+      setMessage({ type: "error", text: error.message || "Failed to update profile." });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSaveMeasurements = async () => {
     setSaving(true);
@@ -75,17 +116,32 @@ export default function AccountPage() {
     setMeasurements((prev: any) => ({ ...prev, [field]: value }));
   };
 
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   return (
-    <div className="bg-[#FDFCFB] min-h-screen pt-40 pb-20 px-4 sm:px-6 lg:px-8">
+    <div className="bg-[#FDFCFB] min-h-screen pt-32 pb-20 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-black tracking-tight underline underline-offset-8 decoration-accent-yellow/30">The Lawyer&apos;s Vault</h1>
-          <p className="mt-2 text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-bold">
-            Welcome back, Counselor
-          </p>
+        <div className="space-y-4">
+          <h1 className="font-serif text-4xl lg:text-5xl font-light text-black tracking-tight uppercase leading-tight">
+            Welcome Back, <span className="italic font-normal text-accent-yellow">{profile.name.split(' ')[0] || 'Counselor'}</span>
+          </h1>
+          <div className="h-[2px] w-16 bg-accent-yellow/40" />
         </div>
-        <Button variant="outline" className="border-black/10 text-black hover:bg-black/5 uppercase tracking-widest text-[10px] font-black h-12 px-6">
+        <Button 
+          onClick={handleSignOut}
+          variant="outline" 
+          className="border-black/10 text-black hover:bg-black/5 uppercase tracking-widest text-[10px] font-black h-12 px-6"
+        >
           <LogOut className="mr-3 h-4 w-4" />
           Sign Out
         </Button>
@@ -114,7 +170,7 @@ export default function AccountPage() {
         <TabsContent value="measurements" className="mt-6">
           <div className="rounded-none border border-black/5 bg-white p-8 md:p-12 shadow-sm">
             <div className="mb-10 flex items-center justify-between">
-              <h2 className="font-serif text-2xl font-light text-black">
+              <h2 className="font-serif text-2xl font-light text-black uppercase">
                 Measurement Profile
               </h2>
               <Badge className={cn(
@@ -143,8 +199,8 @@ export default function AccountPage() {
                     { label: "Sleeve", key: "sleeve" },
                     { label: "Shoulder", key: "shoulder" },
                   ].map(({ label, key }) => (
-                    <div key={label}>
-                      <Label htmlFor={key}>{label} (cm)</Label>
+                    <div key={label} className="space-y-2">
+                      <Label htmlFor={key} className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">{label} (cm)</Label>
                       <Input 
                         id={key}
                         type="number" 
@@ -152,17 +208,17 @@ export default function AccountPage() {
                         placeholder={`Enter ${label.toLowerCase()}`} 
                         value={measurements[key] || ""}
                         onChange={(e) => handleInputChange(key, e.target.value)}
-                        className="rounded-none border-black/10 focus:border-accent-yellow transition-colors mt-1"
+                        className="rounded-none border-0 border-b border-black/10 focus:border-accent-yellow transition-colors bg-transparent px-0"
                       />
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-8">
-                  <Label htmlFor="notes">Professional Tailoring Notes</Label>
+                <div className="mt-12">
+                  <Label htmlFor="notes" className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Professional Tailoring Notes</Label>
                   <textarea
                     id="notes"
-                    className="mt-2 w-full rounded-none border border-black/10 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-accent-yellow transition-all"
+                    className="mt-4 w-full rounded-none border-0 border-b border-black/10 bg-transparent px-0 py-3 text-sm focus:outline-none focus:border-accent-yellow transition-all"
                     rows={4}
                     placeholder="Any specific preferences or notes for the tailor..."
                     value={measurements.notes || ""}
@@ -172,7 +228,7 @@ export default function AccountPage() {
 
                 {message && (
                   <div className={cn(
-                    "mt-8 p-4 flex items-center gap-3 text-xs uppercase tracking-widest font-bold",
+                    "mt-8 p-4 flex items-center gap-3 text-[10px] uppercase tracking-widest font-bold",
                     message.type === "success" ? "bg-green-50 text-green-700 border border-green-100" : "bg-red-50 text-red-700 border border-red-100"
                   )}>
                     {message.type === "success" ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -198,11 +254,11 @@ export default function AccountPage() {
         </TabsContent>
 
         <TabsContent value="orders" className="mt-6">
-          <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg border border-dashed border-border/40 bg-black/[0.01]">
+          <div className="flex flex-col items-center justify-center py-24 text-center rounded-none border-border/40 bg-zinc-50 border">
             <Package className="h-12 w-12 text-muted-foreground/20 mb-6" />
-            <h2 className="font-serif text-2xl font-light italic">Your Order Archive</h2>
-            <p className="mt-2 text-sm text-muted-foreground/60 uppercase tracking-widest max-w-xs">Access your complete history of commissions and tailoring.</p>
-            <Button className="mt-10 bg-black text-white hover:bg-black/9 group rounded-none h-14 px-10 uppercase tracking-[0.3em] text-[11px] font-black" asChild>
+            <h2 className="font-serif text-2xl font-light italic text-black">Your Order Archive</h2>
+            <p className="mt-2 text-[10px] text-muted-foreground/60 uppercase tracking-widest max-w-xs font-bold leading-relaxed">Access your complete history of commissions and tailoring.</p>
+            <Button className="mt-10 bg-black text-white hover:bg-zinc-800 group rounded-none h-14 px-10 uppercase tracking-[0.3em] text-[11px] font-black" asChild>
               <Link href="/account/orders">
                 View Detailed History
                 <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -214,7 +270,7 @@ export default function AccountPage() {
         <TabsContent value="wishlist" className="mt-6">
           <div className="rounded-none border border-black/5 bg-white p-8 md:p-12 shadow-sm min-h-[400px]">
             <div className="mb-10 flex items-center justify-between">
-              <h2 className="font-serif text-2xl font-light text-black">
+              <h2 className="font-serif text-2xl font-light text-black uppercase">
                 Your Selection Archive
               </h2>
               <Badge className="bg-accent-yellow/10 text-accent-yellow rounded-none border-none uppercase tracking-widest text-[9px] font-black px-3 py-1">
@@ -246,7 +302,7 @@ export default function AccountPage() {
                       />
                     </Link>
                     <div className="p-6">
-                      <h4 className="font-serif text-lg font-light tracking-tight text-black line-clamp-1">{item.product.name}</h4>
+                      <h4 className="font-serif text-lg font-light tracking-tight text-black line-clamp-2">{item.product.name}</h4>
                       <div className="mt-4 flex items-center justify-between">
                         <span className="font-serif text-lg text-accent-yellow italic">₹{item.product.base_price.toLocaleString()}</span>
                         <div className="flex gap-2">
@@ -277,25 +333,64 @@ export default function AccountPage() {
         </TabsContent>
 
         <TabsContent value="profile" className="mt-6">
-          <div className="rounded-lg border border-border p-6">
-            <h2 className="mb-6 font-serif text-xl font-semibold">
+          <div className="rounded-none border border-black/5 bg-white p-8 md:p-12 shadow-sm">
+            <h2 className="mb-10 font-serif text-2xl font-light text-black uppercase">
               Profile Settings
             </h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <Label>Full Name</Label>
-                <Input placeholder="Your full name" />
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Full Name</Label>
+                <Input 
+                   value={profile.name} 
+                   onChange={(e) => handleProfileChange("name", e.target.value)}
+                   className="rounded-none border-0 border-b border-black/10 focus:border-accent-yellow transition-colors bg-transparent px-0 text-base" 
+                   placeholder="Counsel Name"
+                />
               </div>
-              <div>
-                <Label>Email</Label>
-                <Input type="email" placeholder="your@email.com" />
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Email Address</Label>
+                <Input 
+                   type="email" 
+                   value={profile.email} 
+                   readOnly
+                   className="rounded-none border-0 border-b border-black/10 transition-colors bg-zinc-50/50 px-0 text-base text-zinc-400 cursor-not-allowed" 
+                   placeholder="counsel@chambers.com"
+                />
               </div>
-              <div>
-                <Label>Phone</Label>
-                <Input type="tel" placeholder="+91 98765 43210" />
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Phone Number</Label>
+                <Input 
+                   type="tel" 
+                   value={profile.phone} 
+                   onChange={(e) => handleProfileChange("phone", e.target.value)}
+                   className="rounded-none border-0 border-b border-black/10 focus:border-accent-yellow transition-colors bg-transparent px-0 text-base" 
+                   placeholder="+91 XXXXX XXXXX"
+                />
               </div>
             </div>
-            <Button className="mt-6">Save Changes</Button>
+            
+            {message && (
+                  <div className={cn(
+                    "mt-8 p-4 flex items-center gap-3 text-[10px] uppercase tracking-widest font-bold",
+                    message.type === "success" ? "bg-green-50 text-green-700 border border-green-100" : "bg-red-50 text-red-700 border border-red-100"
+                  )}>
+                    {message.type === "success" ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                    {message.text}
+                  </div>
+            )}
+
+            <Button 
+               onClick={handleSaveProfile}
+               disabled={saving}
+               className="mt-12 bg-black text-white hover:bg-zinc-800 rounded-none h-14 px-10 uppercase tracking-[0.3em] text-[10px] font-black shadow-xl"
+            >
+               {saving ? (
+                <>
+                  <Loader2 className="mr-3 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : "Update Profile Information"}
+            </Button>
           </div>
         </TabsContent>
       </Tabs>

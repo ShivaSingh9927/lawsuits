@@ -23,6 +23,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+
 
 const navItems = [
   {
@@ -48,9 +50,37 @@ export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileCollectionOpen, setIsMobileCollectionOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const { items } = useCartStore();
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabaseClient = createClient();
+      
+      const { data } = await supabaseClient.auth.getSession();
+      setUser(data.session?.user ?? null);
+
+      const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event: any, session: any) => {
+        setUser(session?.user ?? null);
+      });
+
+      return subscription;
+    };
+
+    let subscription: { unsubscribe: () => void } | undefined;
+    
+    fetchSession().then(sub => {
+      subscription = sub;
+    });
+
+    return () => {
+      if (subscription) subscription.unsubscribe();
+    };
+  }, []);
+
 
   useEffect(() => {
     setMounted(true);
@@ -73,6 +103,13 @@ export function Header() {
     }
   };
 
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return (
     <header
       className="fixed top-0 left-0 right-0 z-50 px-6 md:px-12 py-4 bg-black border-b border-white/5"
@@ -83,14 +120,15 @@ export function Header() {
             {/* Logo */}
             <Link
               href="/"
-              className="group relative z-10 flex items-center"
+              onClick={handleLogoClick}
+              className="group relative z-10 flex items-center cursor-pointer"
             >
               <Image
                 src="/TDO-black-logo-transp-01.webp"
                 alt="THE DRESS OUTFITTERS"
                 width={180}
                 height={65}
-                className="h-12 md:h-16 w-auto invert"
+                className="h-12 md:h-16 w-auto invert brightness-0 invert"
               />
               <div className="absolute -bottom-2 left-0 h-[1px] w-0 bg-accent-yellow transition-all duration-500 group-hover:w-full" />
             </Link>
@@ -99,33 +137,33 @@ export function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-10">
               {!isSearchOpen && navItems.map((item) => (
-                <div key={item.name} className="relative group">
+                <div key={item.name} className="relative group/nav">
                   {item.dropdown ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          className={cn(
-                            "flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-bold transition-all duration-300 py-2",
-                            pathname.startsWith("/shop") ? "text-accent-yellow" : "text-zinc-400 hover:text-white"
-                          )}
-                        >
-                          {item.name}
-                          <ChevronDown className="h-3 w-3 opacity-50 group-hover:rotate-180 transition-transform" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-black border border-white/10 p-2 min-w-[200px]">
-                        {item.dropdown.map((subItem) => (
-                          <DropdownMenuItem key={subItem.name} className="p-0 !bg-transparent !focus:bg-zinc-900 cursor-pointer group/sub">
+                    <>
+                      <button
+                        className={cn(
+                          "flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-bold transition-all duration-300 py-2",
+                          pathname.startsWith("/shop") ? "text-accent-yellow" : "text-zinc-400 hover:text-white"
+                        )}
+                      >
+                        {item.name}
+                        <ChevronDown className="h-3 w-3 opacity-50 group-hover/nav:rotate-180 transition-transform" />
+                      </button>
+                      
+                      <div className="absolute top-full left-0 pt-2 opacity-0 translate-y-2 pointer-events-none group-hover/nav:opacity-100 group-hover/nav:translate-y-0 group-hover/nav:pointer-events-auto transition-all duration-300 z-50">
+                        <div className="bg-black border border-white/10 p-2 min-w-[200px] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                          {item.dropdown.map((subItem) => (
                             <Link
+                              key={subItem.name}
                               href={subItem.href}
-                              className="block w-full px-4 py-3 text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-400 transition-colors group-hover/sub:!text-white group-focus/sub:!text-white hover:!text-white"
+                              className="block w-full px-4 py-3 text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
                             >
                               {subItem.name}
                             </Link>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          ))}
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     <Link
                       href={item.href}
@@ -180,11 +218,26 @@ export function Header() {
               {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </Button>
 
-            <Link href="/account">
-              <Button variant="ghost" size="icon" className="transition-colors text-white hover:bg-white/10">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
+            {user ? (
+              <Link href="/account" className="transition-all hover:scale-110 active:scale-95">
+                <Button variant="ghost" size="icon" className="transition-colors text-white hover:bg-white/10">
+                  <User className="h-6 w-6" />
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/login" className="flex items-center">
+                <Button 
+                  className="hidden md:flex bg-accent-yellow hover:bg-white text-black text-[10px] uppercase tracking-[0.2em] font-black h-9 px-6 rounded-md border-none transition-all shadow-lg hover:shadow-accent-yellow/20"
+                >
+                  LOGIN / SIGNUP
+                </Button>
+                {/* Mobile version icon */}
+                <Button variant="ghost" size="icon" className="md:hidden transition-colors text-white hover:bg-white/10">
+                  <User className="h-6 w-6" />
+                </Button>
+              </Link>
+            )}
+
 
             <Button
               variant="ghost"

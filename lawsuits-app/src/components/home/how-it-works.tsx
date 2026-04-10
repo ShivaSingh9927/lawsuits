@@ -26,14 +26,14 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section className="bg-black py-32 text-white overflow-hidden">
+    <section className="bg-white py-32 text-black overflow-hidden border-y border-zinc-100">
       <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
         <div className="mb-24 flex flex-col items-center text-center">
           <motion.span
             initial={{ opacity: 0, letterSpacing: "0.2em" }}
             whileInView={{ opacity: 1, letterSpacing: "0.4em" }}
             viewport={{ once: true }}
-            className="mb-6 block text-sm font-semibold uppercase tracking-[0.4em] text-accent-yellow bg-accent-yellow/10 px-6 py-2"
+            className="mb-6 block text-sm font-semibold uppercase tracking-[0.4em] text-accent-yellow bg-accent-yellow/[0.05] px-6 py-2"
           >
             The Dress Outfitters
           </motion.span>
@@ -42,7 +42,7 @@ export function HowItWorks() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
-            className="font-serif text-5xl font-light tracking-tight sm:text-6xl"
+            className="font-serif text-5xl font-normal tracking-tight sm:text-6xl text-zinc-900"
           >
             How it works
           </motion.h2>
@@ -58,13 +58,13 @@ export function HowItWorks() {
               transition={{ delay: index * 0.2, duration: 1 }}
               className="flex flex-col items-center text-center"
             >
-              <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-full border border-white/10 bg-white/5 transition-transform hover:scale-110">
+              <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-full border border-zinc-100 bg-zinc-50 transition-transform hover:scale-110">
                 <step.icon className="h-12 w-12 stroke-[1px] text-accent-yellow" />
               </div>
-              <h3 className="mb-6 font-serif text-3xl font-light tracking-tight">
+              <h3 className="mb-6 font-serif text-3xl font-normal tracking-tight text-zinc-900">
                 {step.title}
               </h3>
-              <p className="text-base font-light leading-relaxed text-white/70">
+              <p className="text-base font-normal leading-relaxed text-zinc-600">
                 {step.description}
               </p>
             </motion.div>

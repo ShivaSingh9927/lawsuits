@@ -127,7 +127,7 @@ export function ProductCard({
         <div className="space-y-2">
           <Link href={`/product/${product.slug}`} className="block">
             <h3 className={cn(
-              "font-serif text-lg md:text-2xl tracking-tight transition-colors group-hover:text-amber-800 uppercase line-clamp-1",
+              "font-serif text-lg md:text-2xl tracking-tight transition-colors group-hover:text-amber-800 line-clamp-2",
               onDark ? "text-white" : "text-black"
             )}>
               {product.name}

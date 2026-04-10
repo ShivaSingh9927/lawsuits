@@ -91,14 +91,14 @@ export function FeaturedProducts() {
     <section className="bg-[#1A1512] py-32 border-y border-white/5">
       <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
         <div className="mb-20 flex flex-col items-center text-center space-y-6" id="best-products">
-          <motion.span
+          {/* <motion.span
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="mb-6 block text-sm uppercase tracking-[0.4em] text-accent-yellow bg-white/5 px-6 py-2 font-semibold"
           >
             CURATED EXCELLENCE
-          </motion.span>
+          </motion.span> */}
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

@@ -33,12 +33,10 @@ export function HomeFittingForm() {
     date: "",
     timeSlot: "",
     requestedProducts: [
-      { productId: "", size: "" },
-      { productId: "", size: "" },
-      { productId: "", size: "" },
-      { productId: "", size: "" },
-      { productId: "", size: "" },
-      { productId: "", size: "" },
+      { productId: "", size: "", unit: "IN" },
+      { productId: "", size: "", unit: "IN" },
+      { productId: "", size: "", unit: "IN" },
+      { productId: "", size: "", unit: "IN" },
     ],
   });
   
@@ -67,9 +65,21 @@ export function HomeFittingForm() {
     fetchProducts();
   }, []);
 
-  const handleProductChange = (index: number, field: "productId" | "size", value: string) => {
+  const addProductRow = () => {
+    setFormData({
+      ...formData,
+      requestedProducts: [...formData.requestedProducts, { productId: "", size: "", unit: "IN" }]
+    });
+  };
+
+  const removeProductRow = (index: number) => {
+    const updatedProducts = formData.requestedProducts.filter((_, i) => i !== index);
+    setFormData({ ...formData, requestedProducts: updatedProducts });
+  };
+
+  const handleProductChange = (idx: number, field: string, value: string) => {
     const updatedProducts = [...formData.requestedProducts];
-    updatedProducts[index] = { ...updatedProducts[index], [field]: value };
+    updatedProducts[idx] = { ...updatedProducts[idx], [field]: value };
     setFormData({ ...formData, requestedProducts: updatedProducts });
   };
 
@@ -95,7 +105,7 @@ export function HomeFittingForm() {
           category: filledProducts.map(p => {
              const prod = allProducts.find(ap => ap.id === p.productId);
              const productName = prod?.name || "SELECTED PRODUCT";
-             return `${productName.toUpperCase()} (SIZE: ${(p.size || "N/A").toUpperCase()})`;
+             return `${productName.toUpperCase()} (SIZE: ${p.size} ${p.unit})`;
           }).join(", "),
         }),
       });
@@ -201,41 +211,79 @@ export function HomeFittingForm() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                       {formData.requestedProducts.map((p, idx) => (
-                        <div key={idx} className="space-y-4">
-                          <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Product {idx + 1}</Label>
-                          <div className="flex gap-4">
-                            <div className="flex-1">
-                              <Select
-                                value={p.productId}
-                                onValueChange={(v) => handleProductChange(idx, "productId", v || "")}
+                        <div key={idx} className="space-y-4 group">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[9px] uppercase tracking-widest text-black/40 font-bold">Product {idx + 1}</Label>
+                            {formData.requestedProducts.length > 1 && (
+                              <button 
+                                type="button" 
+                                onClick={() => removeProductRow(idx)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-black/20 hover:text-destructive"
                               >
-                                <SelectTrigger className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus:ring-0 rounded-none h-10 font-medium">
-                                  <SelectValue placeholder="SELECT ITEM">
-                                    {p.productId 
-                                      ? allProducts.find((prod) => prod.id === p.productId)?.name 
-                                      : "SELECT ITEM"}
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent className="max-h-[300px]">
-                                  {allProducts.map((prod) => (
-                                    <SelectItem key={prod.id} value={prod.id} className="text-xs">
-                                      {prod.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="w-24">
-                              <Input
-                                placeholder="SIZE"
-                                value={p.size}
-                                onChange={(e) => handleProductChange(idx, "size", e.target.value)}
-                                className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 rounded-none h-10 font-bold uppercase placeholder:font-normal"
-                              />
-                            </div>
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            )}
                           </div>
+                            <div className="flex gap-4">
+                              <div className="flex-1">
+                                <Select
+                                  value={p.productId}
+                                  onValueChange={(v) => handleProductChange(idx, "productId", v || "")}
+                                >
+                                  <SelectTrigger className="border-0 border-b border-black/10 bg-transparent px-0 text-sm focus:ring-0 rounded-none h-10 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                    <SelectValue placeholder="SELECT ITEM">
+                                      {p.productId 
+                                        ? allProducts.find((prod) => prod.id === p.productId)?.name 
+                                        : "SELECT ITEM"}
+                                    </SelectValue>
+                                  </SelectTrigger>
+                                  <SelectContent className="max-h-[300px]">
+                                    {allProducts.map((prod) => (
+                                      <SelectItem key={prod.id} value={prod.id} className="text-xs">
+                                        {prod.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="flex items-end gap-2">
+                                <Input
+                                  required
+                                  type="number"
+                                  min="0"
+                                  step="0.1"
+                                  placeholder="SIZE"
+                                  value={p.size}
+                                  onChange={(e) => handleProductChange(idx, "size", e.target.value)}
+                                  className="w-20 border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 rounded-none h-10 font-bold placeholder:font-normal [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <Select
+                                  value={p.unit}
+                                    onValueChange={(v) => handleProductChange(idx, "unit", v || "IN")}
+                                >
+                                  <SelectTrigger className="w-14 border-0 border-b border-black/10 bg-transparent px-0 text-[10px] focus:ring-0 rounded-none h-10 font-bold text-accent-yellow">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="IN" className="text-[10px] font-bold">IN</SelectItem>
+                                    <SelectItem value="CM" className="text-[10px] font-bold">CM</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
                         </div>
                       ))}
+                      
+                      <div className="md:col-span-2 pt-4">
+                        <button
+                          type="button"
+                          onClick={addProductRow}
+                          className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] text-accent-yellow hover:text-accent-yellow/80 transition-colors border border-accent-yellow/20 px-6 py-3 rounded-full hover:bg-accent-yellow/5"
+                        >
+                          <Plus className="h-4 w-4" />
+                          ADD ANOTHER PRODUCT
+                        </button>
+                      </div>
                     </div>
                   </div>
 
