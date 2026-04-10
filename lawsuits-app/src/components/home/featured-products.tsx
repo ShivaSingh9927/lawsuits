@@ -14,50 +14,22 @@ export function FeaturedProducts() {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        // Fetch featured products first
-        let res = await fetch("/api/products?featured=true&limit=20");
+        let res = await fetch("/api/products?limit=100");
         let data = await res.json();
-        let products = data.products || [];
+        const allProducts = data.products || [];
 
-        // If we have few featured products or want more diversity, fetch more and mix
-        if (products.length < 4) {
-          const resAll = await fetch("/api/products?limit=50");
-          const dataAll = await resAll.json();
-          const allProducts = dataAll.products || [];
-          
-          // Use a Map to ensure category diversity
-          const categoryMap = new Map();
-          
-          // First add existing featured products
-          products.forEach((p: Product) => {
-            if (p.category_id) categoryMap.set(p.category_id, [...(categoryMap.get(p.category_id) || []), p]);
-          });
+        // Target exactly 4 specific categories: Coat, Gown, Waistcoat, Pant cloth
+        const targetKeywords = ["coat", "gown", "waistcoat", "pant cloth"];
+        
+        const prioritized = targetKeywords.map(keyword => {
+          return allProducts.find((p: Product) => 
+            p.name.toLowerCase().includes(keyword) && 
+            !p.name.toLowerCase().includes("combo") &&
+            !p.name.toLowerCase().includes("suit")
+          );
+        }).filter(Boolean) as Product[];
 
-          // Then add from all products to fill gaps
-          allProducts.forEach((p: Product) => {
-            if (p.category_id && !categoryMap.has(p.category_id)) {
-              categoryMap.set(p.category_id, [p]);
-            } else if (p.category_id) {
-              const list = categoryMap.get(p.category_id);
-              if (list.length < 2) list.push(p);
-            }
-          });
-
-          // Flatten and pick top products
-          const diverseList: Product[] = [];
-          const iterators = Array.from(categoryMap.values());
-          let i = 0;
-          while (diverseList.length < 12 && diverseList.length < allProducts.length + products.length) {
-             const list = iterators[i % iterators.length];
-             const item = list.shift();
-             if (item) diverseList.push(item);
-             i++;
-             if (i > 100) break; // safety
-          }
-          products = diverseList;
-        }
-
-        setFeaturedProducts(products);
+        setFeaturedProducts(prioritized.slice(0, 4));
       } catch (error) {
         console.error("Error fetching featured products:", error);
       } finally {
@@ -69,15 +41,15 @@ export function FeaturedProducts() {
 
   if (loading) {
     return (
-      <section className="bg-[#1A1512] py-20 border-y border-white/5">
+      <section className="bg-white py-20 border-y border-zinc-100">
         <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="space-y-6">
-                <Skeleton className="aspect-[3/4] w-full bg-white/5" />
+                <Skeleton className="aspect-[3/4] w-full bg-zinc-100" />
                 <div className="space-y-3">
-                  <Skeleton className="h-6 w-3/4 bg-white/5" />
-                  <Skeleton className="h-4 w-1/2 bg-white/5" />
+                  <Skeleton className="h-6 w-3/4 bg-zinc-100" />
+                  <Skeleton className="h-4 w-1/2 bg-zinc-100" />
                 </div>
               </div>
             ))}
@@ -88,34 +60,26 @@ export function FeaturedProducts() {
   }
 
   return (
-    <section className="bg-[#1A1512] py-32 border-y border-white/5">
+    <section className="bg-white py-32 border-y border-zinc-100">
       <div className="mx-auto max-w-screen-2xl px-12 lg:px-32">
         <div className="mb-20 flex flex-col items-center text-center space-y-6" id="best-products">
-          {/* <motion.span
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-6 block text-sm uppercase tracking-[0.4em] text-accent-yellow bg-white/5 px-6 py-2 font-semibold"
-          >
-            CURATED EXCELLENCE
-          </motion.span> */}
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
-            className="font-serif text-3xl font-light tracking-tight sm:text-6xl text-white uppercase"
+            className="font-serif text-3xl font-light tracking-tight sm:text-6xl text-zinc-900 uppercase"
           >
-            BEST <span className="italic">PRODUCTS</span>
+            BEST <span className="italic font-normal">PRODUCTS</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.4 }}
-            className="max-w-2xl text-[10px] uppercase tracking-[0.3em] leading-relaxed text-white/50"
+            className="max-w-2xl text-[10px] uppercase tracking-[0.3em] leading-relaxed text-zinc-400"
           >
-            A collection of our most distinguished silhouettes, 
+            A collection of our most distinguished silhouettes,
             handcrafted for the modern advocate who demands nothing less than perfection.
           </motion.p>
         </div>
@@ -130,28 +94,27 @@ export function FeaturedProducts() {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
               >
-                <ProductCard 
-                  product={product} 
-                  onDark={true}
+                <ProductCard
+                  product={product}
+                  onDark={false}
                 />
               </motion.div>
             ))
           ) : (
             <div className="col-span-full py-20 text-center text-zinc-500 font-light italic opacity-50">
-                Discovering your unique collection...
+              Discovering your unique collection...
             </div>
           )}
         </div>
 
-        
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="mt-40 flex justify-center"
         >
-          <Link href="/shop" className="group relative px-12 py-5 text-[11px] font-black uppercase tracking-[0.5em] text-black transition-all">
-            <div className="absolute inset-0 bg-accent-yellow rounded-none transition-transform duration-300 group-hover:scale-105" />
+          <Link href="/shop" className="group relative px-12 py-5 text-[11px] font-black uppercase tracking-[0.5em] text-white transition-all">
+            <div className="absolute inset-0 bg-black rounded-none transition-transform duration-300 group-hover:scale-105" />
             <span className="relative z-10">EXPLORE FULL COLLECTION</span>
           </Link>
         </motion.div>

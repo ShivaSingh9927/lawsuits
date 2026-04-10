@@ -15,8 +15,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const slugArray = resolvedParams.slug;
   const rawSlug = Array.isArray(slugArray) ? slugArray.join(" ") : slugArray || "";
   const slug = decodeURIComponent(rawSlug);
-  console.log("DEBUG: ProductPage hitting with slug:", slug);
   
+
   // 1. Try fetching from Supabase first
   const supabase = await createClient();
   const decodedSlug = decodeURIComponent(slug);
@@ -30,7 +30,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
         *,
         category:categories(*),
         images:product_images(*),
-        variants:product_variants(*)
+        variants:product_variants(*),
+        package_items:package_deals!package_deals_main_product_id_fkey(
+          *,
+          component:products!package_deals_component_id_fkey(
+            *,
+            variants:product_variants(*)
+          )
+        )
       `)
       .eq("slug", slug)
       .is("deleted_at", null)
@@ -41,26 +48,34 @@ export default async function ProductPage({ params }: ProductPageProps) {
       product = dbProduct;
     } else {
       // If exact match fails, try fuzzy match
-      const { data: fuzzyProduct } = await supabase
+
+      const { data: fuzzyProduct, error: fuzzyError } = await supabase
         .from("products")
         .select(`
           *,
           category:categories(*),
           images:product_images(*),
-          variants:product_variants(*)
+          variants:product_variants(*),
+          package_items:package_deals!package_deals_main_product_id_fkey(
+            *,
+            component:products!package_deals_component_id_fkey(
+              *,
+              variants:product_variants(*)
+            )
+          )
         `)
-        .or(`slug.ilike.${slug},slug.ilike.${decodedSlug},slug.ilike.${decodedSlug.replace(/ /g, "-")},slug.ilike.${decodedSlug.toLowerCase().replace(/ /g, "-")}`)
+        .or(`slug.ilike."${slug}",slug.ilike."${decodedSlug}",slug.ilike."${decodedSlug.replace(/ /g, "-")}",slug.ilike."${decodedSlug.toLowerCase().replace(/ /g, "-")}"`)
         .is("deleted_at", null)
         .eq("is_visible", true)
         .limit(1)
         .maybeSingle();
-      
+
       if (fuzzyProduct) {
         product = fuzzyProduct;
       }
     }
   } catch (err) {
-    console.error("Supabase fetch error:", err);
+    console.error("Supabase catch-all error:", err);
   }
 
   // 2. Fallback to static data if not found in database

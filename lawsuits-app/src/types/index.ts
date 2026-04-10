@@ -1,3 +1,12 @@
+export interface PackageDeal {
+  id: string;
+  main_product_id: string;
+  component_id: string;
+  label: string;
+  sort_order: number;
+  component?: Product;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -19,6 +28,13 @@ export interface Product {
   created_at?: string;
   updated_at?: string;
   deleted_at?: string | null;
+  is_bundle?: boolean;
+  bundle_config?: Array<{
+    id: string;
+    label: string;
+    type: "top" | "bottom" | "accessory";
+    category?: string;
+  }>;
 }
 
 export interface ProductImage {
@@ -137,6 +153,7 @@ export interface OrderItem {
   discount_amount: number;
   net_price: number;
   image_url: string;
+  metadata?: Record<string, any>;
 }
 
 export interface CartItem {
@@ -146,6 +163,7 @@ export interface CartItem {
   quantity: number;
   product: Product;
   variant: ProductVariant;
+  metadata?: Record<string, any>;
 }
 
 export interface Coupon {

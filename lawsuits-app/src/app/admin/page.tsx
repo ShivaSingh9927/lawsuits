@@ -948,7 +948,7 @@ export default function AdminPage() {
                                <span>₹{(selectedOrder as Order).subtotal.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-xs uppercase tracking-widest font-black text-accent-yellow">
-                               <span>GST (18%)</span>
+                               <span>GST (5%)</span>
                                <span>₹{(selectedOrder as Order).tax.toLocaleString()}</span>
                             </div>
                             <Separator className="my-2 bg-border/10" />

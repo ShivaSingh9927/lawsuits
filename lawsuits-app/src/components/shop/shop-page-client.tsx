@@ -45,16 +45,16 @@ const sortOptions = [
   { value: "popular", label: "Curated Selection" },
 ];
 
-const FiltersContent = ({ 
-  categories, 
-  priceRange, 
-  selectedCategory, 
-  handleCategoryChange, 
-  setPriceRange 
-}: { 
-  categories: Category[], 
-  priceRange: [number, number], 
-  selectedCategory: string | null, 
+const FiltersContent = ({
+  categories,
+  priceRange,
+  selectedCategory,
+  handleCategoryChange,
+  setPriceRange
+}: {
+  categories: Category[],
+  priceRange: [number, number],
+  selectedCategory: string | null,
   handleCategoryChange: (slug: string | null) => void,
   setPriceRange: (range: [number, number]) => void
 }) => (
@@ -62,32 +62,32 @@ const FiltersContent = ({
     <div>
       <h3 className="mb-8 text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">Category</h3>
       <div className="space-y-5">
-          {categories.map((cat) => {
-            const displayName = 
-              cat.name === "Men's Legal Attire" ? "MEN" :
+        {categories.map((cat) => {
+          const displayName =
+            cat.name === "Men's Legal Attire" ? "MEN" :
               cat.name === "Women's Legal Attire" ? "WOMEN" :
-              cat.name === "Package Deals" ? "COMBOS" :
-              cat.name.toUpperCase();
-              
-            return (
-              <button
-                key={cat.id}
-                onClick={() =>
-                  handleCategoryChange(
-                    selectedCategory === cat.slug ? null : cat.slug
-                  )
-                }
-                className={cn(
-                  "block w-full text-left text-base tracking-[0.2em] font-bold transition-all",
-                  selectedCategory === cat.slug
-                    ? "text-black translate-x-2"
-                    : "text-zinc-400 hover:text-black"
-                )}
-              >
-                {displayName}
-              </button>
-            );
-          })}
+                cat.name === "Package Deals" ? "COMBOS" :
+                  cat.name.toUpperCase();
+
+          return (
+            <button
+              key={cat.id}
+              onClick={() =>
+                handleCategoryChange(
+                  selectedCategory === cat.slug ? null : cat.slug
+                )
+              }
+              className={cn(
+                "block w-full text-left text-base tracking-[0.2em] font-bold transition-all",
+                selectedCategory === cat.slug
+                  ? "text-black translate-x-2"
+                  : "text-zinc-400 hover:text-black"
+              )}
+            >
+              {displayName}
+            </button>
+          );
+        })}
       </div>
     </div>
 
@@ -218,7 +218,7 @@ export function ShopPageClient() {
 
         if (selectedFit) query = query.eq("fit", selectedFit);
         if (searchQuery) query = query.ilike("name", `%${searchQuery}%`);
-        
+
         switch (sortBy) {
           case "price-asc": query = query.order("base_price", { ascending: true }); break;
           case "price-desc": query = query.order("base_price", { ascending: false }); break;
@@ -228,10 +228,14 @@ export function ShopPageClient() {
 
         const { data, error } = await query.limit(100);
 
-        if (!error && data && data.length > 0) {
-          setAllProducts(data);
-          setLoading(false);
-          return;
+        if (!error && data) {
+          console.log("[ShopPage] Data from Supabase:", data.length, "items");
+          console.log("[ShopPage] Product names:", data.map(p => p.name));
+          if (data.length > 0) {
+            setAllProducts(data);
+            setLoading(false);
+            return;
+          }
         }
       } catch (err) {
         console.error("Browser Supabase Fetch Error:", err);
@@ -252,19 +256,19 @@ export function ShopPageClient() {
     .filter((p) => {
       if (selectedCategory) {
         const cat = (p as any).category;
-        const isComboProduct = p.name.toLowerCase().match(/combo|set|piece|package/) || 
-                               p.description?.toLowerCase().match(/combo|set|piece|package/);
-        
+        const isComboProduct = p.name.toLowerCase().match(/combo|set|piece|package/) ||
+          p.description?.toLowerCase().match(/combo|set|piece|package/);
+
         // Special handling: "combos" category shows package deal products
         if (selectedCategory === "combos") {
           return !!isComboProduct;
         }
-        
+
         // For Men's Legal Attire, exclude combo/package products
         if (selectedCategory === "mens-legal-attire" && isComboProduct) {
           return false;
         }
-        
+
         if (cat) {
           // Look up the expected category name from URL slug
           const expectedName = slugToName[selectedCategory];
@@ -306,7 +310,7 @@ export function ShopPageClient() {
       if (selectedCategory === "womens-legal-attire") return "Women's Collection";
       if (selectedCategory === "accessories") return "Accessories Collection";
       if (selectedCategory === "combos") return "Package Deals";
-      
+
       const category = categories.find(c => c.slug === selectedCategory);
       return category ? `${category.name} Collection` : "The Collection";
     }
@@ -365,7 +369,7 @@ export function ShopPageClient() {
                 <SheetHeader className="mb-12">
                   <SheetTitle className="text-left text-xs uppercase tracking-[0.5em] font-bold text-zinc-400">Refine Archives</SheetTitle>
                 </SheetHeader>
-                <FiltersContent 
+                <FiltersContent
                   categories={categories}
                   priceRange={priceRange}
                   selectedCategory={selectedCategory}
@@ -376,29 +380,29 @@ export function ShopPageClient() {
             </Sheet>
 
             <div className="hidden items-center gap-6 md:flex">
-                {activeFiltersCount > 0 && (
-                  <>
-                    <span className="text-xs uppercase tracking-widest text-zinc-400 font-bold">Active:</span>
-                    <div className="flex gap-6">
-                      {selectedCategory && (
-                        <button 
-                          onClick={() => setSelectedCategory(null)}
-                          className="text-xs uppercase tracking-widest hover:line-through font-semibold text-accent-yellow"
-                        >
-                          {selectedCategory}
-                        </button>
-                      )}
-                      {selectedFit && (
-                        <button 
-                          onClick={() => setSelectedFit(null)}
-                          className="text-xs uppercase tracking-widest hover:line-through font-semibold text-accent-yellow"
-                        >
-                          {selectedFit}
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
+              {activeFiltersCount > 0 && (
+                <>
+                  <span className="text-xs uppercase tracking-widest text-zinc-400 font-bold">Active:</span>
+                  <div className="flex gap-6">
+                    {selectedCategory && (
+                      <button
+                        onClick={() => setSelectedCategory(null)}
+                        className="text-xs uppercase tracking-widest hover:line-through font-semibold text-accent-yellow"
+                      >
+                        {selectedCategory}
+                      </button>
+                    )}
+                    {selectedFit && (
+                      <button
+                        onClick={() => setSelectedFit(null)}
+                        className="text-xs uppercase tracking-widest hover:line-through font-semibold text-accent-yellow"
+                      >
+                        {selectedFit}
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -410,8 +414,8 @@ export function ShopPageClient() {
               </SelectTrigger>
               <SelectContent className="bg-[#FDFCFB] border-border/40">
                 {sortOptions.map((opt) => (
-                  <SelectItem 
-                    key={opt.value} 
+                  <SelectItem
+                    key={opt.value}
                     value={opt.value}
                     className="text-xs uppercase tracking-[0.2em] focus:bg-accent-yellow/10"
                   >
@@ -425,7 +429,7 @@ export function ShopPageClient() {
 
         <div className="flex gap-24">
           <aside className="hidden w-80 flex-shrink-0 lg:block border-r border-border/20 pr-12 sticky top-32 h-fit">
-            <FiltersContent 
+            <FiltersContent
               categories={categories}
               priceRange={priceRange}
               selectedCategory={selectedCategory}
@@ -437,7 +441,7 @@ export function ShopPageClient() {
           <div className="flex-1">
             {loading ? (
               <div className="flex min-h-[40vh] items-center justify-center">
-                 <div className="h-16 w-[1.5px] animate-pulse bg-accent-yellow" />
+                <div className="h-16 w-[1.5px] animate-pulse bg-accent-yellow" />
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-48 text-center">
@@ -445,7 +449,7 @@ export function ShopPageClient() {
                 <p className="mt-6 text-sm tracking-widest text-zinc-500 font-medium">
                   Your current criteria remains unfulfilled.
                 </p>
-                <button 
+                <button
                   onClick={clearAllFilters}
                   className="mt-16 text-xs uppercase tracking-[0.5em] text-accent-yellow underline underline-offset-8 transition-opacity hover:opacity-70 font-bold"
                 >

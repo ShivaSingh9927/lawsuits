@@ -64,7 +64,7 @@ function CheckoutContent() {
   const { items, getSubtotal, clearCart, updateQuantity, removeItem } = useCartStore();
   const subtotal = getSubtotal();
   const shipping = subtotal >= 5000 ? 0 : 299;
-  const tax = Math.round(subtotal * 0.18);
+  const tax = Math.round(subtotal * 0.05);
   const total = subtotal + shipping + tax;
 
   const [loading, setLoading] = useState(false);
@@ -206,8 +206,10 @@ function CheckoutContent() {
 
       // Prepare order items
       const orderItems = items.map((item) => ({
+        product_id: item.product_id,
         variant_id: item.variant_id,
         quantity: item.quantity,
+        metadata: item.metadata,
       }));
 
       // Create order in database
@@ -326,7 +328,7 @@ function CheckoutContent() {
     isPincodeValid;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 pt-32 pb-16 sm:px-6 lg:px-8">
       <div className="mb-6">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/shop">
@@ -527,7 +529,7 @@ function CheckoutContent() {
                 <span>{shipping === 0 ? "Free" : `₹${shipping}`}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">GST (18%)</span>
+                <span className="text-muted-foreground">GST (5%)</span>
                 <span>₹{tax.toLocaleString()}</span>
               </div>
             </div>

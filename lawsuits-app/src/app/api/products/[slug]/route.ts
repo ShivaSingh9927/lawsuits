@@ -17,6 +17,13 @@ export async function GET(
       category:categories(*),
       images:product_images(*),
       variants:product_variants(*),
+      package_items:package_deals!package_deals_main_product_id_fkey(
+        *,
+        component:products!package_deals_component_id_fkey(
+          *,
+          variants:product_variants(*)
+        )
+      ),
       reviews:reviews(
         *,
         user:users(full_name, avatar_url)

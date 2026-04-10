@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,19 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { 
-  Star, 
-  Heart, 
-  ShoppingBag, 
-  Truck, 
-  Shield, 
-  RotateCcw, 
-  Check, 
+import {
+  Star,
+  Heart,
+  ShoppingBag,
+  Truck,
+  Shield,
+  RotateCcw,
+  Check,
   ChevronRight,
   ArrowRight,
   Info
 } from "lucide-react";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -60,51 +60,90 @@ const colorMap: Record<string, string> = {
 
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
   // Combo Logic - Broadened detection
-  const isCombo = 
-    product.sku?.startsWith("TDO-PKG") || 
-    product.id?.includes("PKG") || 
+  const isCombo =
+    product.sku?.startsWith("TDO-PKG") ||
+    product.id?.includes("PKG") ||
     product.category?.slug === "package-deals" ||
     product.name.toLowerCase().includes("piece") ||
     product.name.toLowerCase().includes("combo") ||
     product.name.toLowerCase().includes("package");
 
   const isShirtCombo = product.sku?.includes("-SH-") || product.name.toLowerCase().includes("shirt");
-  const topLabel = product.sku?.includes("-CO-WC-") || product.name.toLowerCase().includes("coat and waistcoat") ? "Coat and Waistcoat Size" : 
-                   product.sku?.includes("-CO-") || product.name.toLowerCase().includes("coat") ? "Coat Size" :
-                   product.sku?.includes("-WC-") || product.name.toLowerCase().includes("waistcoat") ? "Waistcoat Size" :
-                   isShirtCombo ? "Shirt Size" : "Top Size";
+  
+  const isBundle = product.is_bundle || (product.bundle_config?.items?.length || 0) > 0 || (product.package_items?.length || 0) > 0;
+  const bundleConfig = product.bundle_config?.items || [];
+  
+  const sortedPackageItems = useMemo(() => {
+    if (!product.package_items) return [];
+    return [...product.package_items].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  }, [product.package_items]);
+
+  const topLabel = product.sku?.includes("-CO-WC-") || product.name.toLowerCase().includes("coat and waistcoat") ? "Coat and Waistcoat Size" :
+    product.sku?.includes("-CO-") || product.name.toLowerCase().includes("coat") ? "Coat Size" :
+      product.sku?.includes("-WC-") || product.name.toLowerCase().includes("waistcoat") ? "Waistcoat Size" :
+        isShirtCombo ? "Shirt Size" : "Top Size";
 
   // Dynamic Size Calculation from Database Variants
-  const getDynamicSizes = (type: "top" | "bottom") => {
-    if (!product.variants || product.variants.length === 0) return [];
-    
-    const availableSet = new Set<string | number>();
-    const allNumericSizes = [36, 38, 40, 42, 44, 46, 48, 50];
-    const allShirtSizes = ["S", "M", "L", "XL", "XXL"];
-    const allPantSizes = [28, 30, 32, 34, 36, 38];
+  const getDynamicSizes = (type: string, customVariants?: ProductVariant[]) => {
+    const variantsToUse = customVariants || product.variants || [];
+    if (variantsToUse.length === 0) return [];
 
-    product.variants.forEach(v => {
+    const availableSet = new Set<string | number>();
+    const allNumericSizes = [36, 38, 40, 42, 44, 46, 48, 50, 52];
+    const allShirtSizes = ["S", "M", "L", "XL", "XXL"];
+    const allPantSizes = [28, 30, 32, 34, 36, 38, 40, 42];
+
+    variantsToUse.forEach(v => {
       const vSize = String(v.size || v.sku).toUpperCase();
-      
-      if (isShirtCombo && type === "top") {
-        allShirtSizes.forEach(s => { if (vSize.includes(s)) availableSet.add(s); });
-      } else if (!isShirtCombo && type === "top") {
-        // Handle Range Expansion (e.g. "36-44" -> 36, 38, 40, 42, 44)
-        if (vSize.includes("36-44")) [36,38,40,42,44].forEach(n => availableSet.add(n));
-        if (vSize.includes("46-50")) [46,48,50].forEach(n => availableSet.add(n));
-        // Handle Individual Numeric (e.g. "Size 40")
+
+      if (type.includes("shirt") || type === "shirt") {
+        // Find shirt sizes
+        const foundShirtSizes = ["S", "M", "L", "XL", "XXL", "XXXL", "2XL", "3XL", "4XL", "5XL"].filter(s =>
+          vSize === s || vSize.includes(`-${s}`) || vSize.includes(` ${s}`)
+        );
+        foundShirtSizes.forEach(s => availableSet.add(s));
+        if (vSize.includes("46-50")) [46, 48, 50].forEach(n => availableSet.add(n));
+        if (vSize.includes("52")) availableSet.add(52);
+      } else if (type === "bottom") {
+        // For pants
         const matches = vSize.match(/\d+/g);
         if (matches) matches.forEach(m => {
           const n = parseInt(m);
-          if (allNumericSizes.includes(n)) availableSet.add(n);
+          if (n >= 26 && n <= 54) availableSet.add(n);
         });
-      } else if (type === "bottom") {
-        allPantSizes.forEach(n => availableSet.add(n)); // Pants are usually standard ranges in combos
+      } else if (type === "fabric" || type === "option") {
+        const val = v.metadata?.label || v.color || (v.sku.includes("-") ? v.sku.split("-")[3] : v.sku);
+        if (val) availableSet.add(val);
+      } else {
+        // DEFAULT: Search for any numbers in the variant size/sku (covers "top", "outerwear", etc)
+        const matches = vSize.match(/\d+/g);
+        if (matches) matches.forEach(m => {
+          const n = parseInt(m);
+          if (n >= 28 && n <= 60) availableSet.add(n);
+        });
       }
     });
 
-    return Array.from(availableSet).sort((a,b) => {
-      if (typeof a === 'number' && typeof b === 'number') return a - b;
+    // Final fallback: If nothing found but it's a known type, provide standard range
+    if (availableSet.size === 0) {
+      if (type === "bottom") [28, 30, 32, 34, 36, 38, 40, 42].forEach(n => availableSet.add(n));
+      else if (type === "top") [36, 38, 40, 42, 44, 46, 48, 50].forEach(n => availableSet.add(n));
+    }
+
+    return Array.from(availableSet).sort((a, b) => {
+      const valA = typeof a === 'number' ? a : parseInt(String(a).replace(/\D/g, ''));
+      const valB = typeof b === 'number' ? b : parseInt(String(b).replace(/\D/g, ''));
+
+      // Numeric sort
+      if (!isNaN(valA) && !isNaN(valB) && valA !== 0 && valB !== 0) return valA - valB;
+
+      // Shirt size sort
+      const shirtOrder = ["S", "M", "L", "XL", "XXL", "XXXL"];
+      const idxA = shirtOrder.indexOf(String(a).toUpperCase());
+      const idxB = shirtOrder.indexOf(String(b).toUpperCase());
+
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+
       return String(a).localeCompare(String(b));
     });
   };
@@ -118,12 +157,19 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     if (!product.variants || product.variants.length === 0) return [];
     const colors = new Set<string>();
     product.variants.forEach(v => {
+      // 1. Explicit color field
+      if (v.color && v.color !== "EMPTY") {
+        colors.add(v.color);
+        return;
+      }
+      
+      // 2. SKU strategy (Fallback)
       const parts = v.sku.split('-');
       const lastPart = parts[parts.length - 1].toUpperCase();
       if (colorMap[lastPart]) {
         colors.add(colorMap[lastPart]);
-      } else if (isNaN(Number(lastPart)) && lastPart.length >= 2) {
-        // Fallback: If not in map but looks like a code, use it
+      } else if (isNaN(Number(lastPart)) && lastPart.length >= 2 && !["SS", "MS", "LS", "XL", "2X", "3X"].includes(lastPart)) {
+        // Exclude common size codes from being treated as colors
         colors.add(lastPart);
       }
     });
@@ -132,59 +178,186 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   const colorOptions = getDynamicColors();
 
+  // Extract Unique Sizes for Individual Products
+  const commonColors = ["BLACK", "WHITE", "GREY", "GRAY", "BLUE", "NAVY", "DARK", "LIGHT", "BROWN"];
+  const uniqueSizes = Array.from(new Set(
+    (product.variants || [])
+      .filter(v => {
+        const s = String(v.size || "").toUpperCase();
+        return (
+          s && 
+          s !== "EMPTY" && 
+          s !== "NULL" &&
+          !colorOptions.some(c => c.toLowerCase() === s.toLowerCase()) &&
+          !commonColors.includes(s)
+        );
+      })
+      .map(v => v.size)
+  ));
+
   // Use the provided demo image as fallback if no images exist
-  const displayImages = product.images?.length > 0 
-    ? [...product.images] 
+  const displayImages = product.images?.length > 0
+    ? [...product.images]
     : [{ id: "fallback-1", product_id: product.id, url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: product.name, position: 0, is_primary: true }];
 
-  // Multi-angle Fallback for Combos
   if (isCombo && displayImages.length < 2) {
     displayImages.push({
-       id: "fallback-2",
-       product_id: product.id,
-       url: "/advocate_dress_coat.webp",
-       thumbnail_url: "/advocate_dress_coat.webp",
-       medium_url: "/advocate_dress_coat.webp",
-       alt: "Detail view",
-       position: 1,
-       is_primary: false
+      id: "fallback-2",
+      product_id: product.id,
+      url: "/advocate_dress_coat.webp",
+      thumbnail_url: "/advocate_dress_coat.webp",
+      medium_url: "/advocate_dress_coat.webp",
+      alt: "Detail view",
+      position: 1,
+      is_primary: false
     });
     displayImages.push({
-       id: "fallback-3",
-       product_id: product.id,
-       url: "/pexels-pavel-danilyuk-8112126.webp",
-       thumbnail_url: "/pexels-pavel-danilyuk-8112126.webp",
-       medium_url: "/pexels-pavel-danilyuk-8112126.webp",
-       alt: "Fabric texture and finish",
-       position: 2,
-       is_primary: false
+      id: "fallback-3",
+      product_id: product.id,
+      url: "/pexels-pavel-danilyuk-8112126.webp",
+      thumbnail_url: "/pexels-pavel-danilyuk-8112126.webp",
+      medium_url: "/pexels-pavel-danilyuk-8112126.webp",
+      alt: "Fabric texture and finish",
+      position: 2,
+      is_primary: false
     });
   }
 
+  // Sort variants by size numerically
+  const sortedVariants = [...(product.variants || [])].sort((a, b) => {
+    const sizeA = parseInt(String(a.size).replace(/\D/g, '')) || 0;
+    const sizeB = parseInt(String(b.size).replace(/\D/g, '')) || 0;
+
+    // If both are numeric sizes (e.g., 36, 46)
+    if (sizeA !== 0 && sizeB !== 0) return sizeA - sizeB;
+
+    // Fallback for non-numeric sizes (e.g., S, M, L)
+    const shirtSizeOrder = ["S", "M", "L", "XL", "XXL", "XXXL"];
+    const idxA = shirtSizeOrder.indexOf(String(a.size).toUpperCase());
+    const idxB = shirtSizeOrder.indexOf(String(b.size).toUpperCase());
+
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+
+    // Alphabetical fallback
+    return String(a.size).localeCompare(String(b.size));
+  });
+
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
-    product.variants?.[0] || { id: 'base', price: product.base_price, compare_at_price: product.compare_at_price, size: 'Standard', stock_quantity: 5 } as any
+    sortedVariants[0] || { id: 'base', price: product.base_price, compare_at_price: product.compare_at_price, size: 'Standard', stock_quantity: 5 } as any
   );
+  
+  const [selectedSize, setSelectedSize] = useState<string | number>(
+    uniqueSizes[0] || ""
+  );
+
+  const [selectedColor, setSelectedColor] = useState<string>(
+    colorOptions[0] || ""
+  );
+
   const [selectedTopSize, setSelectedTopSize] = useState<string | number>(
     topSizes[0] || (isShirtCombo ? "S" : 40)
   );
   const [selectedBottomSize, setSelectedBottomSize] = useState<string | number>(
     bottomSizes[0] || 32
   );
-  const [selectedColor, setSelectedColor] = useState<string>(
-    colorOptions[0] || ""
-  );
+  
+  // Bundle selection state (Record<ComponentID, SelectedValue>)
+  const [bundleSelections, setBundleSelections] = useState<Record<string, string | number>>({});
+
+  // Initialize bundle selections from config OR relational package items
+  useEffect(() => {
+    const initial: Record<string, string | number> = {};
+    
+    // Check relational items first as they are the new source of truth
+    if ((product.package_items?.length || 0) > 0) {
+      product.package_items?.forEach((item) => {
+        const variants = item.component?.variants || [];
+        const type = item.label.toLowerCase().includes("pant") ? "bottom" : "top";
+        const sizes = getDynamicSizes(type, variants);
+        initial[item.id] = sizes[0] || "";
+      });
+      setBundleSelections(initial);
+    } else if (isBundle && bundleConfig.length > 0) {
+      bundleConfig.forEach(config => {
+        const sizes = getDynamicSizes(config.type);
+        initial[config.id] = sizes[0] || "";
+      });
+      setBundleSelections(initial);
+    }
+  }, [product.id, product.bundle_config, product.package_items]);
   const [selectedImage, setSelectedImage] = useState(0);
   const { addItem, toggleCart } = useCartStore();
   const { addItem: addRecentlyViewed, items: recentlyViewedIds } = useRecentlyViewedStore();
   const { isWishlisted, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlistStore();
 
-  // Match variant based on combo selections
-  // Enhanced Matching Logic for Combo Packages
-  // Hyper-Resilient Variant Matching for Combo Packages
+  // Hyper-Resilient Variant Matching for Combo Packages and Bundles
   useEffect(() => {
     if (!product.variants || product.variants.length === 0) {
       if (!selectedVariant) setSelectedVariant({ id: 'base', price: product.base_price, compare_at_price: product.compare_at_price, size: 'Standard', stock_quantity: 5 } as any);
       return;
+    }
+
+    // 0. Bundle Matching (Refined: First item in config acts as price controller)
+    if (isBundle && Object.keys(bundleSelections).length > 0) {
+      const firstConfig = bundleConfig[0];
+      const primarySelection = bundleSelections[firstConfig?.id];
+      const primaryType = firstConfig?.type;
+
+      if (primarySelection) {
+        const primaryNum = parseInt(String(primarySelection).replace(/\D/g, ''));
+        const matched = product.variants.find(v => {
+          const vSize = String(v.size || v.sku).toUpperCase();
+          const vColor = (v.color || "").toLowerCase();
+
+          // 1. Size Range Match
+          const rangeMatch = vSize.match(/(\d+)\s*-\s*(\d+)/);
+          const sizeMatch = 
+            vSize === String(primarySelection).toUpperCase() ||
+            (rangeMatch && !isNaN(primaryNum) && (
+              primaryNum >= parseInt(rangeMatch[1]) && 
+              primaryNum <= parseInt(rangeMatch[2])
+            ));
+          
+          // 2. Fabric/Color Match
+          const fabricMatch = primaryType === "fabric" ? vColor === String(primarySelection).toLowerCase() : true;
+          return sizeMatch && fabricMatch;
+        });
+
+        if (matched) {
+          setSelectedVariant(matched);
+          return;
+        }
+      }
+    }
+
+    // 3. Individual Product Variation Matching (New Logic)
+    if (!isBundle && !isCombo) {
+      const matched = product.variants.find(v => {
+        const sizeMatch = selectedSize ? String(v.size) === String(selectedSize) : true;
+        
+        let colorMatch = true;
+        if (selectedColor) {
+           const vColor = (v.color || "").toLowerCase();
+           colorMatch = vColor === selectedColor.toLowerCase();
+           
+           // Fallback for SKU-derived colors
+           if (!vColor && v.sku.toUpperCase().endsWith(selectedColor.toUpperCase())) {
+             colorMatch = true;
+           }
+        }
+        
+        return sizeMatch && colorMatch;
+      });
+
+      if (matched) {
+        setSelectedVariant(matched);
+        return;
+      }
+    }
+
+    // Legacy Fallback (Always ensure something is selected)
+    if (!selectedVariant && sortedVariants.length > 0) {
+      setSelectedVariant(sortedVariants[0]);
     }
 
     if (isCombo) {
@@ -194,33 +367,37 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       // 1. Shirt Combo Strategy (S, M, L, XL, XXL)
       if (isShirtCombo) {
         const topStr = String(selectedTopSize).toLowerCase().trim();
-        matched = product.variants.find(v => 
-          v.size.toLowerCase().includes(topStr) || 
+        matched = product.variants.find(v =>
+          v.size.toLowerCase().includes(topStr) ||
           v.sku.toLowerCase().includes(topStr)
         );
-      } 
+      }
       // 2. Suit/Package Strategy (Numeric 36-50)
       else if (!isNaN(topNum)) {
-        const bracket = topNum <= 44 ? "36-44" : "46-50";
-        
-        // Tier A: Direct Size Match (e.g., v.size is "46" precisely)
-        matched = product.variants.find(v => 
-          v.size.trim() === String(selectedTopSize).trim() || 
-          v.sku.endsWith(`-${selectedTopSize}`)
-        );
+        // Dynamic Strategy: Match exact size OR find a range [min-max] that includes topNum
+        matched = product.variants.find(v => {
+          const vSize = String(v.size || v.sku).toUpperCase();
 
-        // Tier B: Named Bracket Match (e.g., v.size contains "46-50")
-        if (!matched) {
-          matched = product.variants.find(v => 
-            v.size.includes(bracket) || 
-            v.sku.includes(bracket)
-          );
-        }
+          // Try Exact Match
+          if (vSize.trim() === String(selectedTopSize).trim() || v.sku.endsWith(`-${selectedTopSize}`)) {
+            return true;
+          }
+
+          // Try Range Match (e.g., "36-44", "46-52")
+          const rangeMatch = vSize.match(/(\d+)\s*-\s*(\d+)/);
+          if (rangeMatch) {
+            const min = parseInt(rangeMatch[1]);
+            const max = parseInt(rangeMatch[2]);
+            return topNum >= min && topNum <= max;
+          }
+
+          return false;
+        });
 
         // Tier C: Price Position Fallback (Standard vs Premium Brackets)
         if (!matched && product.variants.length >= 2) {
           const sorted = [...product.variants].sort((a, b) => a.price - b.price);
-          // If top size is 46+, force the most expensive variant (Premium tier)
+          // If we can't find a match, use price sorting as a heuristic
           matched = topNum <= 44 ? sorted[0] : sorted[sorted.length - 1];
         }
       }
@@ -228,7 +405,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       // Final Variant Activation
       // Enhanced Matching: Consider color even in combos if color variations exist
       let finalMatched = matched || product.variants[0];
-      
+
       if (colorOptions.length > 0 && selectedColor) {
         const colorMatched = product.variants.find(v => {
           const parts = v.sku.split('-');
@@ -254,20 +431,27 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         setSelectedVariant(matched);
       }
     }
-  }, [selectedTopSize, selectedBottomSize, selectedColor, isCombo, isShirtCombo, product.variants, colorOptions]);
+  }, [selectedTopSize, selectedBottomSize, selectedColor, selectedSize, bundleSelections, isCombo, isShirtCombo, isBundle, product.variants]);
 
   useEffect(() => {
     addRecentlyViewed(product.id);
   }, [product.id, addRecentlyViewed]);
 
   const handleAddToCart = () => {
+    const metadata = isBundle ? bundleSelections : {
+      size: selectedTopSize,
+      waist: isCombo ? selectedBottomSize : undefined,
+      fabric: selectedColor || undefined
+    };
+
     addItem({
-      id: `${product.id}-${selectedVariant.id}`,
+      id: `${product.id}-${selectedVariant.id}-${JSON.stringify(metadata)}`,
       product_id: product.id,
       variant_id: selectedVariant.id,
       quantity: 1,
       product,
       variant: selectedVariant,
+      metadata,
     });
     toggleCart();
   };
@@ -390,7 +574,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               <h1 className="font-serif text-3xl font-light tracking-tight sm:text-4xl md:text-5xl lg:text-5xl mb-6 leading-[1.1]">
                 {product.name}
               </h1>
-              
+
               <div className="flex flex-col sm:flex-row sm:items-baseline gap-4 sm:gap-6 min-h-[2.5rem]">
                 <div key={selectedVariant?.id} className="flex items-baseline gap-4">
                   <AnimatePresence mode="wait">
@@ -405,7 +589,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                       ₹{selectedVariant?.price?.toLocaleString() || product.base_price.toLocaleString()}
                     </motion.span>
                   </AnimatePresence>
-                  
+
                   {selectedVariant?.compare_at_price && selectedVariant.compare_at_price > (selectedVariant.price || 0) && (
                     <span className="text-xl sm:text-2xl text-zinc-300 line-through font-light">
                       ₹{selectedVariant.compare_at_price.toLocaleString()}
@@ -419,13 +603,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   </Badge>
                 )}
               </div>
-              
+
               {(selectedVariant?.stock_quantity || 0) <= 3 && (
                 <div className="mt-6 flex items-center gap-6 text-[10px] uppercase tracking-widest text-zinc-400 font-bold border-t border-zinc-100 pt-6">
-                   <div className="flex items-center gap-2">
-                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                     <span>Available: <span className="text-foreground">{selectedVariant?.stock_quantity}</span></span>
-                   </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Available: <span className="text-foreground">{selectedVariant?.stock_quantity}</span></span>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -466,6 +650,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                           { size: "S", chest: 36, waist: 30, hips: 36 },
                           { size: "M", chest: 38, waist: 32, hips: 38 },
                           { size: "L", chest: 40, waist: 34, hips: 40 },
+                          { size: "XL", chest: 42, waist: 36, hips: 42 },
                           { size: "2XL", chest: 44, waist: 38, hips: 44 },
                         ].map((row) => (
                           <TableRow key={row.size} className="border-border/10 hover:bg-black/[0.02]">
@@ -480,118 +665,199 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   </DialogContent>
                 </Dialog>
               </div>
-              
-              {isCombo ? (
+
+              {isBundle ? (
                 <div className="space-y-8">
-                   {/* Top Selection */}
-                   <div className="space-y-4">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
-                         {topLabel.toUpperCase()} : <span className="text-foreground">{selectedTopSize}</span>
-                      </p>
-                      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
-                         {topSizes.length > 0 ? topSizes.map((size) => (
-                            <button
-                               key={size}
-                               onClick={() => setSelectedTopSize(size)}
-                               className={cn(
-                                  "flex h-10 w-full items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
-                                  selectedTopSize === size
-                                     ? "border-black bg-black text-white shadow-lg"
-                                     : "border-zinc-200 hover:border-black text-zinc-600"
-                               )}
-                            >
-                               {size}
-                            </button>
-                         )) : (
-                            <button className="flex h-10 w-full items-center justify-center border border-black bg-black text-white text-[10px] tracking-widest font-black">
-                               STANDARD
-                            </button>
-                         )}
-                      </div>
-                   </div>
+                  {sortedPackageItems.length > 0 ? (
+                    // 1. Relational Bundle Strategy
+                    sortedPackageItems.map((item) => {
+                      const variants = item.component?.variants || [];
+                      const type = item.label.toLowerCase().includes("pant") ? "bottom" : "top";
+                      const sizes = getDynamicSizes(type, variants);
+                      const selected = bundleSelections[item.id] || sizes[0];
+                      
+                      return (
+                        <div key={item.id} className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
+                              {item.label.toUpperCase()} : <span className="text-foreground">{selected}</span>
+                            </p>
+                            {selected && (
+                              <p className={cn(
+                                "text-[10px] uppercase tracking-widest font-bold",
+                                (variants.find(v => String(v.size || v.sku).includes(String(selected)))?.stock_quantity || 0) > 0 
+                                  ? "text-emerald-600" 
+                                  : "text-red-500"
+                              )}>
+                                {(variants.find(v => String(v.size || v.sku).includes(String(selected)))?.stock_quantity || 0) > 0 
+                                  ? "In Stock" 
+                                  : "Out of Stock"}
+                              </p>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                            {sizes.map((size) => {
+                              const isSizeMatch = (vSize: string, s: string | number) => {
+                                const strVSize = String(vSize).toUpperCase();
+                                const strS = String(s).toUpperCase();
+                                // Exact match or contains as word
+                                return strVSize === strS || 
+                                       strVSize.includes(`-${strS}`) || 
+                                       strVSize.includes(` ${strS}`) ||
+                                       strVSize.startsWith(`${strS} `) ||
+                                       strVSize.endsWith(` ${strS}`);
+                              };
 
-                   {/* Pant Selection */}
-                   <div className="space-y-4">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
-                         PANT SIZE : <span className="text-foreground">{selectedBottomSize}</span>
-                      </p>
-                      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
-                         {bottomSizes.length > 0 ? bottomSizes.map((size) => (
-                            <button
-                               key={size}
-                               onClick={() => setSelectedBottomSize(size)}
-                               className={cn(
-                                  "flex h-10 w-full items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
-                                  selectedBottomSize === size
-                                     ? "border-black bg-black text-white shadow-lg"
-                                     : "border-zinc-200 hover:border-black text-zinc-600"
-                               )}
-                            >
-                               {size}
-                            </button>
-                         )) : (
-                            <button className="flex h-10 w-full items-center justify-center border border-black bg-black text-white text-[10px] tracking-widest font-black">
-                               STANDARD
-                            </button>
-                         )}
-                      </div>
-                   </div>
-
-                   {/* Color/Variation Selection for Combos */}
-                      {colorOptions.length > 0 && (
-                        <div className="space-y-4 pt-8 border-t border-black/5">
+                              const v = variants.find(v => isSizeMatch(v.size || v.sku, size));
+                              const isOutOfStock = v ? (v.is_out_of_stock || (v.stock_quantity !== undefined && v.stock_quantity <= 0)) : false;
+                              
+                              return (
+                                <button
+                                  key={size}
+                                  disabled={isOutOfStock}
+                                  onClick={() => {
+                                    setBundleSelections(prev => {
+                                      const next = { ...prev, [item.id]: size };
+                                      
+                                      // AUTO-SYNC sizes between Coat and Waistcoat
+                                      const currentLabel = item.label.toLowerCase();
+                                      if ((currentLabel.includes("coat") || currentLabel.includes("court")) && !currentLabel.includes("waist")) {
+                                        const waistcoatItem = product.package_items!.find(p => {
+                                          const l = p.label.toLowerCase();
+                                          return l.includes("waistcoat") || l.includes("waist court") || l.includes("waist coat");
+                                        });
+                                        if (waistcoatItem) {
+                                          const wcVariant = waistcoatItem.component?.variants?.find(v => isSizeMatch(v.size || v.sku, size));
+                                          if (wcVariant && !wcVariant.is_out_of_stock && (wcVariant.stock_quantity === undefined || wcVariant.stock_quantity > 0)) {
+                                            next[waistcoatItem.id] = size;
+                                          }
+                                        }
+                                      } else if (currentLabel.includes("waist")) {
+                                        // Sync Waistcoat back to Coat
+                                        const coatItem = product.package_items!.find(p => {
+                                          const l = p.label.toLowerCase();
+                                          return (l.includes("coat") || l.includes("court")) && !l.includes("waist");
+                                        });
+                                        if (coatItem) {
+                                          const cVariant = coatItem.component?.variants?.find(v => isSizeMatch(v.size || v.sku, size));
+                                          if (cVariant && !cVariant.is_out_of_stock && (cVariant.stock_quantity === undefined || cVariant.stock_quantity > 0)) {
+                                            next[coatItem.id] = size;
+                                          }
+                                        }
+                                      }
+                                      
+                                      return next;
+                                    });
+                                  }}
+                                  className={cn(
+                                    "flex h-10 w-full items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                                    selected === size
+                                      ? "border-black bg-black text-white shadow-lg"
+                                      : "border-zinc-200 text-zinc-600 hover:border-black",
+                                    isOutOfStock && "opacity-20 cursor-not-allowed grayscale border-zinc-100"
+                                  )}
+                                >
+                                  {size}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    // 2. Legacy Bundle Strategy
+                    bundleConfig.map((config) => {
+                      const sizes = getDynamicSizes(config.type);
+                      const selected = bundleSelections[config.id] || sizes[0];
+                      
+                      return (
+                        <div key={config.id} className="space-y-4">
                           <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
-                            FABRIC SELECTION : <span className="text-foreground">{selectedColor}</span>
+                            {config.label} : <span className="text-foreground">{selected}</span>
                           </p>
-                          <div className="flex flex-wrap gap-2">
-                            {colorOptions.map((color) => (
+                          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                            {sizes.map((size) => (
                               <button
-                                key={color}
-                                onClick={() => setSelectedColor(color)}
+                                key={size}
+                                onClick={() => setBundleSelections(prev => ({ ...prev, [config.id]: size }))}
                                 className={cn(
-                                  "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
-                                  selectedColor === color
+                                  "flex h-10 w-full items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                                  selected === size
                                     ? "border-black bg-black text-white shadow-lg"
                                     : "border-zinc-200 hover:border-black text-zinc-600"
                                 )}
                               >
-                                {color}
+                                {size}
                               </button>
                             ))}
                           </div>
                         </div>
-                      )}
-                 </div>
-              ) : (
+                      );
+                    })
+                  )}
+                </div>
+              ) : isCombo ? (
                 <div className="space-y-8">
-                  {/* Size Selection */}
-                  {product.variants && product.variants.some(v => !isNaN(Number(v.size))) && (
-                    <div className="grid grid-cols-4 gap-3">
-                      {product.variants.map((variant) => (
+                  {/* Top Selection */}
+                  <div className="space-y-4">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
+                      {topLabel.toUpperCase()} : <span className="text-foreground">{selectedTopSize}</span>
+                    </p>
+                    <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                      {topSizes.length > 0 ? topSizes.map((size) => (
                         <button
-                          key={variant.id}
-                          disabled={variant.is_out_of_stock}
-                          onClick={() => setSelectedVariant(variant)}
+                          key={size}
+                          onClick={() => setSelectedTopSize(size)}
                           className={cn(
-                            "flex h-12 items-center justify-center border text-[10px] tracking-widest transition-all duration-500",
-                            selectedVariant?.id === variant.id
-                              ? "border-accent-yellow bg-accent-yellow/5 text-foreground font-bold"
-                              : variant.is_out_of_stock
-                              ? "opacity-20 cursor-not-allowed border-border line-through"
-                              : "border-border hover:border-foreground/40"
+                            "flex h-10 w-full items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                            selectedTopSize === size
+                              ? "border-black bg-black text-white shadow-lg"
+                              : "border-zinc-200 hover:border-black text-zinc-600"
                           )}
                         >
-                          {variant.size}
+                          {size}
                         </button>
-                      ))}
+                      )) : (
+                        <button className="flex h-10 w-full items-center justify-center border border-black bg-black text-white text-[10px] tracking-widest font-black">
+                          STANDARD
+                        </button>
+                      )}
                     </div>
-                  )}
+                  </div>
 
-                  {/* Color Selection */}
+                  {/* Pant Selection */}
+                  <div className="space-y-4">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
+                      PANT SIZE : <span className="text-foreground">{selectedBottomSize}</span>
+                    </p>
+                    <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                      {bottomSizes.length > 0 ? bottomSizes.map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedBottomSize(size)}
+                          className={cn(
+                            "flex h-10 w-full items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                            selectedBottomSize === size
+                              ? "border-black bg-black text-white shadow-lg"
+                              : "border-zinc-200 hover:border-black text-zinc-600"
+                          )}
+                        >
+                          {size}
+                        </button>
+                      )) : (
+                        <button className="flex h-10 w-full items-center justify-center border border-black bg-black text-white text-[10px] tracking-widest font-black">
+                          STANDARD
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Color/Variation Selection for Combos */}
                   {colorOptions.length > 0 && (
-                    <div className="space-y-4">
+                    <div className="space-y-4 pt-8 border-t border-black/5">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
-                        SELECT VARIATION : <span className="text-foreground text-accent-yellow">{selectedColor}</span>
+                        FABRIC SELECTION : <span className="text-foreground">{selectedColor}</span>
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {colorOptions.map((color) => (
@@ -603,6 +869,58 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                               selectedColor === color
                                 ? "border-black bg-black text-white shadow-lg"
                                 : "border-zinc-200 hover:border-black text-zinc-600"
+                            )}
+                          >
+                            {color}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Size Selection for Individual Products */}
+                  {uniqueSizes.length > 0 && !(uniqueSizes.length === 1 && uniqueSizes[0] === "Standard") && (
+                    <div className="space-y-4">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
+                        SIZE : <span className="text-foreground tracking-widest">{selectedSize || "Standard"}</span>
+                      </p>
+                      <div className="grid grid-cols-4 gap-3">
+                        {uniqueSizes.map((size) => (
+                          <button
+                            key={size}
+                            onClick={() => setSelectedSize(size)}
+                            className={cn(
+                              "flex h-12 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-500",
+                              selectedSize === size
+                                ? "border-black bg-black text-white shadow-lg"
+                                : "border-border hover:border-foreground/40 text-zinc-600"
+                            )}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Color Selection for Individual Products */}
+                  {colorOptions.length > 0 && (
+                    <div className="space-y-4">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
+                        COLOR / FABRIC : <span className="text-foreground tracking-widest">{selectedColor}</span>
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {colorOptions.map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => setSelectedColor(color)}
+                            className={cn(
+                              "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                              selectedColor === color
+                                ? "border-black bg-black text-white shadow-lg"
+                                : "border-border hover:border-black text-zinc-600"
                             )}
                           >
                             {color}
@@ -625,7 +943,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   onClick={handleAddToCart}
                   disabled={selectedVariant?.is_out_of_stock}
                 >
-                   {selectedVariant?.is_out_of_stock ? "Exhausted" : "Add to Cart"}
+                  {selectedVariant?.is_out_of_stock ? "Exhausted" : "Add to Cart"}
                 </Button>
               </div>
             </div>
@@ -634,38 +952,38 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             <Tabs defaultValue="details" className="w-full pt-8">
               <div className="w-full overflow-x-auto scrollbar-hide border-b border-border/20">
                 <TabsList className="inline-flex w-max justify-start rounded-none bg-transparent p-0 gap-8 sm:gap-12">
-                  <TabsTrigger 
-                    value="details" 
+                  <TabsTrigger
+                    value="details"
                     className="rounded-none border-b-2 border-transparent px-2 pb-6 text-[10px] sm:text-sm uppercase tracking-[0.4em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-bold"
                   >
                     Details
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="fabric" 
+                  <TabsTrigger
+                    value="fabric"
                     className="rounded-none border-b-2 border-transparent px-2 pb-6 text-[10px] sm:text-sm uppercase tracking-[0.4em] data-[state=active]:border-accent-yellow data-[state=active]:bg-transparent font-bold"
                   >
                     Textile
                   </TabsTrigger>
                 </TabsList>
               </div>
-               <TabsContent value="details" className="mt-12">
+              <TabsContent value="details" className="mt-12">
                 <p className="text-base leading-loose tracking-wide text-zinc-700 font-medium">
                   {product.description}
                 </p>
                 <div className="mt-12 grid grid-cols-2 gap-8">
-                   <div className="space-y-4">
-                      <span className="text-sm uppercase tracking-widest text-accent-yellow font-bold">Construction</span>
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Half-Canvas Interior</p>
-                   </div>
-                   <div className="space-y-4">
-                      <span className="text-sm uppercase tracking-widest text-accent-yellow font-bold">Silhouette</span>
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{product.fit}</p>
-                   </div>
+                  <div className="space-y-4">
+                    <span className="text-sm uppercase tracking-widest text-accent-yellow font-bold">Construction</span>
+                    <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Half-Canvas Interior</p>
+                  </div>
+                  <div className="space-y-4">
+                    <span className="text-sm uppercase tracking-widest text-accent-yellow font-bold">Silhouette</span>
+                    <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{product.fit}</p>
+                  </div>
                 </div>
               </TabsContent>
-               <TabsContent value="fabric" className="mt-12">
+              <TabsContent value="fabric" className="mt-12">
                 <p className="text-base leading-loose tracking-wide text-zinc-700 font-medium">
-                  Crafted with precision from <span className="text-black font-bold underline underline-offset-4 decoration-accent-yellow/30">{product.fabric}</span>. This selection represents the pinnacle of 
+                  Crafted with precision from <span className="text-black font-bold underline underline-offset-4 decoration-accent-yellow/30">{product.fabric}</span>. This selection represents the pinnacle of
                   textile engineering, offering a natural drape that matures with the wearer over generations.
                 </p>
               </TabsContent>
@@ -675,13 +993,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
         {/* New Sections */}
         <div className="mt-32 space-y-32">
-          <ProductCarousel 
+          <ProductCarousel
             title="You May Also Like"
             subtitle="Related Curations"
             products={relatedProducts}
           />
-          
-          <ProductCarousel 
+
+          <ProductCarousel
             title="Recently Viewed"
             subtitle="Your History"
             products={recentlyViewedProducts}

@@ -83,7 +83,7 @@ export function CartSidebar() {
                 <ul className="space-y-4">
                   {items.map((item) => (
                     <motion.li
-                      key={item.variant_id}
+                      key={item.id}
                       layout
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -101,9 +101,19 @@ export function CartSidebar() {
                       <div className="flex flex-1 flex-col justify-between">
                         <div>
                           <h3 className="text-sm font-serif text-black line-clamp-2">{item.product.name}</h3>
-                          <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
-                            Size: {item.variant.size}
-                          </p>
+                          <div className="mt-1 space-y-0.5">
+                            {item.metadata ? (
+                              Object.entries(item.metadata).map(([key, value]) => (
+                                <p key={key} className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
+                                  {key}: {value}
+                                </p>
+                              ))
+                            ) : (
+                              <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
+                                Size: {item.variant.size}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -112,7 +122,7 @@ export function CartSidebar() {
                               size="icon"
                               className="h-7 w-7"
                               onClick={() =>
-                                updateQuantity(item.variant_id, item.quantity - 1)
+                                updateQuantity(item.id, item.quantity - 1)
                               }
                             >
                               <Minus className="h-3 w-3" />
@@ -125,7 +135,7 @@ export function CartSidebar() {
                               size="icon"
                               className="h-7 w-7"
                               onClick={() =>
-                                updateQuantity(item.variant_id, item.quantity + 1)
+                                updateQuantity(item.id, item.quantity + 1)
                               }
                             >
                               <Plus className="h-3 w-3" />
@@ -140,7 +150,7 @@ export function CartSidebar() {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 flex-shrink-0 self-start"
-                        onClick={() => removeItem(item.variant_id)}
+                        onClick={() => removeItem(item.id)}
                       >
                         <X className="h-4 w-4" />
                       </Button>

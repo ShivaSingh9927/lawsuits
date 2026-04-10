@@ -53,49 +53,78 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
   }
 
-  // Calculate totals
-  let subtotal = 0;
+  // Optimize: Batch fetch all variants in a single query
+  const variantIds = items.map((i: any) => i.variant_id);
+  const { data: allVariants, error: fetchError } = await admin
+    .from("product_variants")
+    .select(`*, product:products(*, images:product_images(*))`)
+    .in("id", variantIds);
+
+  if (fetchError) {
+    return NextResponse.json({ error: "Failed to verify items" }, { status: 500 });
+  }
+
+  const fetchedVariantsMap = new Map(allVariants?.map(v => [v.id, v]));
   const orderItems = [];
+  let subtotal = 0;
 
   for (const item of items) {
-    // Fetch variant with product and its primary image
-    const { data: variant, error: variantError } = await admin
-      .from("product_variants")
-      .select(`
-        *,
-        product:products(
-          *,
-          images:product_images(*)
-        )
-      `)
-      .eq("id", item.variant_id)
-      .single();
+    const currentVariant = fetchedVariantsMap.get(item.variant_id);
+    const currentProduct = currentVariant?.product;
 
-    if (variantError || !variant || variant.is_out_of_stock || variant.stock_quantity < item.quantity) {
-      return NextResponse.json(
-        { error: `Item ${variant?.product?.name || "unknown"} is out of stock` },
-        { status: 400 }
-      );
+    if (!currentVariant || !currentProduct) {
+      // Fallback for missing variant data but known product_id
+      const { data: productData } = await admin
+        .from("products")
+        .select("*, images:product_images(*)")
+        .eq("id", item.product_id)
+        .single();
+      
+      if (!productData) {
+        return NextResponse.json({ error: `Item ${item.product_name || "Bundle"} not found` }, { status: 404 });
+      }
+
+      const itemPrice = productData.base_price || item.unit_price || 0;
+      const itemTotal = itemPrice * item.quantity;
+      subtotal += itemTotal;
+
+      orderItems.push({
+        product_id: productData.id,
+        variant_id: item.variant_id,
+        product_name: productData.name,
+        variant_size: item.variant_size || "Standard",
+        unit_price: itemPrice,
+        quantity: item.quantity,
+        discount_amount: 0,
+        net_price: itemTotal,
+        image_url: productData.images?.[0]?.url || "/product-image/demo.webp",
+        metadata: item.metadata || {},
+      });
+      continue;
     }
 
-    const itemTotal = variant.price * item.quantity;
+    if (currentVariant.is_out_of_stock) {
+      return NextResponse.json({ error: `Item ${currentProduct.name} is out of stock` }, { status: 400 });
+    }
+
+    const itemTotal = currentVariant.price * item.quantity;
     subtotal += itemTotal;
 
-    // Find primary image URL or fallback to first image
-    const primaryImage = (variant.product as any).images?.find((img: any) => img.is_primary)?.url ||
-      (variant.product as any).images?.[0]?.url ||
+    const primaryImage = currentProduct.images?.find((img: any) => img.is_primary)?.url ||
+      currentProduct.images?.[0]?.url ||
       "/product-image/demo.webp";
 
     orderItems.push({
-      product_id: variant.product_id,
-      variant_id: variant.id,
-      product_name: (variant.product as any).name,
-      variant_size: variant.size,
-      unit_price: variant.price,
+      product_id: currentVariant.product_id,
+      variant_id: currentVariant.id,
+      product_name: currentProduct.name,
+      variant_size: currentVariant.size,
+      unit_price: currentVariant.price,
       quantity: item.quantity,
       discount_amount: 0,
       net_price: itemTotal,
       image_url: primaryImage,
+      metadata: item.metadata || {},
     });
   }
 
@@ -131,8 +160,19 @@ export async function POST(request: NextRequest) {
   }
 
   const shippingCost = subtotal >= 5000 ? 0 : 299;
-  const tax = Math.round((subtotal - discountTotal) * 0.18);
+  const tax = Math.round((subtotal - discountTotal) * 0.05);
   const total = subtotal - discountTotal + shippingCost + tax;
+
+  // Ensure user exists in public.users to satisfy foreign key constraints
+  const { error: userSyncError } = await admin.from("users").upsert({
+    id: user.id,
+    email: user.email || shipping.email,
+    role: "customer"
+  }, { onConflict: "id", ignoreDuplicates: true });
+
+  if (userSyncError) {
+    console.error("User sync error:", userSyncError);
+  }
 
   // Create order
   const { data: order, error: orderError } = await admin
