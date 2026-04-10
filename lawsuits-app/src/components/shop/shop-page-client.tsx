@@ -45,6 +45,120 @@ const sortOptions = [
   { value: "popular", label: "Curated Selection" },
 ];
 
+const FiltersContent = ({ 
+  categories, 
+  priceRange, 
+  selectedCategory, 
+  handleCategoryChange, 
+  setPriceRange 
+}: { 
+  categories: Category[], 
+  priceRange: [number, number], 
+  selectedCategory: string | null, 
+  handleCategoryChange: (slug: string | null) => void,
+  setPriceRange: (range: [number, number]) => void
+}) => (
+  <div className="space-y-16 pr-8">
+    <div>
+      <h3 className="mb-8 text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">Category</h3>
+      <div className="space-y-5">
+          {categories.map((cat) => {
+            const displayName = 
+              cat.name === "Men's Legal Attire" ? "MEN" :
+              cat.name === "Women's Legal Attire" ? "WOMEN" :
+              cat.name === "Package Deals" ? "COMBOS" :
+              cat.name.toUpperCase();
+              
+            return (
+              <button
+                key={cat.id}
+                onClick={() =>
+                  handleCategoryChange(
+                    selectedCategory === cat.slug ? null : cat.slug
+                  )
+                }
+                className={cn(
+                  "block w-full text-left text-base tracking-[0.2em] font-bold transition-all",
+                  selectedCategory === cat.slug
+                    ? "text-black translate-x-2"
+                    : "text-zinc-400 hover:text-black"
+                )}
+              >
+                {displayName}
+              </button>
+            );
+          })}
+      </div>
+    </div>
+
+    <div className="h-[1px] w-full bg-border/30" />
+
+    <div>
+      <h3 className="mb-8 text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">Value</h3>
+      <div className="space-y-8">
+        <div className="flex items-center justify-between text-xs tracking-widest text-zinc-600 font-bold">
+          <span>₹{priceRange[0].toLocaleString()}</span>
+          <span>₹{priceRange[1].toLocaleString()}{priceRange[1] >= 30000 ? "+" : ""}</span>
+        </div>
+        <div className="mt-8 px-2">
+          <Slider
+            value={[priceRange[0], priceRange[1]]}
+            max={30000}
+            step={100}
+            onValueChange={(val: any) => {
+              const value = Array.isArray(val) ? val : [val];
+              setPriceRange([value[0], value[1] || value[0]]);
+            }}
+            className="py-4"
+          />
+        </div>
+        <div className="flex gap-6 mt-8">
+          <div className="flex-1 space-y-2">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">Min</span>
+            <Input
+              type="number"
+              placeholder="0"
+              defaultValue={priceRange[0]}
+              key={`min-${priceRange[0]}`}
+              onBlur={(e) => {
+                const val = Number(e.target.value);
+                setPriceRange([val, priceRange[1]]);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = Number((e.target as HTMLInputElement).value);
+                  setPriceRange([val, priceRange[1]]);
+                }
+              }}
+              className="h-12 border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 font-bold text-black"
+            />
+          </div>
+          <div className="flex-1 space-y-2">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">Max</span>
+            <Input
+              type="number"
+              placeholder="30000"
+              defaultValue={priceRange[1]}
+              key={`max-${priceRange[1]}`}
+              onBlur={(e) => {
+                const val = Number(e.target.value);
+                setPriceRange([priceRange[0], val]);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = Number((e.target as HTMLInputElement).value);
+                  setPriceRange([priceRange[0], val]);
+                }
+              }}
+              className="h-12 border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 font-bold text-black"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export function ShopPageClient() {
   const router = useRouter();
   const pathname = usePathname();
@@ -57,7 +171,7 @@ export function ShopPageClient() {
   );
   const [selectedFit, setSelectedFit] = useState<string | null>(null);
   const [selectedFabric, setSelectedFabric] = useState<string | null>(null);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 30000]);
   const [sortBy, setSortBy] = useState("newest");
   const [allProducts, setAllProducts] = useState<Product[]>(mockProducts);
   const [categories, setCategories] = useState<Category[]>(mockCategories);
@@ -87,7 +201,7 @@ export function ShopPageClient() {
     router.push(pathname, { scroll: false });
     setSelectedFit(null);
     setSelectedFabric(null);
-    setPriceRange([0, 100000]);
+    setPriceRange([0, 30000]);
   };
 
   useEffect(() => {
@@ -207,99 +321,12 @@ export function ShopPageClient() {
     (selectedCategory ? 1 : 0) +
     (selectedFit ? 1 : 0) +
     (selectedFabric ? 1 : 0) +
-    (priceRange[0] > 0 || priceRange[1] < 100000 ? 1 : 0);
+    (priceRange[0] > 0 || priceRange[1] < 30000 ? 1 : 0);
 
   const clearAllFilters = () => {
     handleClearFilters();
   };
 
-  const FiltersContent = () => (
-    <div className="space-y-16 pr-8">
-      <div>
-        <h3 className="mb-8 text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">Category</h3>
-        <div className="space-y-5">
-            {categories.map((cat) => {
-              const displayName = 
-                cat.name === "Men's Legal Attire" ? "MEN" :
-                cat.name === "Women's Legal Attire" ? "WOMEN" :
-                cat.name === "Package Deals" ? "COMBOS" :
-                cat.name.toUpperCase();
-                
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() =>
-                    handleCategoryChange(
-                      selectedCategory === cat.slug ? null : cat.slug
-                    )
-                  }
-                  className={cn(
-                    "block w-full text-left text-base tracking-[0.2em] font-bold transition-all",
-                    selectedCategory === cat.slug
-                      ? "text-black translate-x-2"
-                      : "text-zinc-400 hover:text-black"
-                  )}
-                >
-                  {displayName}
-                </button>
-              );
-            })}
-        </div>
-      </div>
-
-      <div className="h-[1px] w-full bg-border/30" />
-
-      <div className="h-[1px] w-full bg-border/30" />
-
-      <div>
-        <h3 className="mb-8 text-sm uppercase tracking-[0.4em] text-accent-yellow font-bold">Value</h3>
-        <div className="space-y-8">
-          <div className="flex items-center justify-between text-xs tracking-widest text-zinc-600 font-bold">
-            <span>₹{priceRange[0].toLocaleString()}</span>
-            <span>₹{priceRange[1].toLocaleString()}+</span>
-          </div>
-          <div className="mt-8 px-2">
-            <Slider
-              defaultValue={[priceRange[0], priceRange[1]]}
-              max={100000}
-              step={1000}
-              onValueChange={(val: any) => {
-                const value = Array.isArray(val) ? val : [val];
-                setPriceRange([value[0], value[1] || value[0]]);
-              }}
-              className="py-4"
-            />
-          </div>
-          <div className="flex gap-6 mt-8">
-            <div className="flex-1 space-y-2">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">Min</span>
-              <Input
-                type="number"
-                placeholder="0"
-                value={priceRange[0]}
-                onChange={(e) =>
-                  setPriceRange([Number(e.target.value), priceRange[1]])
-                }
-                className="h-12 border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 font-bold text-black"
-              />
-            </div>
-            <div className="flex-1 space-y-2">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">Max</span>
-              <Input
-                type="number"
-                placeholder="100000"
-                value={priceRange[1]}
-                onChange={(e) =>
-                  setPriceRange([priceRange[0], Number(e.target.value)])
-                }
-                className="h-12 border-0 border-b border-black/10 bg-transparent px-0 text-sm focus-visible:ring-0 font-bold text-black"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <main className="bg-[#FDFCFB] min-h-screen">
@@ -319,6 +346,35 @@ export function ShopPageClient() {
         {/* Toolbar */}
         <div className="mb-12 flex flex-wrap items-center justify-between gap-12 border-y border-border/40 py-6">
           <div className="flex items-center gap-16">
+            {/* Mobile Filter Trigger */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" className="lg:hidden h-auto p-0 hover:bg-transparent">
+                  <div className="flex items-center gap-4">
+                    <SlidersHorizontal className="h-4 w-4 text-accent-yellow" />
+                    <span className="text-[10px] uppercase tracking-[0.4em] font-bold">Filters</span>
+                    {activeFiltersCount > 0 && (
+                      <Badge variant="secondary" className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] bg-accent-yellow text-black font-bold border-0">
+                        {activeFiltersCount}
+                      </Badge>
+                    )}
+                  </div>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-full sm:w-[400px] bg-[#FDFCFB] border-r border-border/20 p-12 overflow-y-auto">
+                <SheetHeader className="mb-12">
+                  <SheetTitle className="text-left text-xs uppercase tracking-[0.5em] font-bold text-zinc-400">Refine Archives</SheetTitle>
+                </SheetHeader>
+                <FiltersContent 
+                  categories={categories}
+                  priceRange={priceRange}
+                  selectedCategory={selectedCategory}
+                  handleCategoryChange={handleCategoryChange}
+                  setPriceRange={setPriceRange}
+                />
+              </SheetContent>
+            </Sheet>
+
             <div className="hidden items-center gap-6 md:flex">
                 {activeFiltersCount > 0 && (
                   <>
@@ -369,7 +425,13 @@ export function ShopPageClient() {
 
         <div className="flex gap-24">
           <aside className="hidden w-80 flex-shrink-0 lg:block border-r border-border/20 pr-12 sticky top-32 h-fit">
-            <FiltersContent />
+            <FiltersContent 
+              categories={categories}
+              priceRange={priceRange}
+              selectedCategory={selectedCategory}
+              handleCategoryChange={handleCategoryChange}
+              setPriceRange={setPriceRange}
+            />
           </aside>
 
           <div className="flex-1">

@@ -85,16 +85,74 @@ function CheckoutContent() {
     discount: 0,
   });
 
-  // Auth Guard
+  const [previousAddresses, setPreviousAddresses] = useState<any[]>([]);
+
+  // Auth Guard & Data Auto-fill
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push("/login?returnTo=/checkout");
+        return;
+      }
+
+      // Auto-fill from session
+      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "";
+      const [fName, ...lNames] = fullName.split(" ");
+      
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || "",
+        firstName: fName || "",
+        lastName: lNames.join(" ") || "",
+        phone: user.user_metadata?.phone || "",
+      }));
+
+      // Fetch previous addresses from last orders
+      try {
+        const res = await fetch("/api/orders");
+        const data = await res.json();
+        if (data.orders) {
+          // Extract unique addresses
+          const uniqueAddresses: any[] = [];
+          const seen = new Set();
+
+          data.orders.forEach((order: any) => {
+            const addrKey = `${order.shipping_address}-${order.shipping_postal_code}`;
+            if (!seen.has(addrKey)) {
+              seen.add(addrKey);
+              uniqueAddresses.push({
+                name: order.shipping_name,
+                phone: order.shipping_phone,
+                address: order.shipping_address,
+                city: order.shipping_city,
+                state: order.shipping_state,
+                postalCode: order.shipping_postal_code,
+              });
+            }
+          });
+          setPreviousAddresses(uniqueAddresses.slice(0, 3)); // Keep last 3
+        }
+      } catch (err) {
+        console.error("Failed to load previous addresses", err);
       }
     };
     checkUser();
   }, [router]);
+
+  const handleSelectPreviousAddress = (addr: any) => {
+    const [fName, ...lNames] = (addr.name || "").split(" ");
+    setFormData({
+      ...formData,
+      firstName: fName || "",
+      lastName: lNames.join(" ") || "",
+      phone: addr.phone || "",
+      address: addr.address || "",
+      city: addr.city || "",
+      state: addr.state || "",
+      postalCode: addr.postalCode || "",
+    });
+  };
 
   // Load Razorpay script
   useEffect(() => {
@@ -284,8 +342,33 @@ function CheckoutContent() {
 
           <div className="mt-6 space-y-8">
             {/* Contact & Shipping */}
-            <div className="rounded-lg border border-border p-6">
-              <h2 className="mb-4 font-serif text-lg font-semibold">1. Contact & Shipping</h2>
+            <div className="rounded-lg border border-border p-6 bg-white shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-serif text-lg font-semibold">1. Contact & Shipping</h2>
+                <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Secure Delivery</span>
+              </div>
+
+              {previousAddresses.length > 0 && (
+                <div className="mb-8 p-4 bg-zinc-50 border border-zinc-100 rounded-lg">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-accent-yellow font-bold mb-3">Saved Addresses</p>
+                  <div className="flex flex-wrap gap-3">
+                    {previousAddresses.map((addr, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSelectPreviousAddress(addr)}
+                        className="text-left p-3 border border-border bg-white hover:border-accent-yellow hover:bg-accent-yellow/5 transition-all rounded text-xs max-w-[240px] group relative focus:outline-none"
+                      >
+                        <p className="font-bold text-black truncate">{addr.name}</p>
+                        <p className="text-zinc-500 truncate mt-0.5">{addr.address}</p>
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <CheckCircle className="h-3 w-3 text-accent-yellow" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label>First Name *</Label>

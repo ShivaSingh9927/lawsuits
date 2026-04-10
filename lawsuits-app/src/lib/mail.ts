@@ -142,24 +142,6 @@ export async function sendOrderConfirmation(to: string, data: OrderEmailData) {
 
   const fromAddress = process.env.EMAIL || process.env.SMTP_USER || "thedressoutfitters@gmail.com";
 
-  const adminMailOptions = {
-    from: `"TDO Store Alert" <${fromAddress}>`,
-    to: fromAddress,
-    subject: `🔔 NEW ORDER RECEIVED - #${data.orderNumber}`,
-    html: `
-      <div style="font-family: sans-serif; padding: 20px; color: #333; border: 1px solid #eee;">
-        <h2 style="border-bottom: 2px solid #000; padding-bottom: 10px; color: #000;">Management Alert: New Order</h2>
-        <p><strong>Order Number:</strong> #${data.orderNumber}</p>
-        <p><strong>Customer:</strong> ${data.customerName}</p>
-        <p><strong>Total Amount:</strong> ₹${data.totalAmount.toLocaleString()}</p>
-        <p><strong>Destination:</strong> ${data.shippingAddress}</p>
-        <div style="margin-top: 20px;">
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders" style="background: #000; color: #fff; padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: bold; text-transform: uppercase;">View in Dashboard</a>
-        </div>
-      </div>
-    `
-  };
-
   const itemsHtml = data.items.map(item => `
     <tr>
       <td style="padding: 15px 0; border-bottom: 1px solid #f0f0f0;">
@@ -167,9 +149,57 @@ export async function sendOrderConfirmation(to: string, data: OrderEmailData) {
         <div style="font-size: 11px; color: #999; margin-top: 4px; text-transform: uppercase;">Size: ${item.variant_size}</div>
       </td>
       <td style="padding: 15px 0; border-bottom: 1px solid #f0f0f0; text-align: center; color: #666; font-size: 14px;">x${item.quantity}</td>
-      <td style="padding: 15px 0; border-bottom: 1px solid #f0f0f0; text-align: right; color: #000; font-weight: bold; font-size: 14px;">₹${(item.unit_price * item.quantity).toLocaleString()}</td>
+      <td style="padding: 15px 0; border-bottom: 1px solid #f0f0f0; text-align: right; color: #000; font-weight: bold; font-size: 14px;">₹${(Number(item.unit_price) * item.quantity).toLocaleString()}</td>
     </tr>
   `).join('');
+
+  const adminMailOptions = {
+    from: `"TDO Store Alert" <${fromAddress}>`,
+    to: fromAddress,
+    subject: `🔔 NEW ORDER RECEIVED - #${data.orderNumber}`,
+    html: `
+      <div style="font-family: sans-serif; padding: 20px; color: #333; border: 1px solid #eee; max-width: 600px;">
+        <h2 style="border-bottom: 2px solid #000; padding-bottom: 10px; color: #000; text-transform: uppercase; font-size: 18px;">Management Alert: New Order</h2>
+        
+        <div style="background: #fdfcfb; padding: 15px; margin: 20px 0; border-left: 4px solid #000;">
+          <p style="margin: 5px 0;"><strong>Order Number:</strong> #${data.orderNumber}</p>
+          <p style="margin: 5px 0;"><strong>Total Amount:</strong> ₹${data.totalAmount.toLocaleString()}</p>
+          <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleString('en-IN')}</p>
+        </div>
+
+        <h3 style="font-size: 14px; text-transform: uppercase; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Customer Details</h3>
+        <p style="margin: 5px 0;"><strong>Name:</strong> ${data.customerName}</p>
+        <p style="margin: 15px 0 5px 0;"><strong>Shipping Destination:</strong></p>
+        <div style="background: #fafafa; padding: 10px; font-size: 13px; color: #666;">
+          ${data.shippingAddress}
+        </div>
+
+        <h3 style="font-size: 14px; text-transform: uppercase; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Ordered Items</h3>
+        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+          <thead>
+            <tr>
+              <th align="left" style="font-size: 11px; padding: 10px 0; border-bottom: 1px solid #eee; color: #999;">PRODUCT</th>
+              <th align="center" style="font-size: 11px; padding: 10px 0; border-bottom: 1px solid #eee; color: #999;">QTY</th>
+              <th align="right" style="font-size: 11px; padding: 10px 0; border-bottom: 1px solid #eee; color: #999;">PRICE</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" align="right" style="padding: 15px 10px; font-weight: bold;">TOTAL:</td>
+              <td align="right" style="padding: 15px 0; font-weight: bold; color: #000;">₹${data.totalAmount.toLocaleString()}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div style="margin-top: 30px; text-align: center;">
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/orders" style="display: inline-block; background: #000; color: #fff; padding: 12px 25px; text-decoration: none; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Log in to Admin Dashboard</a>
+        </div>
+      </div>
+    `
+  };
 
   const userMailOptions = {
     from: `"The Dress Outfitters" <${fromAddress}>`,
@@ -281,6 +311,16 @@ export async function sendOrderConfirmation(to: string, data: OrderEmailData) {
                     <div style="font-size: 12px; color: #fff;">
                       Contact our concierge at <a href="mailto:support@thedressoutfitters.com" style="color: #D4AF37; text-decoration: none;">support@thedressoutfitters.com</a>
                     </div>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;">
+                      <div style="font-size: 9px; uppercase; tracking: 2px; color: #999; margin-bottom: 10px; text-align: center;">COMPANY INFORMATION</div>
+                      <div style="font-size: 11px; color: #888; line-height: 1.8;">
+                        <span style="color: #666;">GSTIN:</span> 03AZDPB0543K1ZX<br/>
+                        <span style="color: #666;">Phone:</span> +917777955002<br/>
+                        <span style="color: #666;">Address:</span> Punjab and Haryana High Court, Sector 1, Chandigarh, Punjab - 160001
+                      </div>
+                    </div>
+
                     <div style="margin-top: 30px; font-size: 9px; color: #444; letter-spacing: 1px;">
                       &copy; ${new Date().getFullYear()} THE DRESS OUTFITTERS. ALL RIGHTS RESERVED.
                     </div>
@@ -296,8 +336,96 @@ export async function sendOrderConfirmation(to: string, data: OrderEmailData) {
   };
 
   try {
+    // Generate PDF Invoice
+    let pdfAttachment = null;
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF();
+      
+      // Invoice Header
+      doc.setFontSize(22);
+      doc.text("THE DRESS OUTFITTERS", 105, 20, { align: "center" });
+      doc.setFontSize(10);
+      doc.text("ESTABLISHED EXCELLENCE", 105, 28, { align: "center" });
+      
+      doc.setDrawColor(200, 200, 200);
+      doc.line(20, 35, 190, 35);
+      
+      // Invoice Details
+      doc.setFontSize(12);
+      doc.text(`Invoice: #${data.orderNumber}`, 20, 45);
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, 190, 45, { align: "right" });
+      
+      // Bill To
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text("BILL TO:", 20, 55);
+      doc.setTextColor(0);
+      doc.setFontSize(11);
+      doc.text(data.customerName, 20, 60);
+      doc.setFontSize(10);
+      doc.text(data.shippingAddress, 20, 65, { maxWidth: 80 });
+      
+      // Company Details
+      doc.setTextColor(100);
+      doc.text("FROM:", 130, 55);
+      doc.setTextColor(0);
+      doc.setFontSize(11);
+      doc.text("THE DRESS OUTFITTERS", 130, 60);
+      doc.setFontSize(10);
+      doc.text("+917777955002", 130, 65);
+      doc.text("GSTIN: 03AZDPB0543K1ZX", 130, 70);
+      doc.text("Punjab and Haryana High Court,", 130, 75);
+      doc.text("Sector 1, Chandigarh - 160001", 130, 80);
+      
+      // Items Table Header
+      doc.setFillColor(250, 250, 250);
+      doc.rect(20, 95, 170, 10, "F");
+      doc.setFontSize(10);
+      doc.text("DESCRIPTION", 25, 102);
+      doc.text("QTY", 140, 102);
+      doc.text("AMOUNT", 185, 102, { align: "right" });
+      
+      let y = 115;
+      data.items.forEach(item => {
+        doc.text(item.product_name, 25, y);
+        doc.setFontSize(8);
+        doc.text(`Size: ${item.variant_size}`, 25, y + 5);
+        doc.setFontSize(10);
+        doc.text(item.quantity.toString(), 142, y, { align: "center" });
+        doc.text(`INR ${(item.unit_price * item.quantity).toLocaleString()}`, 185, y, { align: "right" });
+        y += 15;
+      });
+      
+      // Total
+      doc.line(130, y + 5, 190, y + 5);
+      doc.setFontSize(12);
+      doc.text("TOTAL:", 130, y + 15);
+      doc.setFontSize(14);
+      doc.setTextColor(212, 175, 55); // Gold color
+      doc.text(`INR ${data.totalAmount.toLocaleString()}`, 185, y + 15, { align: "right" });
+      
+      // Footer
+      doc.setTextColor(150);
+      doc.setFontSize(8);
+      doc.text("Thank you for your commission. This is a computer generated invoice.", 105, 280, { align: "center" });
+      
+      const pdfBuffer = doc.output('arraybuffer');
+      pdfAttachment = {
+        filename: `invoice-${data.orderNumber}.pdf`,
+        content: Buffer.from(pdfBuffer)
+      };
+    } catch (pdfErr) {
+      console.error("PDF Generation failed, sending email without attachment:", pdfErr);
+    }
+
     const adminResult = await transporter.sendMail(adminMailOptions);
-    const userResult = await transporter.sendMail(userMailOptions);
+    const userMailWithAttachment = {
+      ...userMailOptions,
+      attachments: pdfAttachment ? [pdfAttachment] : []
+    };
+    
+    const userResult = await transporter.sendMail(userMailWithAttachment);
     console.log("Emails sent successfully:", { admin: adminResult.messageId, user: userResult.messageId });
     return { success: true };
   } catch (err: any) {
