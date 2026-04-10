@@ -70,8 +70,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   const isShirtCombo = product.sku?.includes("-SH-") || product.name.toLowerCase().includes("shirt");
   
-  const isBundle = product.is_bundle || (product.bundle_config?.items?.length || 0) > 0 || (product.package_items?.length || 0) > 0;
-  const bundleConfig = product.bundle_config?.items || [];
+  const isBundle = product.is_bundle || (product.bundle_config?.length || 0) > 0 || (product.package_items?.length || 0) > 0;
+  const bundleConfig = product.bundle_config || [];
   
   const sortedPackageItems = useMemo(() => {
     if (!product.package_items) return [];

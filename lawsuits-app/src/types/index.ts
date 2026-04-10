@@ -32,9 +32,10 @@ export interface Product {
   bundle_config?: Array<{
     id: string;
     label: string;
-    type: "top" | "bottom" | "accessory";
+    type: "top" | "bottom" | "accessory" | "fabric" | "option";
     category?: string;
   }>;
+  package_items?: PackageDeal[];
 }
 
 export interface ProductImage {
@@ -53,6 +54,8 @@ export interface ProductVariant {
   product_id: string;
   sku: string;
   size: string;
+  color?: string;
+  metadata?: Record<string, any>;
   stock_quantity: number;
   price: number;
   compare_at_price: number | null;
