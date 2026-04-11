@@ -44,19 +44,7 @@ interface ProductDetailClientProps {
   product: Product;
 }
 
-const colorMap: Record<string, string> = {
-  "LG": "Light Grey",
-  "MG": "Grey",
-  "DG": "Dark Grey",
-  "BLK": "Black",
-  "WHT": "White",
-  "BLG": "Broad Lining on Grey",
-  "GRY": "Grey",
-  "DGR": "Dark Grey",
-  "LGR": "Light Grey",
-  "CL": "Charcoal",
-  "NBL": "Navy Blue",
-};
+
 
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
   // Combo Logic - Broadened detection
@@ -152,31 +140,31 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const topSizes = getDynamicSizes("top");
   const bottomSizes = getDynamicSizes("bottom");
 
-  // Dynamic Color Extraction for non-sized products or products with color variants (like Pant Cloth)
-  const getDynamicColors = () => {
+  // Dynamic Color Extraction for products with explicit color variants (like Pant Cloth)
+  const colorOptions = useMemo(() => {
     if (!product.variants || product.variants.length === 0) return [];
     const colors = new Set<string>();
     product.variants.forEach(v => {
-      // 1. Explicit color field
-      if (v.color && v.color !== "EMPTY") {
-        colors.add(v.color);
-        return;
-      }
-      
-      // 2. SKU strategy (Fallback)
-      const parts = v.sku.split('-');
-      const lastPart = parts[parts.length - 1].toUpperCase();
-      if (colorMap[lastPart]) {
-        colors.add(colorMap[lastPart]);
-      } else if (isNaN(Number(lastPart)) && lastPart.length >= 2 && !["SS", "MS", "LS", "XL", "2X", "3X"].includes(lastPart)) {
-        // Exclude common size codes from being treated as colors
-        colors.add(lastPart);
+      if (v.color && v.color.trim() !== "" && v.color !== "EMPTY" && v.color.toLowerCase() !== "null") {
+        colors.add(v.color.trim());
       }
     });
     return Array.from(colors);
-  };
+  }, [product.variants]);
 
-  const colorOptions = getDynamicColors();
+  // Dynamic Fabric Extraction
+  const fabricOptions = useMemo(() => {
+    if (!product.variants || product.variants.length === 0) return [];
+    const fabrics = new Set<string>();
+    product.variants.forEach(v => {
+      if (v.fabric && v.fabric.trim() !== "" && v.fabric !== "EMPTY" && v.fabric.toLowerCase() !== "null") {
+        fabrics.add(v.fabric.trim());
+      }
+    });
+    return Array.from(fabrics);
+  }, [product.variants]);
+
+
 
   // Extract Unique Sizes for Individual Products
   const commonColors = ["BLACK", "WHITE", "GREY", "GRAY", "BLUE", "NAVY", "DARK", "LIGHT", "BROWN"];
@@ -189,6 +177,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           s !== "EMPTY" && 
           s !== "NULL" &&
           !colorOptions.some(c => c.toLowerCase() === s.toLowerCase()) &&
+          !fabricOptions.some(f => f.toLowerCase() === s.toLowerCase()) &&
           !commonColors.includes(s)
         );
       })
@@ -242,33 +231,85 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     return String(a.size).localeCompare(String(b.size));
   });
 
+  // 1. State Declarations
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
     sortedVariants[0] || { id: 'base', price: product.base_price, compare_at_price: product.compare_at_price, size: 'Standard', stock_quantity: 5 } as any
   );
-  
   const [selectedSize, setSelectedSize] = useState<string | number>(
     uniqueSizes[0] || ""
   );
-
-  const [selectedColor, setSelectedColor] = useState<string>(
-    colorOptions[0] || ""
-  );
-
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedFabric, setSelectedFabric] = useState<string | null>(null);
   const [selectedTopSize, setSelectedTopSize] = useState<string | number>(
     topSizes[0] || (isShirtCombo ? "S" : 40)
   );
   const [selectedBottomSize, setSelectedBottomSize] = useState<string | number>(
     bottomSizes[0] || 32
   );
-  
-  // Bundle selection state (Record<ComponentID, SelectedValue>)
   const [bundleSelections, setBundleSelections] = useState<Record<string, string | number>>({});
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  // 2. Memoized Values
+  const availableColorsForSelection = useMemo(() => {
+    // Determine which size to filter by
+    const currentSize = isCombo ? selectedTopSize : (uniqueSizes.length > 0 ? selectedSize : null);
+    
+    if (!currentSize) return colorOptions;
+    const colors = new Set<string>();
+    product.variants?.forEach(v => {
+      const vSize = String(v.size || v.sku).toUpperCase();
+      const strSize = String(currentSize).toUpperCase();
+      
+      const matchesSize = vSize.includes(strSize) || v.sku.includes(strSize);
+      if (matchesSize && v.color && v.color.trim() !== "" && v.color !== "EMPTY" && v.color.toLowerCase() !== "null") {
+        colors.add(v.color.trim());
+      }
+    });
+    return Array.from(colors);
+  }, [product.variants, selectedTopSize, selectedSize, colorOptions, isCombo, uniqueSizes]);
+
+  // Fabrics available for the currently selected size
+  const availableFabricsForSelection = useMemo(() => {
+    const currentSize = isCombo ? selectedTopSize : (uniqueSizes.length > 0 ? selectedSize : null);
+    if (!currentSize) return fabricOptions;
+    const fabrics = new Set<string>();
+    product.variants?.forEach(v => {
+      const vSize = String(v.size || v.sku).toUpperCase();
+      const strSize = String(currentSize).toUpperCase();
+      const matchesSize = vSize.includes(strSize) || v.sku.includes(strSize);
+      if (matchesSize && v.fabric && v.fabric.trim() !== "" && v.fabric !== "EMPTY" && v.fabric.toLowerCase() !== "null") {
+        fabrics.add(v.fabric.trim());
+      }
+    });
+    return Array.from(fabrics);
+  }, [product.variants, selectedTopSize, selectedSize, fabricOptions, isCombo, uniqueSizes]);
+
+  // 3. Effects
+  // Sync selectedColor with availability for the current size
+  useEffect(() => {
+    if (availableColorsForSelection.length > 0) {
+      if (!selectedColor || !availableColorsForSelection.includes(selectedColor)) {
+        setSelectedColor(availableColorsForSelection[0]);
+      }
+    } else {
+      setSelectedColor(null);
+    }
+  }, [availableColorsForSelection, selectedColor]);
+
+  // Sync selectedFabric with availability for the current size
+  useEffect(() => {
+    if (availableFabricsForSelection.length > 0) {
+      if (!selectedFabric || !availableFabricsForSelection.includes(selectedFabric)) {
+        setSelectedFabric(availableFabricsForSelection[0]);
+      }
+    } else {
+      setSelectedFabric(null);
+    }
+  }, [availableFabricsForSelection, selectedFabric]);
 
   // Initialize bundle selections from config OR relational package items
   useEffect(() => {
     const initial: Record<string, string | number> = {};
-    
-    // Check relational items first as they are the new source of truth
     if ((product.package_items?.length || 0) > 0) {
       product.package_items?.forEach((item) => {
         const variants = item.component?.variants || [];
@@ -285,7 +326,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       setBundleSelections(initial);
     }
   }, [product.id, product.bundle_config, product.package_items]);
-  const [selectedImage, setSelectedImage] = useState(0);
   const { addItem, toggleCart } = useCartStore();
   const { addItem: addRecentlyViewed, items: recentlyViewedIds } = useRecentlyViewedStore();
   const { isWishlisted, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlistStore();
@@ -339,14 +379,15 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         if (selectedColor) {
            const vColor = (v.color || "").toLowerCase();
            colorMatch = vColor === selectedColor.toLowerCase();
-           
-           // Fallback for SKU-derived colors
-           if (!vColor && v.sku.toUpperCase().endsWith(selectedColor.toUpperCase())) {
-             colorMatch = true;
-           }
+        }
+
+        let fabricMatch = true;
+        if (selectedFabric) {
+           const vFabric = (v.fabric || "").toLowerCase();
+           fabricMatch = vFabric === selectedFabric.toLowerCase();
         }
         
-        return sizeMatch && colorMatch;
+        return sizeMatch && colorMatch && fabricMatch;
       });
 
       if (matched) {
@@ -406,15 +447,19 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       // Enhanced Matching: Consider color even in combos if color variations exist
       let finalMatched = matched || product.variants[0];
 
-      if (colorOptions.length > 0 && selectedColor) {
-        const colorMatched = product.variants.find(v => {
-          const parts = v.sku.split('-');
-          const lastPart = parts[parts.length - 1].toUpperCase();
-          const matchesColor = colorMap[lastPart] === selectedColor || lastPart === selectedColor;
+      if (selectedColor || selectedFabric) {
+        const matchingCriteria = product.variants.find(v => {
+          const matchesColor = selectedColor ? v.color === selectedColor : true;
+          const matchesFabric = selectedFabric ? v.fabric === selectedFabric : true;
           const matchesSize = v.size.includes(String(selectedTopSize)) || v.sku.includes(String(selectedTopSize));
-          return matchesColor && matchesSize;
+          return matchesColor && matchesFabric && matchesSize;
         });
-        if (colorMatched) finalMatched = colorMatched;
+        
+        if (matchingCriteria) {
+          finalMatched = matchingCriteria;
+        } else {
+          finalMatched = matched || product.variants[0];
+        }
       }
 
       if (finalMatched && (!selectedVariant || finalMatched.id !== selectedVariant.id || finalMatched.price !== selectedVariant.price)) {
@@ -422,16 +467,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       }
     } else if (selectedColor) {
       // Non-combo color matching logic
-      const matched = product.variants.find(v => {
-        const parts = v.sku.split('-');
-        const lastPart = parts[parts.length - 1].toUpperCase();
-        return colorMap[lastPart] === selectedColor || lastPart === selectedColor;
-      });
-      if (matched && matched.id !== selectedVariant?.id) {
-        setSelectedVariant(matched);
+      const matched = product.variants.find(v => v.color === selectedColor);
       }
-    }
-  }, [selectedTopSize, selectedBottomSize, selectedColor, selectedSize, bundleSelections, isCombo, isShirtCombo, isBundle, product.variants]);
+  }, [selectedTopSize, selectedBottomSize, selectedColor, selectedFabric, selectedSize, bundleSelections, isCombo, isShirtCombo, isBundle, product.variants]);
 
   useEffect(() => {
     addRecentlyViewed(product.id);
@@ -439,9 +477,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   const handleAddToCart = () => {
     const metadata = isBundle ? bundleSelections : {
-      size: selectedTopSize,
+      size: selectedTopSize || selectedSize,
       waist: isCombo ? selectedBottomSize : undefined,
-      fabric: selectedColor || undefined
+      color: selectedColor || undefined,
+      fabric: selectedFabric || undefined
     };
 
     addItem({
@@ -854,13 +893,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   </div>
 
                   {/* Color/Variation Selection for Combos */}
-                  {colorOptions.length > 0 && (
+                  {availableColorsForSelection.length > 0 && (
                     <div className="space-y-4 pt-8 border-t border-black/5">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
                         FABRIC SELECTION : <span className="text-foreground">{selectedColor}</span>
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {colorOptions.map((color) => (
+                        {availableColorsForSelection.map((color) => (
                           <button
                             key={color}
                             onClick={() => setSelectedColor(color)}
@@ -872,6 +911,31 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                             )}
                           >
                             {color}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fabric Selection for Combos */}
+                  {availableFabricsForSelection.length > 0 && (
+                    <div className="space-y-4 pt-8 border-t border-black/5">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
+                        FINISH SELECTION : <span className="text-foreground">{selectedFabric}</span>
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {availableFabricsForSelection.map((fabric) => (
+                          <button
+                            key={fabric}
+                            onClick={() => setSelectedFabric(fabric)}
+                            className={cn(
+                              "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                              selectedFabric === fabric
+                                ? "border-black bg-black text-white shadow-lg"
+                                : "border-zinc-200 hover:border-black text-zinc-600"
+                            )}
+                          >
+                            {fabric}
                           </button>
                         ))}
                       </div>
@@ -906,13 +970,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   )}
 
                   {/* Color Selection for Individual Products */}
-                  {colorOptions.length > 0 && (
+                  {availableColorsForSelection.length > 0 && (
                     <div className="space-y-4">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
                         COLOR / FABRIC : <span className="text-foreground tracking-widest">{selectedColor}</span>
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {colorOptions.map((color) => (
+                        {availableColorsForSelection.map((color) => (
                           <button
                             key={color}
                             onClick={() => setSelectedColor(color)}
@@ -924,6 +988,31 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                             )}
                           >
                             {color}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fabric Selection for Individual Products */}
+                  {availableFabricsForSelection.length > 0 && (
+                    <div className="space-y-4 pt-8 border-t border-black/5">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
+                        FABRIC TYPE : <span className="text-foreground tracking-widest">{selectedFabric}</span>
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {availableFabricsForSelection.map((fabric) => (
+                          <button
+                            key={fabric}
+                            onClick={() => setSelectedFabric(fabric)}
+                            className={cn(
+                              "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                              selectedFabric === fabric
+                                ? "border-black bg-black text-white shadow-lg"
+                                : "border-border hover:border-black text-zinc-600"
+                            )}
+                          >
+                            {fabric}
                           </button>
                         ))}
                       </div>

@@ -55,6 +55,7 @@ export interface ProductVariant {
   sku: string;
   size: string;
   color?: string;
+  fabric?: string;
   metadata?: Record<string, any>;
   stock_quantity: number;
   price: number;
