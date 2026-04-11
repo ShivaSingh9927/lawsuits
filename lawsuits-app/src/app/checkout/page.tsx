@@ -68,6 +68,7 @@ function CheckoutContent() {
   const total = subtotal + shipping + tax;
 
   const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
   const [formData, setFormData] = useState({
@@ -90,33 +91,44 @@ function CheckoutContent() {
   // Auth Guard & Data Auto-fill
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login?returnTo=/checkout");
-        return;
-      }
-
-      // Auto-fill from session
-      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "";
-      const [fName, ...lNames] = fullName.split(" ");
-      
-      setFormData(prev => ({
-        ...prev,
-        email: user.email || "",
-        firstName: fName || "",
-        lastName: lNames.join(" ") || "",
-        phone: user.user_metadata?.phone || "",
-      }));
-
-      // Fetch previous addresses from last orders
       try {
+        // Use getSession for faster check first
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        let targetUser = session?.user || null;
+        
+        // If no session in memory, double check with getUser (reliable but async network call)
+        if (!targetUser) {
+          const { data: { user } } = await supabase.auth.getUser();
+          targetUser = user;
+        }
+
+        if (!targetUser) {
+          router.push("/login?returnTo=/checkout");
+          return;
+        }
+
+        const user = targetUser;
+        // Auto-fill from session
+        const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "";
+        const [fName, ...lNames] = fullName.split(" ");
+        
+        setFormData(prev => ({
+          ...prev,
+          email: user.email || "",
+          firstName: fName || "",
+          lastName: lNames.join(" ") || "",
+          phone: user.user_metadata?.phone || "",
+        }));
+
+        setAuthLoading(false);
+
+        // Fetch previous addresses from last orders
         const res = await fetch("/api/orders");
         const data = await res.json();
         if (data.orders) {
-          // Extract unique addresses
           const uniqueAddresses: any[] = [];
           const seen = new Set();
-
           data.orders.forEach((order: any) => {
             const addrKey = `${order.shipping_address}-${order.shipping_postal_code}`;
             if (!seen.has(addrKey)) {
@@ -131,10 +143,11 @@ function CheckoutContent() {
               });
             }
           });
-          setPreviousAddresses(uniqueAddresses.slice(0, 3)); // Keep last 3
+          setPreviousAddresses(uniqueAddresses.slice(0, 3));
         }
       } catch (err) {
-        console.error("Failed to load previous addresses", err);
+        console.error("Auth or data load failed", err);
+        setAuthLoading(false);
       }
     };
     checkUser();
@@ -304,6 +317,15 @@ function CheckoutContent() {
   };
 
 
+  if (authLoading) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center py-32 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-yellow mb-4"></div>
+        <p className="text-zinc-500 font-serif lowercase italic">verifying your counsel status...</p>
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -460,7 +482,7 @@ function CheckoutContent() {
 
             <div className="mt-4 space-y-4">
               {items.map((item) => (
-                <div key={item.variant_id} className="flex gap-4 items-start group">
+                <div key={item.id} className="flex gap-4 items-start group">
                   <div className="relative h-20 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted border border-border">
                     <Image src={item.product.images?.[0]?.url || "/placeholder-suit.jpg"} alt={item.product.name} fill className="object-cover" />
                   </div>
@@ -471,7 +493,7 @@ function CheckoutContent() {
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Size: {item.variant.size}</p>
                       </div>
                       <button 
-                        onClick={() => removeItem(item.variant_id)}
+                        onClick={() => removeItem(item.id)}
                         className="text-muted-foreground hover:text-red-500 transition-colors p-1"
                       >
                         <X className="h-3 w-3" />
@@ -481,14 +503,14 @@ function CheckoutContent() {
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2 border border-border rounded-none p-1 bg-white">
                         <button 
-                          onClick={() => updateQuantity(item.variant_id, Math.max(1, item.quantity - 1))}
+                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                           className="p-1 hover:bg-zinc-100 transition-colors"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
                         <span className="text-xs w-4 text-center">{item.quantity}</span>
                         <button 
-                          onClick={() => updateQuantity(item.variant_id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           className="p-1 hover:bg-zinc-100 transition-colors"
                         >
                           <Plus className="h-3 w-3" />

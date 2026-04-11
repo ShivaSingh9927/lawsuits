@@ -14,6 +14,7 @@ import { LogIn } from "lucide-react";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo") || "/account";
   const mode = searchParams.get("mode");
   const [isSignUp, setIsSignUp] = useState(mode === "signup");
   const [loading, setLoading] = useState(false);
@@ -24,6 +25,17 @@ function LoginForm() {
     fullName: "",
     phone: "",
   });
+
+  // Check for existing session
+  React.useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push(returnTo);
+      }
+    };
+    checkSession();
+  }, [router, returnTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +63,7 @@ function LoginForm() {
           password: formData.password,
         });
         if (error) throw error;
-        router.push("/account");
+        router.push(returnTo);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -64,7 +76,7 @@ function LoginForm() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(returnTo)}`,
       },
     });
   };
