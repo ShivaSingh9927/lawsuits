@@ -7,9 +7,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase/client";
-import { LogIn } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
@@ -72,15 +70,6 @@ function LoginForm() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(returnTo)}`,
-      },
-    });
-  };
-
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4">
       <motion.div
@@ -99,22 +88,7 @@ function LoginForm() {
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          className="mt-6 w-full"
-          onClick={handleGoogleSignIn}
-        >
-          <LogIn className="mr-2 h-4 w-4" />
-          Continue with Google
-        </Button>
-
-        <div className="my-6 flex items-center gap-4">
-          <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground">or</span>
-          <Separator className="flex-1" />
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {isSignUp && (
             <>
               <div>

@@ -9,13 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ChevronLeft, ShieldCheck, CheckCircle, Minus, Plus, X } from "lucide-react";
 import { useCartStore } from "@/store";
 import { supabase } from "@/lib/supabase/client";
@@ -57,7 +50,7 @@ interface RazorpayResponse {
   razorpay_signature: string;
 }
 
-const timeSlots = ["9am-12pm", "12pm-3pm", "3pm-6pm"];
+
 
 function CheckoutContent() {
   const router = useRouter();
@@ -80,8 +73,6 @@ function CheckoutContent() {
     city: "",
     state: "",
     postalCode: "",
-    appointmentDate: "",
-    timeSlot: "",
     couponCode: "",
     discount: 0,
   });
@@ -241,8 +232,8 @@ function CheckoutContent() {
             postalCode: formData.postalCode,
           },
           coupon_code: formData.couponCode || null,
-          appointment_date: formData.appointmentDate || null,
-          time_slot: formData.timeSlot || null,
+          appointment_date: null,
+          time_slot: null,
         }),
       });
 
@@ -438,36 +429,9 @@ function CheckoutContent() {
               </div>
             </div>
 
-            {/* Appointment */}
-            <div className="rounded-lg border border-border p-6">
-              <h2 className="mb-4 font-serif text-lg font-semibold">2. Home Fitting Appointment (Optional)</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <Label>Preferred Date</Label>
-                  <Input type="date" value={formData.appointmentDate} onChange={(e) => setFormData({ ...formData, appointmentDate: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Time Slot</Label>
-                  <Select value={formData.timeSlot} onValueChange={(v: string | null) => setFormData({ ...formData, timeSlot: v ?? "" })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select time slot" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeSlots.map((slot) => (
-                        <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Our master tailor will visit your address for final measurements and fitting adjustments.
-              </p>
-            </div>
-
             {/* Payment */}
             <div className="rounded-lg border border-border p-6">
-              <h2 className="mb-4 font-serif text-lg font-semibold">3. Payment</h2>
+              <h2 className="mb-4 font-serif text-lg font-semibold">2. Payment</h2>
               <p className="text-sm text-muted-foreground">
                 Secure payment powered by Razorpay. You&apos;ll be redirected to complete payment after clicking &quot;Pay Now&quot;.
               </p>

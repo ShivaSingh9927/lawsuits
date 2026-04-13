@@ -1032,7 +1032,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   onClick={handleAddToCart}
                   disabled={selectedVariant?.is_out_of_stock}
                 >
-                  {selectedVariant?.is_out_of_stock ? "Exhausted" : "Add to Cart"}
+                  {selectedVariant?.is_out_of_stock ? "Out of Stock" : "Add to Cart"}
                 </Button>
               </div>
             </div>
