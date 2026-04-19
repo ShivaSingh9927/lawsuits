@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { computeOrderTax } from "@/lib/tax";
 
 // GET /api/orders - List user's orders
 export async function GET(request: NextRequest) {
@@ -160,7 +161,14 @@ export async function POST(request: NextRequest) {
   }
 
   const shippingCost = subtotal >= 5000 ? 0 : 299;
-  const tax = Math.round((subtotal - discountTotal) * 0.05);
+  const tax = computeOrderTax(
+    orderItems.map((i) => ({
+      name: i.product_name,
+      unitPrice: i.unit_price,
+      qty: i.quantity,
+    })),
+    discountTotal
+  );
   const total = subtotal - discountTotal + shippingCost + tax;
 
   // Ensure user exists in public.users to satisfy foreign key constraints

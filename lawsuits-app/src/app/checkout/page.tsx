@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, ShieldCheck, CheckCircle, Minus, Plus, X } from "lucide-react";
 import { useCartStore } from "@/store";
 import { supabase } from "@/lib/supabase/client";
+import { computeOrderTax } from "@/lib/tax";
 
 declare global {
   interface Window {
@@ -56,9 +57,7 @@ function CheckoutContent() {
   const router = useRouter();
   const { items, getSubtotal, clearCart, updateQuantity, removeItem } = useCartStore();
   const subtotal = getSubtotal();
-  const shipping = subtotal >= 5000 ? 0 : 299;
-  const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + shipping + tax;
+  const shipping = subtotal >= 3500 ? 0 : 100;
 
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
@@ -78,6 +77,20 @@ function CheckoutContent() {
   });
 
   const [previousAddresses, setPreviousAddresses] = useState<any[]>([]);
+
+  const tax = useMemo(
+    () =>
+      computeOrderTax(
+        items.map((item) => ({
+          name: item.product.name,
+          unitPrice: item.variant.price,
+          qty: item.quantity,
+        })),
+        formData.discount || 0
+      ),
+    [items, formData.discount]
+  );
+  const total = subtotal - (formData.discount || 0) + shipping + tax;
 
   // Auth Guard & Data Auto-fill
   useEffect(() => {
@@ -515,7 +528,10 @@ function CheckoutContent() {
                 <span>{shipping === 0 ? "Free" : `₹${shipping}`}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">GST (5%)</span>
+                <span className="text-muted-foreground">
+                  GST
+                  {/* <span className="ml-1 text-[10px] text-muted-foreground/70">(per item)</span> */}
+                </span>
                 <span>₹{tax.toLocaleString()}</span>
               </div>
             </div>
@@ -524,7 +540,7 @@ function CheckoutContent() {
 
             <div className="flex justify-between font-semibold">
               <span>Total</span>
-              <span className="font-serif text-xl">₹{(total - formData.discount).toLocaleString()}</span>
+              <span className="font-serif text-xl">₹{total.toLocaleString()}</span>
             </div>
 
             <Button
@@ -533,7 +549,7 @@ function CheckoutContent() {
               onClick={createOrderAndPay}
               disabled={loading || !isFormValid}
             >
-              {loading ? "Processing..." : `Pay ₹${(total - formData.discount).toLocaleString()}`}
+              {loading ? "Processing..." : `Pay ₹${total.toLocaleString()}`}
             </Button>
 
             <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">

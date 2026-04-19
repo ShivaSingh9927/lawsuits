@@ -168,6 +168,25 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   // Extract Unique Sizes for Individual Products
   const commonColors = ["BLACK", "WHITE", "GREY", "GRAY", "BLUE", "NAVY", "DARK", "LIGHT", "BROWN"];
+  const SHIRT_SIZE_ORDER = ["S", "M", "L", "XL", "XXL", "XXXL"];
+  const compareSizes = (a: string | number, b: string | number) => {
+    const strA = String(a).toUpperCase();
+    const strB = String(b).toUpperCase();
+
+    // Shirt size ordering (S, M, L, ...)
+    const idxA = SHIRT_SIZE_ORDER.indexOf(strA);
+    const idxB = SHIRT_SIZE_ORDER.indexOf(strB);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+
+    // Numeric ordering (36, 38, 40, ...)
+    const numA = parseInt(strA.replace(/\D/g, ''));
+    const numB = parseInt(strB.replace(/\D/g, ''));
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+
+    // Alphabetical fallback
+    return strA.localeCompare(strB);
+  };
+
   const uniqueSizes = Array.from(new Set(
     (product.variants || [])
       .filter(v => {
@@ -182,7 +201,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         );
       })
       .map(v => v.size)
-  ));
+  )).sort(compareSizes);
 
   // Use the provided demo image as fallback if no images exist
   const displayImages = product.images?.length > 0
@@ -945,29 +964,55 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               ) : (
                 <div className="space-y-8">
                   {/* Size Selection for Individual Products */}
-                  {uniqueSizes.length > 0 && !(uniqueSizes.length === 1 && uniqueSizes[0] === "Standard") && (
-                    <div className="space-y-4">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
-                        SIZE : <span className="text-foreground tracking-widest">{selectedSize || "Standard"}</span>
-                      </p>
-                      <div className="grid grid-cols-4 gap-3">
-                        {uniqueSizes.map((size) => (
-                          <button
-                            key={size}
-                            onClick={() => setSelectedSize(size)}
-                            className={cn(
-                              "flex h-12 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-500",
-                              selectedSize === size
-                                ? "border-black bg-black text-white shadow-lg"
-                                : "border-border hover:border-foreground/40 text-zinc-600"
-                            )}
-                          >
-                            {size}
-                          </button>
-                        ))}
+                  {uniqueSizes.length > 0 && !(uniqueSizes.length === 1 && uniqueSizes[0] === "Standard") && (() => {
+                    const findVariantForSize = (s: string | number) =>
+                      (product.variants || []).find(v => String(v.size) === String(s));
+                    const selectedVariantForSize = selectedSize ? findVariantForSize(selectedSize) : undefined;
+                    const selectedInStock = selectedVariantForSize
+                      ? !(selectedVariantForSize.is_out_of_stock || (selectedVariantForSize.stock_quantity !== undefined && selectedVariantForSize.stock_quantity <= 0))
+                      : false;
+
+                    return (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
+                            SIZE : <span className="text-foreground tracking-widest">{selectedSize || "Standard"}</span>
+                          </p>
+                          {selectedSize && selectedVariantForSize && (
+                            <p className={cn(
+                              "text-[10px] uppercase tracking-widest font-bold",
+                              selectedInStock ? "text-emerald-600" : "text-red-500"
+                            )}>
+                              {selectedInStock ? "In Stock" : "Out of Stock"}
+                            </p>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                          {uniqueSizes.map((size) => {
+                            const v = findVariantForSize(size);
+                            const isOutOfStock = v ? (v.is_out_of_stock || (v.stock_quantity !== undefined && v.stock_quantity <= 0)) : false;
+
+                            return (
+                              <button
+                                key={size}
+                                disabled={isOutOfStock}
+                                onClick={() => setSelectedSize(size)}
+                                className={cn(
+                                  "flex h-10 w-full items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                                  selectedSize === size
+                                    ? "border-black bg-black text-white shadow-lg"
+                                    : "border-zinc-200 text-zinc-600 hover:border-black",
+                                  isOutOfStock && "opacity-20 cursor-not-allowed grayscale border-zinc-100"
+                                )}
+                              >
+                                {size}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Color Selection for Individual Products */}
                   {availableColorsForSelection.length > 0 && (

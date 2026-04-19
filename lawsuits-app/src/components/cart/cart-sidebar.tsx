@@ -53,7 +53,7 @@ export function CartSidebar() {
                   <motion.div
                     className="h-full bg-accent-yellow"
                     initial={{ width: 0 }}
-                    animate={{ width: `${Math.min(100, (subtotal / 5000) * 100)}%` }}
+                    animate={{ width: `${Math.min(100, (subtotal / 3500) * 100)}%` }}
                   />
                 </div>
               </div>
