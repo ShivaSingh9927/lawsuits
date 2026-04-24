@@ -50,15 +50,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  // Send confirmation email
+  // Send confirmation email (fall back to guest_email for guest checkouts)
+  const recipientEmail: string | undefined =
+    order.user?.email || order.guest_email || undefined;
   try {
-    await sendOrderConfirmation(order.user.email, {
-      orderNumber: order.order_number,
-      customerName: order.shipping_name,
-      totalAmount: order.total,
-      items: order.items,
-      shippingAddress: `${order.shipping_address}, ${order.shipping_city}, ${order.shipping_state} ${order.shipping_postal_code}`,
-    });
+    if (recipientEmail) {
+      await sendOrderConfirmation(recipientEmail, {
+        orderNumber: order.order_number,
+        customerName: order.shipping_name,
+        totalAmount: order.total,
+        items: order.items,
+        shippingAddress: `${order.shipping_address}, ${order.shipping_city}, ${order.shipping_state} ${order.shipping_postal_code}`,
+      });
+    }
   } catch (emailError) {
     console.error("Failed to send order confirmation email:", emailError);
     // Continue despite email error to not break the successful transaction flow

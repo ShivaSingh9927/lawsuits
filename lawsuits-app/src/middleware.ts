@@ -57,12 +57,7 @@ export default async function middleware(request: NextRequest) {
       }
     }
 
-    // Protect /checkout route
-    if (request.nextUrl.pathname === "/checkout" && !user) {
-      const redirectUrl = new URL("/login", request.url);
-      redirectUrl.searchParams.set("returnTo", "/checkout");
-      return NextResponse.redirect(redirectUrl);
-    }
+    // /checkout is open to guests — no auth required (guest checkout flow).
   } catch (err) {
     console.error("Middleware auth error:", err);
     // If it's a timeout or network error, we might want to let it pass and let the client-side handle it
@@ -73,5 +68,5 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/account/:path*", "/admin/:path*", "/checkout"],
+  matcher: ["/account/:path*", "/admin/:path*"],
 };

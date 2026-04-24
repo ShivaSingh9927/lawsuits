@@ -53,12 +53,21 @@ interface RazorpayResponse {
 
 
 
+type AuthMode = "guest" | "signup" | "login" | "authenticated";
+
 function CheckoutContent() {
   const router = useRouter();
   const { items, clearCart, updateQuantity, removeItem } = useCartStore();
 
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [authMode, setAuthMode] = useState<AuthMode>("guest");
+  const [accountPassword, setAccountPassword] = useState("");
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [existence, setExistence] = useState<{ emailTaken: boolean; phoneTaken: boolean }>({
+    emailTaken: false,
+    phoneTaken: false,
+  });
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
   const [formData, setFormData] = useState({
@@ -79,6 +88,112 @@ function CheckoutContent() {
 
   const [previousAddresses, setPreviousAddresses] = useState<any[]>([]);
 
+  // Soft auth detection: prefill if logged-in, otherwise default to guest.
+  // Never redirects; guests can finish checkout without an account.
+  const loadSignedInUser = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      let targetUser = session?.user || null;
+      if (!targetUser) {
+        const { data: { user } } = await supabase.auth.getUser();
+        targetUser = user;
+      }
+      if (!targetUser) {
+        setAuthMode("guest");
+        setAuthLoading(false);
+        return;
+      }
+
+      const user = targetUser;
+      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "";
+      const [fName, ...lNames] = fullName.split(" ");
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || prev.email,
+        firstName: fName || prev.firstName,
+        lastName: lNames.join(" ") || prev.lastName,
+        phone: user.user_metadata?.phone || prev.phone,
+      }));
+      setAuthMode("authenticated");
+      setAuthLoading(false);
+
+      // Previous addresses (auth only)
+      const res = await fetch("/api/orders");
+      const data = await res.json();
+      if (data.orders) {
+        const uniqueAddresses: any[] = [];
+        const seen = new Set();
+        data.orders.forEach((order: any) => {
+          const addrKey = `${order.shipping_address}-${order.shipping_postal_code}`;
+          if (!seen.has(addrKey)) {
+            seen.add(addrKey);
+            uniqueAddresses.push({
+              name: order.shipping_name,
+              phone: order.shipping_phone,
+              address: order.shipping_address,
+              city: order.shipping_city,
+              state: order.shipping_state,
+              postalCode: order.shipping_postal_code,
+            });
+          }
+        });
+        setPreviousAddresses(uniqueAddresses.slice(0, 3));
+      }
+    } catch (err) {
+      console.error("Auth check failed", err);
+      setAuthLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSignedInUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced existence check when signing up for the 5% reward.
+  useEffect(() => {
+    if (authMode !== "signup") {
+      setExistence({ emailTaken: false, phoneTaken: false });
+      return;
+    }
+    const email = formData.email.trim();
+    const phone = formData.phone.trim();
+    if (!email && !phone) return;
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/auth/check-existence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, phone }),
+        });
+        const data = await res.json();
+        setExistence({
+          emailTaken: !!data.emailTaken,
+          phoneTaken: !!data.phoneTaken,
+        });
+        if (data.emailTaken || data.phoneTaken) {
+          setAuthMode("login");
+          setAccountError(
+            "This email or phone already has an account. Sign in to continue."
+          );
+        }
+      } catch (err) {
+        console.error("existence check failed", err);
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [authMode, formData.email, formData.phone]);
+
+  const eligibleForNewUserDiscount =
+    authMode === "signup" && !existence.emailTaken && !existence.phoneTaken;
+
+  // Coupon preview shown in the order summary when the user toggles to
+  // "Create account & save 5%". Server is still authoritative at order time.
+  const previewCoupon = useMemo<AppliedCoupon | null>(
+    () => (eligibleForNewUserDiscount ? { type: "percentage", value: 5 } : null),
+    [eligibleForNewUserDiscount]
+  );
+
   const totals = useMemo(
     () =>
       computeOrderTotals(
@@ -87,76 +202,11 @@ function CheckoutContent() {
           unitPrice: item.variant.price,
           qty: item.quantity,
         })),
-        appliedCoupon
+        appliedCoupon ?? previewCoupon
       ),
-    [items, appliedCoupon]
+    [items, appliedCoupon, previewCoupon]
   );
   const { subtotal, discount, shipping, tax, total } = totals;
-
-  // Auth Guard & Data Auto-fill
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        // Use getSession for faster check first
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        let targetUser = session?.user || null;
-        
-        // If no session in memory, double check with getUser (reliable but async network call)
-        if (!targetUser) {
-          const { data: { user } } = await supabase.auth.getUser();
-          targetUser = user;
-        }
-
-        if (!targetUser) {
-          router.push("/login?returnTo=/checkout");
-          return;
-        }
-
-        const user = targetUser;
-        // Auto-fill from session
-        const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "";
-        const [fName, ...lNames] = fullName.split(" ");
-        
-        setFormData(prev => ({
-          ...prev,
-          email: user.email || "",
-          firstName: fName || "",
-          lastName: lNames.join(" ") || "",
-          phone: user.user_metadata?.phone || "",
-        }));
-
-        setAuthLoading(false);
-
-        // Fetch previous addresses from last orders
-        const res = await fetch("/api/orders");
-        const data = await res.json();
-        if (data.orders) {
-          const uniqueAddresses: any[] = [];
-          const seen = new Set();
-          data.orders.forEach((order: any) => {
-            const addrKey = `${order.shipping_address}-${order.shipping_postal_code}`;
-            if (!seen.has(addrKey)) {
-              seen.add(addrKey);
-              uniqueAddresses.push({
-                name: order.shipping_name,
-                phone: order.shipping_phone,
-                address: order.shipping_address,
-                city: order.shipping_city,
-                state: order.shipping_state,
-                postalCode: order.shipping_postal_code,
-              });
-            }
-          });
-          setPreviousAddresses(uniqueAddresses.slice(0, 3));
-        }
-      } catch (err) {
-        console.error("Auth or data load failed", err);
-        setAuthLoading(false);
-      }
-    };
-    checkUser();
-  }, [router]);
 
   const handleSelectPreviousAddress = (addr: any) => {
     const [fName, ...lNames] = (addr.name || "").split(" ");
@@ -207,14 +257,81 @@ function CheckoutContent() {
 
   const createOrderAndPay = async () => {
     setLoading(true);
+    setAccountError(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert("Please login first");
-        router.push("/login?returnTo=/checkout");
-        setLoading(false);
-        return;
+      // Branch on authMode: may need to sign the user up or in first.
+      let { data: { user } } = await supabase.auth.getUser();
+      let newUserSignup = false;
+
+      if (!user && authMode === "signup") {
+        if (!accountPassword || accountPassword.length < 6) {
+          setAccountError("Please enter a password with at least 6 characters.");
+          setLoading(false);
+          return;
+        }
+        // 1. Create user via admin route (confirmed, no email round-trip)
+        const signupRes = await fetch("/api/auth/signup-at-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.email.trim(),
+            password: accountPassword,
+            fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+            phone: formData.phone.trim(),
+          }),
+        });
+        const signupData = await signupRes.json();
+        if (!signupRes.ok) {
+          if (signupRes.status === 409) {
+            setAuthMode("login");
+            setExistence({
+              emailTaken: !!signupData.emailTaken,
+              phoneTaken: !!signupData.phoneTaken,
+            });
+            setAccountError(
+              "An account with this email or phone already exists. Please sign in to continue."
+            );
+          } else {
+            setAccountError(signupData.error || "Signup failed. Please try again.");
+          }
+          setLoading(false);
+          return;
+        }
+        // 2. Sign in to establish session
+        const { error: signInErr } = await supabase.auth.signInWithPassword({
+          email: formData.email.trim(),
+          password: accountPassword,
+        });
+        if (signInErr) {
+          setAccountError(signInErr.message);
+          setLoading(false);
+          return;
+        }
+        const { data: refreshed } = await supabase.auth.getUser();
+        user = refreshed.user;
+        setAuthMode("authenticated");
+        newUserSignup = true;
+      } else if (!user && authMode === "login") {
+        if (!accountPassword) {
+          setAccountError("Please enter your password to sign in.");
+          setLoading(false);
+          return;
+        }
+        const { error: signInErr } = await supabase.auth.signInWithPassword({
+          email: formData.email.trim(),
+          password: accountPassword,
+        });
+        if (signInErr) {
+          setAccountError("Invalid email or password.");
+          setLoading(false);
+          return;
+        }
+        const { data: refreshed } = await supabase.auth.getUser();
+        user = refreshed.user;
+        setAuthMode("authenticated");
       }
+
+      const isGuestCheckout = !user && authMode === "guest";
 
       // Final validation before payment
       if (!/^\d{6}$/.test(formData.postalCode)) {
@@ -247,6 +364,8 @@ function CheckoutContent() {
             postalCode: formData.postalCode,
           },
           coupon_code: formData.couponCode || null,
+          guest: isGuestCheckout,
+          new_user_signup: newUserSignup,
           // What the customer saw on screen. The API will recompute from DB
           // and reject the request if these disagree, so the charged amount
           // is guaranteed to match the displayed amount.
@@ -375,6 +494,103 @@ function CheckoutContent() {
           <h1 className="font-serif text-2xl font-bold">Checkout</h1>
 
           <div className="mt-6 space-y-8">
+            {/* Account: guest / signup / login (hidden when already signed in) */}
+            {authMode !== "authenticated" && (
+              <div className="rounded-lg border border-border p-6 bg-white shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-serif text-lg font-semibold">Account</h2>
+                  <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Optional</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                  {([
+                    { key: "guest", label: "Continue as Guest", sub: "No account needed" },
+                    { key: "signup", label: "Create account · Save 5%", sub: "New-member reward" },
+                    { key: "login", label: "Sign in", sub: "Existing customer" },
+                  ] as { key: AuthMode; label: string; sub: string }[]).map((opt) => {
+                    const active = authMode === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => {
+                          setAuthMode(opt.key);
+                          setAccountError(null);
+                          setAccountPassword("");
+                        }}
+                        className={`text-left p-3 rounded border transition-all focus:outline-none ${
+                          active
+                            ? "border-accent-yellow bg-accent-yellow/10"
+                            : "border-border bg-white hover:border-accent-yellow/60"
+                        }`}
+                      >
+                        <p className="text-xs font-bold uppercase tracking-wide">{opt.label}</p>
+                        <p className="text-[11px] text-zinc-500 mt-0.5">{opt.sub}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {authMode === "signup" && (
+                  <div className="space-y-3">
+                    <div className="rounded border border-accent-yellow/40 bg-accent-yellow/5 p-3 text-[12px] text-zinc-700">
+                      <span className="font-bold">Save 5% on this order</span> when you create an account as a
+                      first-time customer. Offer is verified at checkout; if your email or phone already has an
+                      account, we'll ask you to sign in instead (no reward).
+                    </div>
+                    <div>
+                      <Label>Password (min 6 chars) *</Label>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        value={accountPassword}
+                        onChange={(e) => setAccountPassword(e.target.value)}
+                        minLength={6}
+                        autoComplete="new-password"
+                      />
+                    </div>
+                    <p className="text-[11px] text-zinc-500">
+                      We'll use the name, email and phone from the shipping section below for your account.
+                    </p>
+                  </div>
+                )}
+
+                {authMode === "login" && (
+                  <div className="space-y-3">
+                    <p className="text-xs text-zinc-600">
+                      Sign in to continue checkout. Your saved addresses will be available after sign-in.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label>Email *</Label>
+                        <Input
+                          type="email"
+                          placeholder="your@email.com"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          autoComplete="email"
+                        />
+                      </div>
+                      <div>
+                        <Label>Password *</Label>
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          value={accountPassword}
+                          onChange={(e) => setAccountPassword(e.target.value)}
+                          autoComplete="current-password"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {accountError && (
+                  <p className="mt-3 text-xs text-red-600">{accountError}</p>
+                )}
+              </div>
+            )}
+
             {/* Contact & Shipping */}
             <div className="rounded-lg border border-border p-6 bg-white shadow-sm">
               <div className="flex items-center justify-between mb-6">

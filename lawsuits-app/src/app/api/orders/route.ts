@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ orders: data });
 }
 
-// POST /api/orders - Create order
+// POST /api/orders - Create order (supports guest checkout)
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const admin = await createAdminClient();
@@ -46,10 +46,6 @@ export async function POST(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   const body = await request.json();
   const {
@@ -59,10 +55,26 @@ export async function POST(request: NextRequest) {
     expected,
     appointment_date,
     time_slot,
+    guest,
+    new_user_signup,
   } = body;
 
   if (!items?.length) {
     return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+  }
+
+  // Guest checkout: no auth session, but must supply email + phone.
+  const isGuest = !user && (guest === true);
+  if (!user && !isGuest) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (isGuest) {
+    if (!shipping?.email || !shipping?.phone) {
+      return NextResponse.json(
+        { error: "Email and phone are required for guest checkout" },
+        { status: 400 }
+      );
+    }
   }
 
   // Optimize: Batch fetch all variants in a single query
@@ -145,6 +157,7 @@ export async function POST(request: NextRequest) {
   let couponId: string | null = null;
   let currentCoupon: any = null;
   let appliedCoupon: AppliedCoupon | null = null;
+  let newUserDiscountApplied = false;
 
   if (coupon_code) {
     const { data: coupon } = await admin
@@ -164,6 +177,49 @@ export async function POST(request: NextRequest) {
         couponId = coupon.id;
         currentCoupon = coupon;
         appliedCoupon = { type: coupon.type, value: coupon.value };
+      }
+    }
+  }
+
+  // Server-side WELCOME5 new-user discount. Applied only when:
+  //  - client requested it (new_user_signup === true)
+  //  - no other coupon already applied
+  //  - the buyer's email and phone are NOT already tied to a pre-existing
+  //    account (other than the one just created for them).
+  if (new_user_signup === true && !couponId) {
+    const email = (shipping?.email || user?.email || "").trim().toLowerCase();
+    const phoneDigits = String(shipping?.phone || "").replace(/\D+/g, "");
+    const phoneSuffix = phoneDigits.slice(-10);
+
+    // Count matching users excluding the current user (who was just created).
+    let emailOwners = 0;
+    let phoneOwners = 0;
+
+    if (email) {
+      let q = admin.from("users").select("id", { count: "exact", head: true }).ilike("email", email);
+      if (user?.id) q = q.neq("id", user.id);
+      const { count } = await q;
+      emailOwners = count || 0;
+    }
+    if (phoneSuffix) {
+      let q = admin.from("users").select("id", { count: "exact", head: true }).ilike("phone", `%${phoneSuffix}`);
+      if (user?.id) q = q.neq("id", user.id);
+      const { count } = await q;
+      phoneOwners = count || 0;
+    }
+
+    if (emailOwners === 0 && phoneOwners === 0) {
+      const { data: welcome } = await admin
+        .from("coupons")
+        .select("*")
+        .eq("code", "WELCOME5")
+        .eq("is_active", true)
+        .maybeSingle();
+      if (welcome) {
+        couponId = welcome.id;
+        currentCoupon = welcome;
+        appliedCoupon = { type: welcome.type, value: welcome.value };
+        newUserDiscountApplied = true;
       }
     }
   }
@@ -207,21 +263,26 @@ export async function POST(request: NextRequest) {
   }
 
   // Ensure user exists in public.users to satisfy foreign key constraints
-  const { error: userSyncError } = await admin.from("users").upsert({
-    id: user.id,
-    email: user.email || shipping.email,
-    role: "customer"
-  }, { onConflict: "id", ignoreDuplicates: true });
+  if (user) {
+    const { error: userSyncError } = await admin.from("users").upsert({
+      id: user.id,
+      email: user.email || shipping.email,
+      role: "customer"
+    }, { onConflict: "id", ignoreDuplicates: true });
 
-  if (userSyncError) {
-    console.error("User sync error:", userSyncError);
+    if (userSyncError) {
+      console.error("User sync error:", userSyncError);
+    }
   }
 
   // Create order
   const { data: order, error: orderError } = await admin
     .from("orders")
     .insert({
-      user_id: user.id,
+      user_id: user?.id ?? null,
+      is_guest: isGuest,
+      guest_email: isGuest ? shipping.email : null,
+      guest_phone: isGuest ? shipping.phone : null,
       status: "pending",
       subtotal,
       discount_total: discountTotal,
@@ -280,5 +341,8 @@ export async function POST(request: NextRequest) {
   //   });
   // }
 
-  return NextResponse.json({ order }, { status: 201 });
+  return NextResponse.json(
+    { order, new_user_discount_applied: newUserDiscountApplied },
+    { status: 201 }
+  );
 }
