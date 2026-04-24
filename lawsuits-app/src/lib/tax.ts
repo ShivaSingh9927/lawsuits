@@ -1,9 +1,8 @@
 // GST calculation helpers shared by client checkout UI and server order API.
 //
 // Rules:
-//   - If product name contains "leather" (case-insensitive) -> 18%
-//   - Else if unit price <= 1000 -> 5%
-//   - Else (unit price > 1000) -> 12%
+//   - If unit price <= 2500 -> 5%
+//   - Else (unit price > 2500) -> 18%
 //
 // Tax base per line = post-discount net (coupon discount allocated
 // proportionally across lines by gross value).
@@ -24,10 +23,9 @@ export interface TaxLineBreakdown {
   tax: number;
 }
 
-export function getGstRate(name: string, unitPrice: number): number {
-  if (/leather/i.test(name || "")) return 0.18;
-  if (unitPrice <= 1000) return 0.05;
-  return 0.12;
+export function getGstRate(_name: string, unitPrice: number): number {
+  if (unitPrice <= 2500) return 0.05;
+  return 0.18;
 }
 
 /**

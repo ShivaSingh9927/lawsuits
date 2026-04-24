@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, ShieldCheck, CheckCircle, Minus, Plus, X } from "lucide-react";
 import { useCartStore } from "@/store";
 import { supabase } from "@/lib/supabase/client";
-import { computeOrderTax } from "@/lib/tax";
+import { computeOrderTotals, AppliedCoupon } from "@/lib/pricing";
 
 declare global {
   interface Window {
@@ -55,9 +55,7 @@ interface RazorpayResponse {
 
 function CheckoutContent() {
   const router = useRouter();
-  const { items, getSubtotal, clearCart, updateQuantity, removeItem } = useCartStore();
-  const subtotal = getSubtotal();
-  const shipping = subtotal >= 3500 ? 0 : 100;
+  const { items, clearCart, updateQuantity, removeItem } = useCartStore();
 
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
@@ -73,24 +71,27 @@ function CheckoutContent() {
     state: "",
     postalCode: "",
     couponCode: "",
-    discount: 0,
   });
+  // Full coupon metadata returned by /api/coupons/validate. We keep the
+  // type+value (not just the computed discount) so that totals recompute
+  // correctly when the cart changes after applying a percentage coupon.
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   const [previousAddresses, setPreviousAddresses] = useState<any[]>([]);
 
-  const tax = useMemo(
+  const totals = useMemo(
     () =>
-      computeOrderTax(
+      computeOrderTotals(
         items.map((item) => ({
           name: item.product.name,
           unitPrice: item.variant.price,
           qty: item.quantity,
         })),
-        formData.discount || 0
+        appliedCoupon
       ),
-    [items, formData.discount]
+    [items, appliedCoupon]
   );
-  const total = subtotal - (formData.discount || 0) + shipping + tax;
+  const { subtotal, discount, shipping, tax, total } = totals;
 
   // Auth Guard & Data Auto-fill
   useEffect(() => {
@@ -194,8 +195,9 @@ function CheckoutContent() {
       });
       const data = await res.json();
       if (data.valid) {
-        setFormData({ ...formData, discount: data.coupon.discount });
+        setAppliedCoupon({ type: data.coupon.type, value: data.coupon.value });
       } else {
+        setAppliedCoupon(null);
         alert(data.message);
       }
     } catch {
@@ -245,6 +247,10 @@ function CheckoutContent() {
             postalCode: formData.postalCode,
           },
           coupon_code: formData.couponCode || null,
+          // What the customer saw on screen. The API will recompute from DB
+          // and reject the request if these disagree, so the charged amount
+          // is guaranteed to match the displayed amount.
+          expected: { subtotal, discount, shipping, tax, total },
           appointment_date: null,
           time_slot: null,
         }),
@@ -506,8 +512,11 @@ function CheckoutContent() {
               <Input placeholder="Coupon code" value={formData.couponCode} onChange={(e) => setFormData({ ...formData, couponCode: e.target.value })} />
               <Button variant="outline" onClick={handleApplyCoupon}>Apply</Button>
             </div>
-            {formData.discount > 0 && (
-              <p className="mt-2 text-sm text-green-600">Coupon applied! -₹{formData.discount.toLocaleString()}</p>
+            {discount > 0 && (
+              <p className="mt-2 text-sm text-green-600">Coupon applied! -₹{discount.toLocaleString()}</p>
+            )}
+            {appliedCoupon?.type === "free_shipping" && (
+              <p className="mt-2 text-sm text-green-600">Free shipping applied!</p>
             )}
 
             <Separator className="my-4" />
@@ -517,10 +526,10 @@ function CheckoutContent() {
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>₹{subtotal.toLocaleString()}</span>
               </div>
-              {formData.discount > 0 && (
+              {discount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Discount</span>
-                  <span>-₹{formData.discount.toLocaleString()}</span>
+                  <span>-₹{discount.toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between">

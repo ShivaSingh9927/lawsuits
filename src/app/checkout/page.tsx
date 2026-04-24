@@ -54,7 +54,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, getSubtotal, clearCart } = useCartStore();
   const subtotal = getSubtotal();
-  const shipping = subtotal >= 5000 ? 0 : 299;
+  const shipping = subtotal >= 3500 ? 0 : 299;
   const tax = Math.round(subtotal * 0.18);
   const total = subtotal + shipping + tax;
 

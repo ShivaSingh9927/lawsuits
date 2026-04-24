@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { computeOrderTax } from "@/lib/tax";
+import {
+  computeOrderTotals,
+  totalsMatch,
+  AppliedCoupon,
+} from "@/lib/pricing";
 
 // GET /api/orders - List user's orders
 export async function GET(request: NextRequest) {
@@ -48,7 +52,14 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { items, shipping, coupon_code, appointment_date, time_slot } = body;
+  const {
+    items,
+    shipping,
+    coupon_code,
+    expected,
+    appointment_date,
+    time_slot,
+  } = body;
 
   if (!items?.length) {
     return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -129,10 +140,11 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // Apply coupon
-  let discountTotal = 0;
-  let couponId = null;
-  let currentCoupon = null;
+  // Load + validate coupon (if provided). We only trust the coupon row from
+  // the DB; the client cannot influence discount type or value.
+  let couponId: string | null = null;
+  let currentCoupon: any = null;
+  let appliedCoupon: AppliedCoupon | null = null;
 
   if (coupon_code) {
     const { data: coupon } = await admin
@@ -149,27 +161,50 @@ export async function POST(request: NextRequest) {
         (coupon.max_uses === null || coupon.current_uses < coupon.max_uses);
 
       if (isValid) {
-        if (coupon.type === "percentage") {
-          discountTotal = Math.round(subtotal * (coupon.value / 100));
-        } else if (coupon.type === "fixed") {
-          discountTotal = coupon.value;
-        }
         couponId = coupon.id;
         currentCoupon = coupon;
+        appliedCoupon = { type: coupon.type, value: coupon.value };
       }
     }
   }
 
-  const shippingCost = subtotal >= 5000 ? 0 : 299;
-  const tax = computeOrderTax(
+  // Authoritative totals - computed from DB prices and DB coupon.
+  const totals = computeOrderTotals(
     orderItems.map((i) => ({
       name: i.product_name,
       unitPrice: i.unit_price,
       qty: i.quantity,
     })),
-    discountTotal
+    appliedCoupon
   );
-  const total = subtotal - discountTotal + shippingCost + tax;
+  const {
+    subtotal: computedSubtotal,
+    discount: discountTotal,
+    shipping: shippingCost,
+    tax,
+    total,
+  } = totals;
+
+  // If the client told us what it displayed, reject any mismatch. This
+  // prevents both (a) silent overcharge when UI / API formulas drift and
+  // (b) tampered requests that try to underpay.
+  if (expected && !totalsMatch(expected, totals)) {
+    return NextResponse.json(
+      {
+        error:
+          "Pricing changed since you loaded this page. Please refresh and try again.",
+        expected,
+        actual: {
+          subtotal: computedSubtotal,
+          discount: discountTotal,
+          shipping: shippingCost,
+          tax,
+          total,
+        },
+      },
+      { status: 409 }
+    );
+  }
 
   // Ensure user exists in public.users to satisfy foreign key constraints
   const { error: userSyncError } = await admin.from("users").upsert({
@@ -234,16 +269,16 @@ export async function POST(request: NextRequest) {
   }
 
   // Create appointment if home fitting
-  if (appointment_date && time_slot) {
-    await admin.from("service_appointments").insert({
-      order_id: order.id,
-      user_id: user.id,
-      status: "pending",
-      scheduled_date: appointment_date,
-      time_slot,
-      notes: shipping.notes || null,
-    });
-  }
+  // if (appointment_date && time_slot) {
+  //   await admin.from("service_appointments").insert({
+  //     order_id: order.id,
+  //     user_id: user.id,
+  //     status: "pending",
+  //     scheduled_date: appointment_date,
+  //     time_slot,
+  //     notes: shipping.notes || null,
+  //   });
+  // }
 
   return NextResponse.json({ order }, { status: 201 });
 }

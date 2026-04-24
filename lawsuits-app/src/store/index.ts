@@ -59,8 +59,8 @@ export const useCartStore = create<CartState>()(
         ),
       getItemCount: () =>
         get().items.reduce((sum, item) => sum + item.quantity, 0),
-      qualifiesForFreeFitting: () => get().getSubtotal() >= 5000,
-      amountForFreeFitting: () => Math.max(0, 5000 - get().getSubtotal()),
+      qualifiesForFreeFitting: () => get().getSubtotal() >= 3500,
+      amountForFreeFitting: () => Math.max(0, 3500 - get().getSubtotal()),
     }),
     { name: "dress-outfitters-cart" }
   )

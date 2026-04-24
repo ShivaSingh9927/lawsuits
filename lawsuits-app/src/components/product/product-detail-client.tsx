@@ -349,6 +349,11 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const { addItem: addRecentlyViewed, items: recentlyViewedIds } = useRecentlyViewedStore();
   const { isWishlisted, addItem: addToWishlist, removeItem: removeFromWishlist } = useWishlistStore();
 
+  // Unified stock check: a variant is out of stock if the flag is set OR quantity is <= 0.
+  const isVariantOutOfStock = (v?: ProductVariant | null) =>
+    !!v && (v.is_out_of_stock === true || (typeof v.stock_quantity === "number" && v.stock_quantity <= 0));
+  const outOfStock = isVariantOutOfStock(selectedVariant);
+
   // Hyper-Resilient Variant Matching for Combo Packages and Bundles
   useEffect(() => {
     if (!product.variants || product.variants.length === 0) {
@@ -626,7 +631,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               <div className="flex items-center gap-4 mb-4">
                 <span className="h-[1px] w-12 bg-accent-yellow/40" />
                 <p className="text-xs uppercase tracking-[0.5em] text-accent-yellow font-bold">
-                  {product.category?.name} Catalog
+                  {product.category?.name} 
+                <span className="h-[1px] w-12 bg-accent-yellow/40" />
                 </p>
               </div>
               <h1 className="font-serif text-3xl font-light tracking-tight sm:text-4xl md:text-5xl lg:text-5xl mb-6 leading-[1.1]">
@@ -662,14 +668,14 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 )}
               </div>
 
-              {(selectedVariant?.stock_quantity || 0) <= 3 && (
-                <div className="mt-6 flex items-center gap-6 text-[10px] uppercase tracking-widest text-zinc-400 font-bold border-t border-zinc-100 pt-6">
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>Available: <span className="text-foreground">{selectedVariant?.stock_quantity}</span></span>
+              {!outOfStock &&
+                typeof selectedVariant?.stock_quantity === "number" &&
+                selectedVariant.stock_quantity >= 1 &&
+                selectedVariant.stock_quantity <= 3 && (
+                  <div className="mt-6 flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-zinc-400 border-t border-zinc-100 pt-6">
+                    <span>Only <span className="text-foreground">{selectedVariant.stock_quantity}</span> left in stock</span>
                   </div>
-                </div>
-              )}
+                )}
             </motion.div>
 
             <Separator className="bg-border/30" />
@@ -740,18 +746,18 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                             <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
                               {item.label.toUpperCase()} : <span className="text-foreground">{selected}</span>
                             </p>
-                            {selected && (
-                              <p className={cn(
-                                "text-[10px] uppercase tracking-widest font-bold",
-                                (variants.find(v => String(v.size || v.sku).includes(String(selected)))?.stock_quantity || 0) > 0 
-                                  ? "text-emerald-600" 
-                                  : "text-red-500"
-                              )}>
-                                {(variants.find(v => String(v.size || v.sku).includes(String(selected)))?.stock_quantity || 0) > 0 
-                                  ? "In Stock" 
-                                  : "Out of Stock"}
-                              </p>
-                            )}
+                            {selected && (() => {
+                              const selV = variants.find(v => String(v.size || v.sku).includes(String(selected)));
+                              const selInStock = selV ? !isVariantOutOfStock(selV) : false;
+                              return (
+                                <p className={cn(
+                                  "text-[10px] uppercase tracking-widest font-bold",
+                                  selInStock ? "text-emerald-600" : "text-red-500"
+                                )}>
+                                  {selInStock ? "In Stock" : "Out of Stock"}
+                                </p>
+                              );
+                            })()}
                           </div>
                           <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
                             {sizes.map((size) => {
@@ -767,7 +773,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                               };
 
                               const v = variants.find(v => isSizeMatch(v.size || v.sku, size));
-                              const isOutOfStock = v ? (v.is_out_of_stock || (v.stock_quantity !== undefined && v.stock_quantity <= 0)) : false;
+                              const isOutOfStock = isVariantOutOfStock(v);
                               
                               return (
                                 <button
@@ -786,7 +792,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                                         });
                                         if (waistcoatItem) {
                                           const wcVariant = waistcoatItem.component?.variants?.find(v => isSizeMatch(v.size || v.sku, size));
-                                          if (wcVariant && !wcVariant.is_out_of_stock && (wcVariant.stock_quantity === undefined || wcVariant.stock_quantity > 0)) {
+                                          if (wcVariant && !isVariantOutOfStock(wcVariant)) {
                                             next[waistcoatItem.id] = size;
                                           }
                                         }
@@ -798,7 +804,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                                         });
                                         if (coatItem) {
                                           const cVariant = coatItem.component?.variants?.find(v => isSizeMatch(v.size || v.sku, size));
-                                          if (cVariant && !cVariant.is_out_of_stock && (cVariant.stock_quantity === undefined || cVariant.stock_quantity > 0)) {
+                                          if (cVariant && !isVariantOutOfStock(cVariant)) {
                                             next[coatItem.id] = size;
                                           }
                                         }
@@ -965,12 +971,21 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 <div className="space-y-8">
                   {/* Size Selection for Individual Products */}
                   {uniqueSizes.length > 0 && !(uniqueSizes.length === 1 && uniqueSizes[0] === "Standard") && (() => {
-                    const findVariantForSize = (s: string | number) =>
-                      (product.variants || []).find(v => String(v.size) === String(s));
-                    const selectedVariantForSize = selectedSize ? findVariantForSize(selectedSize) : undefined;
-                    const selectedInStock = selectedVariantForSize
-                      ? !(selectedVariantForSize.is_out_of_stock || (selectedVariantForSize.stock_quantity !== undefined && selectedVariantForSize.stock_quantity <= 0))
-                      : false;
+                    // Get variants for a size, filtered by currently selected color/fabric if set.
+                    const variantsForSize = (s: string | number) =>
+                      (product.variants || []).filter(v => {
+                        if (String(v.size) !== String(s)) return false;
+                        if (selectedColor && (v.color || "").toLowerCase() !== selectedColor.toLowerCase()) return false;
+                        if (selectedFabric && (v.fabric || "").toLowerCase() !== selectedFabric.toLowerCase()) return false;
+                        return true;
+                      });
+                    // A size is out of stock only if NO matching variant is in stock.
+                    const isSizeOutOfStock = (s: string | number) => {
+                      const list = variantsForSize(s);
+                      if (list.length === 0) return true;
+                      return list.every(v => isVariantOutOfStock(v));
+                    };
+                    const selectedInStock = selectedSize ? !isSizeOutOfStock(selectedSize) : !outOfStock;
 
                     return (
                       <div className="space-y-4">
@@ -978,19 +993,18 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                           <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
                             SIZE : <span className="text-foreground tracking-widest">{selectedSize || "Standard"}</span>
                           </p>
-                          {selectedSize && selectedVariantForSize && (
+                          {selectedSize && (
                             <p className={cn(
                               "text-[10px] uppercase tracking-widest font-bold",
                               selectedInStock ? "text-emerald-600" : "text-red-500"
                             )}>
-                              {selectedInStock ? "In Stock" : "Out of Stock"}
+                              {selectedInStock ? "" : "Out of Stock"}
                             </p>
                           )}
                         </div>
                         <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
                           {uniqueSizes.map((size) => {
-                            const v = findVariantForSize(size);
-                            const isOutOfStock = v ? (v.is_out_of_stock || (v.stock_quantity !== undefined && v.stock_quantity <= 0)) : false;
+                            const isOutOfStock = isSizeOutOfStock(size);
 
                             return (
                               <button
@@ -1075,9 +1089,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   size="lg"
                   className="w-full h-16 rounded-none bg-accent-yellow text-black hover:bg-accent-yellow/90 uppercase tracking-[0.5em] text-xs font-black shadow-lg"
                   onClick={handleAddToCart}
-                  disabled={selectedVariant?.is_out_of_stock}
+                  disabled={outOfStock}
                 >
-                  {selectedVariant?.is_out_of_stock ? "Out of Stock" : "Add to Cart"}
+                  {outOfStock ? "Out of Stock" : "Add to Cart"}
                 </Button>
               </div>
             </div>
