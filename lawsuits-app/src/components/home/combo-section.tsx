@@ -88,7 +88,7 @@ export function ComboSection() {
              className="text-base sm:text-lg text-zinc-100/70 font-light max-w-2xl leading-relaxed uppercase tracking-[0.2em] text-xs sm:text-sm"
            >
               Elevate your presence with our meticulously paired multi-piece sets. 
-              Designed for maximum impact and seamless coordination within the court.
+              Designed for maximum impact and seamless coordination in the court.
            </motion.p>
         </div>
 

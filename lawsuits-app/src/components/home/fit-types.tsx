@@ -49,10 +49,10 @@ export function FitTypes() {
               <h3 className="font-serif text-4xl font-light tracking-tight">Slim Fit</h3>
               <p className="text-base font-light leading-relaxed text-muted-foreground/90">
                 The jacket is V-shaped with broader shoulders, a tapered waist, and less room between the jacket and your body.
-                Pants have a straight waist and tapered leg that's slimmer in the hip/thigh/butt.
+                Pants have a straight waist and a tapered leg, slimmer through the hip, thigh, and seat.
               </p>
               <div className="space-y-2 text-sm uppercase tracking-widest text-accent-yellow font-semibold">
-                <p>Slim Fit coats available in sizes 34-50</p>
+                <p>Slim Fit jackets available in sizes 34-50</p>
                 <p>Slim Fit trousers available in waist sizes 28-42</p>
               </div>
             </div>
@@ -84,10 +84,10 @@ export function FitTypes() {
               <h3 className="font-serif text-4xl font-light tracking-tight">Modern Fit</h3>
               <p className="text-base font-light leading-relaxed text-muted-foreground/90">
                 The jacket has a straighter cut with more room in the waist and more room between the jacket and your body.
-                Pants are cut with a contoured waistband and more room in the butt and thigh area with an easier fit through the leg.
+                Pants are cut with a contoured waistband, with more room through the seat and thigh, and an easier fit through the leg.
               </p>
               <div className="space-y-2 text-sm uppercase tracking-widest text-accent-yellow font-semibold">
-                <p>Modern fit jackets available in sizes 34-60</p>
+                <p>Modern Fit jackets available in sizes 34-60</p>
                 <p>Pants available in even sizes 28-54</p>
               </div>
             </div>

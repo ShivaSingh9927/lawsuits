@@ -387,7 +387,7 @@ export function HomeFittingForm() {
                         {!loading && <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-3" />}
                       </span>
                     </button>
-                    <p className="mt-4 text-[9px] text-center uppercase tracking-widest text-zinc-400 font-medium">Valid for tri-city area only (Chandigarh, Mohali, Panchkula)</p>
+                    <p className="mt-4 text-[9px] text-center uppercase tracking-widest text-zinc-400 font-medium">Valid in the tri-city area only (Chandigarh, Mohali, Panchkula)</p>
                   </div>
                 </motion.form>
               )}

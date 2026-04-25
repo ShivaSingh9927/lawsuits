@@ -121,7 +121,7 @@ export default function ContactPage() {
                    onClick={() => setSubmitted(false)}
                    className="text-[10px] uppercase tracking-[0.3em] font-bold mt-8"
                  >
-                    Send Another message
+                    Send Another Message
                  </Button>
                </motion.div>
              ) : (

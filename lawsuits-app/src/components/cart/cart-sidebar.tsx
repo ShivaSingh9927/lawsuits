@@ -47,7 +47,7 @@ export function CartSidebar() {
               <div className="border-b border-black/5 bg-accent-yellow/5 px-6 py-4">
                 <p className="text-xs uppercase tracking-widest text-zinc-600 font-bold">
                   Add ₹{amountForFreeFitting().toLocaleString()} more for{" "}
-                  <span className="font-semibold text-accent-yellow">free Home Delievery</span>
+                  <span className="font-semibold text-accent-yellow">free Home Delivery</span>
                 </p>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-accent-yellow/20">
                   <motion.div
@@ -62,7 +62,7 @@ export function CartSidebar() {
             {qualifiesForFreeFitting() && (
               <div className="border-b border-border bg-green-500/10 px-6 py-3">
                 <p className="text-sm font-medium text-green-600">
-                  You qualify for free Home Delievery!
+                  You qualify for free Home Delivery!
                 </p>
               </div>
             )}

@@ -447,7 +447,7 @@ export function ShopPageClient() {
               <div className="flex flex-col items-center justify-center py-48 text-center">
                 <h3 className="font-serif text-4xl font-light text-foreground/40">Void of Results</h3>
                 <p className="mt-6 text-sm tracking-widest text-zinc-500 font-medium">
-                  Your current criteria remains unfulfilled.
+                  Your current criteria remain unfulfilled.
                 </p>
                 <button
                   onClick={clearAllFilters}
