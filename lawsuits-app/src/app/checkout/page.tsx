@@ -414,15 +414,28 @@ function CheckoutContent() {
               clearCart();
               router.push(`/checkout/success?order_id=${orderData.order.order_number}`);
             } else {
+              // Verification failed: mark the still-pending order as
+              // cancelled so it doesn't linger and so stock (which was
+              // never decremented) stays accurate.
+              try {
+                await fetch(`/api/orders/${orderData.order.id}/cancel`, { method: "POST" });
+              } catch {}
               router.push(`/checkout/failed?reason=${encodeURIComponent(verifyData.error || "Verification failed")}`);
             }
           } catch (err) {
             console.error("Verification error:", err);
+            try {
+              await fetch(`/api/orders/${orderData.order.id}/cancel`, { method: "POST" });
+            } catch {}
             router.push("/checkout/failed?reason=Verification terminal error");
           }
         },
         modal: {
           ondismiss: function () {
+            // User closed the Razorpay dialog without paying. Cancel the
+            // pending order; stock is untouched because we only decrement
+            // it after a verified payment.
+            fetch(`/api/orders/${orderData.order.id}/cancel`, { method: "POST" }).catch(() => {});
             setLoading(false);
           }
         },
@@ -710,13 +723,23 @@ function CheckoutContent() {
                         <span className="text-xs w-4 text-center">{item.quantity}</span>
                         <button 
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="p-1 hover:bg-zinc-100 transition-colors"
+                          disabled={
+                            typeof item.variant?.stock_quantity === "number" &&
+                            item.quantity >= item.variant.stock_quantity
+                          }
+                          className="p-1 hover:bg-zinc-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
                       </div>
                       <p className="text-sm font-bold">₹{(item.variant.price * item.quantity).toLocaleString()}</p>
                     </div>
+                    {typeof item.variant?.stock_quantity === "number" &&
+                      item.quantity >= item.variant.stock_quantity && (
+                        <p className="text-[10px] uppercase tracking-widest text-amber-600 font-medium">
+                          Only {item.variant.stock_quantity} in stock
+                        </p>
+                      )}
                   </div>
                 </div>
               ))}

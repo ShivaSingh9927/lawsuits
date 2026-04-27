@@ -326,7 +326,29 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     }
   }, [availableFabricsForSelection, selectedFabric]);
 
-  // Initialize bundle selections from config OR relational package items
+  // Helper: find a component variant matching a given size label.
+  // Mirrors the isSizeMatch heuristic used in the bundle size grid.
+  const findComponentVariantForSize = (
+    variants: ProductVariant[] | undefined,
+    size: string | number | undefined
+  ): ProductVariant | undefined => {
+    if (!variants || size === undefined || size === "") return undefined;
+    const strS = String(size).toUpperCase();
+    return variants.find((v) => {
+      const strV = String(v.size || v.sku).toUpperCase();
+      return (
+        strV === strS ||
+        strV.includes(`-${strS}`) ||
+        strV.includes(` ${strS}`) ||
+        strV.startsWith(`${strS} `) ||
+        strV.endsWith(` ${strS}`)
+      );
+    });
+  };
+
+  // Initialize bundle selections from config OR relational package items.
+  // Prefer the first IN-STOCK size for each component so users don't land on
+  // an out-of-stock default (which previously let the OOS state hide).
   useEffect(() => {
     const initial: Record<string, string | number> = {};
     if ((product.package_items?.length || 0) > 0) {
@@ -334,7 +356,11 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         const variants = item.component?.variants || [];
         const type = item.label.toLowerCase().includes("pant") ? "bottom" : "top";
         const sizes = getDynamicSizes(type, variants);
-        initial[item.id] = sizes[0] || "";
+        const firstInStock = sizes.find((s) => {
+          const v = findComponentVariantForSize(variants, s);
+          return v && !isVariantOutOfStock(v);
+        });
+        initial[item.id] = firstInStock ?? sizes[0] ?? "";
       });
       setBundleSelections(initial);
     } else if (isBundle && bundleConfig.length > 0) {
@@ -499,13 +525,74 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     addRecentlyViewed(product.id);
   }, [product.id, addRecentlyViewed]);
 
+  // Per-component stock state for relational bundles (package_items).
+  // A bundle should only be addable when every selected component variant is
+  // in stock; otherwise the user could buy a coat+pant combo where the pant
+  // has zero inventory.
+  const componentSelections = useMemo(() => {
+    if (!isBundle || !sortedPackageItems.length) return [];
+    return sortedPackageItems.map((item) => {
+      const variants = item.component?.variants || [];
+      const size = bundleSelections[item.id];
+      const variant = findComponentVariantForSize(variants, size);
+      return {
+        packageItemId: item.id,
+        label: item.label,
+        size,
+        componentProductId: item.component_id,
+        variant,
+        outOfStock: !variant || isVariantOutOfStock(variant),
+        // True only when every size of this component is OOS — the whole
+        // component is unsellable regardless of size pick.
+        allSizesOOS:
+          variants.length === 0 || variants.every((v) => isVariantOutOfStock(v)),
+      };
+    });
+    // findComponentVariantForSize / isVariantOutOfStock are stable closures
+    // over render-time values; safe to omit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortedPackageItems, bundleSelections]);
+
+  const bundleHasOOSComponent = componentSelections.some((c) => c.outOfStock);
+  const bundleHasUnsellableComponent = componentSelections.some(
+    (c) => c.allSizesOOS
+  );
+
+  const addToCartDisabled =
+    outOfStock || (isBundle && (bundleHasOOSComponent || bundleHasUnsellableComponent));
+
+  const addToCartLabel = (() => {
+    if (outOfStock) return "Out of Stock";
+    if (isBundle && bundleHasUnsellableComponent) return "Out of Stock";
+    if (isBundle && bundleHasOOSComponent) return "Select Available Size";
+    return "Add to Cart";
+  })();
+
   const handleAddToCart = () => {
-    const metadata = isBundle ? bundleSelections : {
-      size: selectedTopSize || selectedSize,
-      waist: isCombo ? selectedBottomSize : undefined,
-      color: selectedColor || undefined,
-      fabric: selectedFabric || undefined
-    };
+    if (addToCartDisabled) return;
+
+    const metadata: Record<string, any> = isBundle
+      ? {
+          ...bundleSelections,
+          // Persist resolved component variants so the cart, checkout, and
+          // server can validate per-component stock at order time and the
+          // sidebar can render readable labels instead of UUIDs.
+          components: componentSelections
+            .filter((c) => !!c.variant)
+            .map((c) => ({
+              package_item_id: c.packageItemId,
+              label: c.label,
+              size: c.size,
+              product_id: c.componentProductId,
+              variant_id: c.variant!.id,
+            })),
+        }
+      : {
+          size: selectedTopSize || selectedSize,
+          waist: isCombo ? selectedBottomSize : undefined,
+          color: selectedColor || undefined,
+          fabric: selectedFabric || undefined,
+        };
 
     addItem({
       id: `${product.id}-${selectedVariant.id}-${JSON.stringify(metadata)}`,
@@ -1089,9 +1176,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   size="lg"
                   className="w-full h-16 rounded-none bg-accent-yellow text-black hover:bg-accent-yellow/90 uppercase tracking-[0.5em] text-xs font-black shadow-lg"
                   onClick={handleAddToCart}
-                  disabled={outOfStock}
+                  disabled={addToCartDisabled}
                 >
-                  {outOfStock ? "Out of Stock" : "Add to Cart"}
+                  {addToCartLabel}
                 </Button>
               </div>
             </div>

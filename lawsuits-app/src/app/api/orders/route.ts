@@ -77,12 +77,24 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Optimize: Batch fetch all variants in a single query
-  const variantIds = items.map((i: any) => i.variant_id);
+  // Optimize: Batch fetch all variants (parents + bundle components) in a
+  // single query so we can validate stock for each side of a combo.
+  const parentVariantIds: string[] = items.map((i: any) => i.variant_id);
+  const componentVariantIds: string[] = items.flatMap((i: any) =>
+    Array.isArray(i.metadata?.components)
+      ? i.metadata.components
+          .map((c: any) => c?.variant_id)
+          .filter((x: any): x is string => typeof x === "string")
+      : []
+  );
+  const allVariantIds = Array.from(
+    new Set([...parentVariantIds, ...componentVariantIds])
+  );
+
   const { data: allVariants, error: fetchError } = await admin
     .from("product_variants")
     .select(`*, product:products(*, images:product_images(*))`)
-    .in("id", variantIds);
+    .in("id", allVariantIds);
 
   if (fetchError) {
     return NextResponse.json({ error: "Failed to verify items" }, { status: 500 });
@@ -129,6 +141,52 @@ export async function POST(request: NextRequest) {
 
     if (currentVariant.is_out_of_stock) {
       return NextResponse.json({ error: `Item ${currentProduct.name} is out of stock` }, { status: 400 });
+    }
+
+    if (
+      typeof currentVariant.stock_quantity === "number" &&
+      item.quantity > currentVariant.stock_quantity
+    ) {
+      return NextResponse.json(
+        {
+          error: `Only ${currentVariant.stock_quantity} of ${currentProduct.name} (${currentVariant.size}) left in stock. Please reduce the quantity.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Bundle / combo: validate every component variant against its own stock.
+    // The cart serialises resolved components into metadata; without this
+    // check, a combo whose pant is OOS would still place an order because the
+    // parent variant has its own (often nominal) stock.
+    if (Array.isArray(item.metadata?.components)) {
+      for (const c of item.metadata.components) {
+        if (!c?.variant_id) continue;
+        const compVariant: any = fetchedVariantsMap.get(c.variant_id);
+        if (!compVariant) {
+          return NextResponse.json(
+            { error: `Component ${c.label || ""} variant not found` },
+            { status: 404 }
+          );
+        }
+        if (compVariant.is_out_of_stock) {
+          return NextResponse.json(
+            { error: `${c.label || "Component"} (${compVariant.size}) is out of stock` },
+            { status: 400 }
+          );
+        }
+        if (
+          typeof compVariant.stock_quantity === "number" &&
+          item.quantity > compVariant.stock_quantity
+        ) {
+          return NextResponse.json(
+            {
+              error: `Only ${compVariant.stock_quantity} of ${c.label || "component"} (${compVariant.size}) left in stock. Please reduce the quantity.`,
+            },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     const itemTotal = currentVariant.price * item.quantity;

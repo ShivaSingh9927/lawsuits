@@ -23,17 +23,23 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
       addItem: (item) => {
         const items = get().items;
+        const stock =
+          typeof item.variant?.stock_quantity === "number"
+            ? item.variant.stock_quantity
+            : Infinity;
         const existing = items.find((i) => i.id === item.id);
         if (existing) {
+          const desired = existing.quantity + item.quantity;
+          const capped = Math.min(desired, stock);
           set({
             items: items.map((i) =>
-              i.id === item.id
-                ? { ...i, quantity: i.quantity + item.quantity }
-                : i
+              i.id === item.id ? { ...i, quantity: capped } : i
             ),
           });
         } else {
-          set({ items: [...items, item] });
+          const capped = Math.min(item.quantity, stock);
+          if (capped <= 0) return;
+          set({ items: [...items, { ...item, quantity: capped }] });
         }
       },
       removeItem: (id) => {
@@ -45,9 +51,14 @@ export const useCartStore = create<CartState>()(
           return;
         }
         set({
-          items: get().items.map((i) =>
-            i.id === id ? { ...i, quantity } : i
-          ),
+          items: get().items.map((i) => {
+            if (i.id !== id) return i;
+            const stock =
+              typeof i.variant?.stock_quantity === "number"
+                ? i.variant.stock_quantity
+                : Infinity;
+            return { ...i, quantity: Math.min(quantity, stock) };
+          }),
         });
       },
       clearCart: () => set({ items: [] }),

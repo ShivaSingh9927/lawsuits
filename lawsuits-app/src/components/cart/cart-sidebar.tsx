@@ -102,17 +102,51 @@ export function CartSidebar() {
                         <div>
                           <h3 className="text-sm font-serif text-black line-clamp-2">{item.product.name}</h3>
                           <div className="mt-1 space-y-0.5">
-                            {item.metadata ? (
-                              Object.entries(item.metadata).map(([key, value]) => (
-                                <p key={key} className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
-                                  {key}: {value}
+                            {(() => {
+                              const md: Record<string, any> = item.metadata || {};
+                              const components: Array<{ label: string; size: string | number }> | undefined = Array.isArray(md.components)
+                                ? md.components
+                                : undefined;
+
+                              // Bundle: prefer the resolved components list.
+                              if (components && components.length > 0) {
+                                return components.map((c, idx) => (
+                                  <p key={`${c.label}-${idx}`} className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
+                                    {c.label}: {c.size}
+                                  </p>
+                                ));
+                              }
+
+                              // Legacy bundle metadata: keys are package_item UUIDs.
+                              // Resolve to human labels via item.product.package_items.
+                              const packageItems = item.product.package_items || [];
+                              const labelLookup = new Map(packageItems.map((p) => [p.id, p.label]));
+
+                              const entries = Object.entries(md).filter(
+                                ([key, value]) =>
+                                  key !== "components" &&
+                                  value !== undefined &&
+                                  value !== null &&
+                                  value !== ""
+                              );
+
+                              if (entries.length > 0) {
+                                return entries.map(([key, value]) => {
+                                  const label = labelLookup.get(key) || key;
+                                  return (
+                                    <p key={key} className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
+                                      {label}: {String(value)}
+                                    </p>
+                                  );
+                                });
+                              }
+
+                              return (
+                                <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
+                                  Size: {item.variant.size}
                                 </p>
-                              ))
-                            ) : (
-                              <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
-                                Size: {item.variant.size}
-                              </p>
-                            )}
+                              );
+                            })()}
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
@@ -134,6 +168,10 @@ export function CartSidebar() {
                               variant="outline"
                               size="icon"
                               className="h-7 w-7"
+                              disabled={
+                                typeof item.variant?.stock_quantity === "number" &&
+                                item.quantity >= item.variant.stock_quantity
+                              }
                               onClick={() =>
                                 updateQuantity(item.id, item.quantity + 1)
                               }
@@ -145,6 +183,12 @@ export function CartSidebar() {
                             ₹{(item.variant.price * item.quantity).toLocaleString()}
                           </p>
                         </div>
+                        {typeof item.variant?.stock_quantity === "number" &&
+                          item.quantity >= item.variant.stock_quantity && (
+                            <p className="mt-1 text-[10px] uppercase tracking-widest text-amber-600 font-medium">
+                              Only {item.variant.stock_quantity} in stock
+                            </p>
+                          )}
                       </div>
                       <Button
                         variant="ghost"
