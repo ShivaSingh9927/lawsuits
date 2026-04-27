@@ -78,9 +78,14 @@ function CheckoutContent() {
     address: "",
     city: "",
     state: "",
+    district: "",
     postalCode: "",
     couponCode: "",
   });
+  // Pincode -> state/district auto-fill state
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeError, setPincodeError] = useState<string | null>(null);
+  const [pincodeManualOverride, setPincodeManualOverride] = useState(false);
   // Full coupon metadata returned by /api/coupons/validate. We keep the
   // type+value (not just the computed discount) so that totals recompute
   // correctly when the cart changes after applying a percentage coupon.
@@ -133,6 +138,7 @@ function CheckoutContent() {
               address: order.shipping_address,
               city: order.shipping_city,
               state: order.shipping_state,
+              district: order.shipping_district || "",
               postalCode: order.shipping_postal_code,
             });
           }
@@ -218,9 +224,57 @@ function CheckoutContent() {
       address: addr.address || "",
       city: addr.city || "",
       state: addr.state || "",
+      district: addr.district || "",
       postalCode: addr.postalCode || "",
     });
   };
+
+  // Auto-fill State + District from 6-digit Indian pincode using the public
+  // postalpincode.in API. Debounced; aborts in-flight requests on re-edit.
+  useEffect(() => {
+    const pin = formData.postalCode;
+    if (!/^\d{6}$/.test(pin)) {
+      setPincodeError(null);
+      setPincodeLoading(false);
+      return;
+    }
+    if (pincodeManualOverride) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setPincodeLoading(true);
+      setPincodeError(null);
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`, {
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        const entry = Array.isArray(data) ? data[0] : null;
+        if (entry?.Status === "Success" && entry.PostOffice?.length) {
+          const po = entry.PostOffice[0];
+          setFormData((prev) =>
+            prev.postalCode === pin
+              ? { ...prev, state: po.State || "", district: po.District || "" }
+              : prev
+          );
+        } else {
+          setPincodeError("Invalid pincode. Please check and try again.");
+        }
+      } catch (err: any) {
+        if (err?.name !== "AbortError") {
+          setPincodeError("Could not look up pincode. You can fill state/district manually.");
+          setPincodeManualOverride(true);
+        }
+      } finally {
+        setPincodeLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [formData.postalCode, pincodeManualOverride]);
 
   // Load Razorpay script
   useEffect(() => {
@@ -361,6 +415,7 @@ function CheckoutContent() {
             address: formData.address,
             city: formData.city,
             state: formData.state,
+            district: formData.district,
             postalCode: formData.postalCode,
           },
           coupon_code: formData.couponCode || null,
@@ -489,6 +544,7 @@ function CheckoutContent() {
     formData.address &&
     formData.city &&
     formData.state &&
+    formData.district &&
     isPincodeValid;
 
   return (
@@ -654,24 +710,64 @@ function CheckoutContent() {
                   <Input placeholder="Flat/House No., Building, Street" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} required />
                 </div>
                 <div>
-                  <Label>City *</Label>
-                  <Input placeholder="Mumbai" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} required />
-                </div>
-                <div>
-                  <Label>State *</Label>
-                  <Input placeholder="Maharashtra" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} required />
-                </div>
-                <div>
                   <Label>Postal Code (6 Digits) *</Label>
                   <Input
                     placeholder="400001"
                     value={formData.postalCode}
-                    onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(0, 6);
+                      setFormData({ ...formData, postalCode: v });
+                      // New pincode -> re-enable auto lookup
+                      if (pincodeManualOverride) setPincodeManualOverride(false);
+                    }}
                     required
+                    inputMode="numeric"
+                    maxLength={6}
                     className={formData.postalCode && !isPincodeValid ? "border-red-500" : ""}
                   />
                   {formData.postalCode && !isPincodeValid && (
                     <p className="mt-1 text-xs text-red-500">Must be exactly 6 digits</p>
+                  )}
+                  {pincodeLoading && (
+                    <p className="mt-1 text-xs text-zinc-500">Looking up location…</p>
+                  )}
+                  {pincodeError && (
+                    <p className="mt-1 text-xs text-red-500">{pincodeError}</p>
+                  )}
+                </div>
+                <div>
+                  <Label>City / Locality *</Label>
+                  <Input placeholder="Andheri West" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} required />
+                </div>
+                <div>
+                  <Label>District *</Label>
+                  <Input
+                    placeholder="Auto-filled from pincode"
+                    value={formData.district}
+                    onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                    required
+                    readOnly={!pincodeManualOverride}
+                    className={!pincodeManualOverride ? "bg-zinc-50" : ""}
+                  />
+                </div>
+                <div>
+                  <Label>State *</Label>
+                  <Input
+                    placeholder="Auto-filled from pincode"
+                    value={formData.state}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    required
+                    readOnly={!pincodeManualOverride}
+                    className={!pincodeManualOverride ? "bg-zinc-50" : ""}
+                  />
+                  {isPincodeValid && !pincodeLoading && !pincodeManualOverride && (
+                    <button
+                      type="button"
+                      onClick={() => setPincodeManualOverride(true)}
+                      className="mt-1 text-[11px] text-zinc-500 hover:text-accent-yellow underline"
+                    >
+                      Edit state / district manually
+                    </button>
                   )}
                 </div>
               </div>
