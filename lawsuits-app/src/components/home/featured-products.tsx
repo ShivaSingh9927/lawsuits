@@ -18,13 +18,14 @@ export function FeaturedProducts() {
         let data = await res.json();
         const allProducts = data.products || [];
 
-        // Target exactly 4 specific categories: Coat, Gown, Waistcoat, Pant cloth
-        const targetKeywords = ["coat", "gown", "waistcoat", "pant cloth"];
-        
+        // Target exactly 4 specific products in order: Dress Coat, Shirt, Pant Fabric, Dress Shoes
+        const targetKeywords = ["dress coat", "shirt", "pant fabric", "shoe"];
+
         const prioritized = targetKeywords.map(keyword => {
-          return allProducts.find((p: Product) => 
-            p.name.toLowerCase().includes(keyword) && 
+          return allProducts.find((p: Product) =>
+            p.name.toLowerCase().includes(keyword) &&
             !p.name.toLowerCase().includes("combo") &&
+            !p.name.toLowerCase().includes("set") &&
             !p.name.toLowerCase().includes("suit")
           );
         }).filter(Boolean) as Product[];
