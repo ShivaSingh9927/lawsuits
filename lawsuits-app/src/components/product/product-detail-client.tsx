@@ -44,6 +44,30 @@ interface ProductDetailClientProps {
   product: Product;
 }
 
+// Split a description into "Label: text" bullet segments.
+// Boundaries are detected where ". " (period + whitespace) is followed by a capitalized
+// label ending with a colon. Returns null if no such labels are detected.
+function parseDescriptionBullets(
+  desc: string | undefined | null
+): Array<{ label: string | null; text: string }> | null {
+  if (!desc) return null;
+  const trimmed = desc.trim();
+  if (!trimmed) return null;
+
+  const segments = trimmed.split(/(?<=\.)\s+(?=[A-Z][A-Za-z0-9 ]*:)/);
+  const labelRe = /^([A-Z][A-Za-z0-9 ]*?):\s*([\s\S]*)$/;
+
+  const parsed = segments.map((seg) => {
+    const m = seg.match(labelRe);
+    if (m) return { label: m[1].trim(), text: m[2].trim() };
+    return { label: null, text: seg.trim() };
+  });
+
+  const hasLabeled = parsed.some((p) => p.label);
+  if (!hasLabeled || parsed.length < 2) return null;
+  return parsed;
+}
+
 
 
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
@@ -140,6 +164,63 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const topSizes = getDynamicSizes("top");
   const bottomSizes = getDynamicSizes("bottom");
 
+  // Count distinct in-stock sizes available for a given option value (fabric or color).
+  // Used to sort the option pills so the option with the most in-stock sizes appears first.
+  const countInStockSizesFor = (
+    variants: ProductVariant[] | undefined,
+    key: "fabric" | "color",
+    value: string
+  ) => {
+    if (!variants) return 0;
+    const sizes = new Set<string>();
+    variants.forEach(v => {
+      const val = ((v as any)[key] || "").trim();
+      if (val.toLowerCase() !== value.toLowerCase()) return;
+      if (v.is_out_of_stock === true) return;
+      if (typeof v.stock_quantity === "number" && v.stock_quantity <= 0) return;
+      const s = String(v.size || v.sku).toUpperCase().trim();
+      if (s) sizes.add(s);
+    });
+    return sizes.size;
+  };
+
+  // Count total variants (any stock) for a given option value — used as a tiebreaker
+  // so an option with more total sizes ranks above one with fewer when in-stock counts tie.
+  const countTotalSizesFor = (
+    variants: ProductVariant[] | undefined,
+    key: "fabric" | "color",
+    value: string
+  ) => {
+    if (!variants) return 0;
+    const sizes = new Set<string>();
+    variants.forEach(v => {
+      const val = ((v as any)[key] || "").trim();
+      if (val.toLowerCase() !== value.toLowerCase()) return;
+      const s = String(v.size || v.sku).toUpperCase().trim();
+      if (s) sizes.add(s);
+    });
+    return sizes.size;
+  };
+
+  // Build a comparator that sorts option values (fabric or color) by:
+  //   1) in-stock size count desc, 2) total size count desc, 3) original index asc (stable).
+  const buildOptionComparator = (
+    key: "fabric" | "color",
+    originalOrder: string[]
+  ) => {
+    const idx = new Map<string, number>();
+    originalOrder.forEach((v, i) => idx.set(v.toLowerCase(), i));
+    return (a: string, b: string) => {
+      const aIn = countInStockSizesFor(product.variants, key, a);
+      const bIn = countInStockSizesFor(product.variants, key, b);
+      if (bIn !== aIn) return bIn - aIn;
+      const aTot = countTotalSizesFor(product.variants, key, a);
+      const bTot = countTotalSizesFor(product.variants, key, b);
+      if (bTot !== aTot) return bTot - aTot;
+      return (idx.get(a.toLowerCase()) ?? 0) - (idx.get(b.toLowerCase()) ?? 0);
+    };
+  };
+
   // Dynamic Color Extraction for products with explicit color variants (like Pant Cloth)
   const colorOptions = useMemo(() => {
     if (!product.variants || product.variants.length === 0) return [];
@@ -149,7 +230,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         colors.add(v.color.trim());
       }
     });
-    return Array.from(colors);
+    const arr = Array.from(colors);
+    return arr.slice().sort(buildOptionComparator("color", arr));
   }, [product.variants]);
 
   // Dynamic Fabric Extraction
@@ -161,7 +243,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         fabrics.add(v.fabric.trim());
       }
     });
-    return Array.from(fabrics);
+    const arr = Array.from(fabrics);
+    return arr.slice().sort(buildOptionComparator("fabric", arr));
   }, [product.variants]);
 
 
@@ -284,7 +367,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         colors.add(v.color.trim());
       }
     });
-    return Array.from(colors);
+    const arr = Array.from(colors);
+    return arr.slice().sort(buildOptionComparator("color", arr));
   }, [product.variants, selectedTopSize, selectedSize, colorOptions, isCombo, uniqueSizes]);
 
   // Fabrics available for the currently selected size
@@ -300,7 +384,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         fabrics.add(v.fabric.trim());
       }
     });
-    return Array.from(fabrics);
+    const arr = Array.from(fabrics);
+    return arr.slice().sort(buildOptionComparator("fabric", arr));
   }, [product.variants, selectedTopSize, selectedSize, fabricOptions, isCombo, uniqueSizes]);
 
   // 3. Effects
@@ -1061,9 +1146,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                     // Get variants for a size, filtered by currently selected color/fabric if set.
                     const variantsForSize = (s: string | number) =>
                       (product.variants || []).filter(v => {
-                        if (String(v.size) !== String(s)) return false;
-                        if (selectedColor && (v.color || "").toLowerCase() !== selectedColor.toLowerCase()) return false;
-                        if (selectedFabric && (v.fabric || "").toLowerCase() !== selectedFabric.toLowerCase()) return false;
+                        if (String(v.size).trim() !== String(s).trim()) return false;
+                        // Treat missing color/fabric on a variant as "fits any" so a NULL/empty
+                        // value in the DB doesn't make the size look out of stock.
+                        const vColor = (v.color || "").trim();
+                        if (selectedColor && vColor && vColor.toLowerCase() !== selectedColor.trim().toLowerCase()) return false;
+                        const vFabric = (v.fabric || "").trim();
+                        if (selectedFabric && vFabric && vFabric.toLowerCase() !== selectedFabric.trim().toLowerCase()) return false;
                         return true;
                       });
                     // A size is out of stock only if NO matching variant is in stock.
@@ -1202,9 +1291,28 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 </TabsList>
               </div>
               <TabsContent value="details" className="mt-12">
-                <p className="text-base leading-loose tracking-wide text-zinc-700 font-medium">
-                  {product.description}
-                </p>
+                {(() => {
+                  const bullets = parseDescriptionBullets(product.description);
+                  if (bullets) {
+                    return (
+                      <ul className="list-disc pl-6 space-y-3 text-base leading-loose tracking-wide text-zinc-700 font-medium">
+                        {bullets.map((b, i) => (
+                          <li key={i}>
+                            {b.label && (
+                              <span className="font-bold text-black">{b.label}: </span>
+                            )}
+                            {b.text}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  return (
+                    <p className="text-base leading-loose tracking-wide text-zinc-700 font-medium">
+                      {product.description}
+                    </p>
+                  );
+                })()}
                 <div className="mt-12 grid grid-cols-2 gap-8">
                   <div className="space-y-4">
                     <span className="text-sm uppercase tracking-widest text-accent-yellow font-bold">Construction</span>

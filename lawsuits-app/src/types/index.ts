@@ -25,6 +25,7 @@ export interface Product {
   category: Category;
   is_visible: boolean;
   is_featured: boolean;
+  display_order?: number;
   created_at?: string;
   updated_at?: string;
   deleted_at?: string | null;

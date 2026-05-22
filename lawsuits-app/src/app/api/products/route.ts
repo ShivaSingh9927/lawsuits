@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const fabric = searchParams.get("fabric");
   const minPrice = searchParams.get("min_price");
   const maxPrice = searchParams.get("max_price");
-  const sort = searchParams.get("sort") || "newest";
+  const sort = searchParams.get("sort") || "popular";
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "20");
   const featured = searchParams.get("featured");
@@ -57,8 +57,14 @@ export async function GET(request: NextRequest) {
     case "oldest":
       query = query.order("created_at", { ascending: true });
       break;
-    default:
+    case "newest":
       query = query.order("created_at", { ascending: false });
+      break;
+    default:
+      // "popular" / "curated" / fallback: admin-curated order, then newest.
+      query = query
+        .order("display_order", { ascending: true })
+        .order("created_at", { ascending: false });
   }
 
   const from = (page - 1) * limit;

@@ -50,9 +50,11 @@ import {
   User as UserIcon,
   ShoppingBag,
   History,
-  MoreHorizontal
+  MoreHorizontal,
+  GripVertical
 } from "lucide-react";
 import { Order, OrderStatus, PaymentStatus } from "@/types";
+import { ReorderProducts } from "@/components/admin/reorder-products";
 
 interface Product {
   id: string;
@@ -662,6 +664,10 @@ export default function AdminPage() {
              <ClipboardList className="mr-2 h-3.5 w-3.5" />
              Orders
           </TabsTrigger>
+          <TabsTrigger value="reorder" className="rounded-none data-[state=active]:bg-white data-[state=active]:text-black text-[10px] uppercase tracking-widest font-black">
+             <GripVertical className="mr-2 h-3.5 w-3.5" />
+             Reorder
+          </TabsTrigger>
           <TabsTrigger value="appointments" className="rounded-none data-[state=active]:bg-white data-[state=active]:text-black text-[10px] uppercase tracking-widest font-black">
              <Calendar className="mr-2 h-3.5 w-3.5" />
              Appointments
@@ -853,6 +859,10 @@ export default function AdminPage() {
               </Table>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="reorder" className="mt-6">
+          <ReorderProducts />
         </TabsContent>
 
         <TabsContent value="appointments" className="mt-6">

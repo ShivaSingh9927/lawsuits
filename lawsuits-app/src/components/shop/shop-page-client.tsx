@@ -172,7 +172,7 @@ export function ShopPageClient() {
   const [selectedFit, setSelectedFit] = useState<string | null>(null);
   const [selectedFabric, setSelectedFabric] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 30000]);
-  const [sortBy, setSortBy] = useState("newest");
+  const [sortBy, setSortBy] = useState("popular");
   const [allProducts, setAllProducts] = useState<Product[]>(mockProducts);
   const [categories, setCategories] = useState<Category[]>(mockCategories);
   const [loading, setLoading] = useState(true);
@@ -223,7 +223,12 @@ export function ShopPageClient() {
           case "price-asc": query = query.order("base_price", { ascending: true }); break;
           case "price-desc": query = query.order("base_price", { ascending: false }); break;
           case "oldest": query = query.order("created_at", { ascending: true }); break;
-          default: query = query.order("created_at", { ascending: false });
+          case "newest": query = query.order("created_at", { ascending: false }); break;
+          default:
+            // "popular" / curated: admin-curated order, then newest as tiebreaker.
+            query = query
+              .order("display_order", { ascending: true })
+              .order("created_at", { ascending: false });
         }
 
         const { data, error } = await query.limit(100);
@@ -299,7 +304,13 @@ export function ShopPageClient() {
         return (
           new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
         );
-      return 0;
+      // Default / "popular" / curated: admin-curated display_order ASC, newest tiebreaker.
+      const aOrder = a.display_order ?? Number.MAX_SAFE_INTEGER;
+      const bOrder = b.display_order ?? Number.MAX_SAFE_INTEGER;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return (
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      );
     });
 
   // Dynamic Page Title Logic
