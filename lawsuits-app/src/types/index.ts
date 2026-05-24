@@ -20,6 +20,7 @@ export interface Product {
   fabric: string;
   fit: "slim" | "modern" | "classic";
   color: string;
+  gender: "men" | "women" | "unisex";
   images: ProductImage[];
   variants: ProductVariant[];
   category: Category;
@@ -48,6 +49,8 @@ export interface ProductImage {
   alt: string;
   position: number;
   is_primary: boolean;
+  color?: string | null;
+  fabric?: string | null;
 }
 
 export interface ProductVariant {

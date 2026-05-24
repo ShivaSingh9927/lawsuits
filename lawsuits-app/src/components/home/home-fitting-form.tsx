@@ -40,7 +40,6 @@ export function HomeFittingForm() {
     ],
   });
   
-  // Import mockProducts for fallback
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -48,19 +47,14 @@ export function HomeFittingForm() {
         if (response.ok) {
           const data = await response.json();
           setAllProducts(data.products || []);
-        } else {
-          // Fallback to mock data if API fails
-          import("@/lib/data").then(module => {
-            setAllProducts(module.products);
-          });
+          return;
         }
       } catch (err) {
         console.error("Failed to fetch products:", err);
-        // Fallback to mock data on error
-        import("@/lib/data").then(module => {
-          setAllProducts(module.products);
-        });
       }
+      // Do not fall back to local mock data — it contains stale entries
+      // (e.g. "Pant Cloth") that aren't in Supabase.
+      setAllProducts([]);
     };
     fetchProducts();
   }, []);

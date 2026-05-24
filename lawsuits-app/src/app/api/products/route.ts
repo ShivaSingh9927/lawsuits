@@ -32,12 +32,21 @@ export async function GET(request: NextRequest) {
     .eq("is_visible", true);
 
   if (category) {
-    const { data: cat } = await supabase
-      .from("categories")
-      .select("id")
-      .eq("slug", category)
-      .single();
-    if (cat) query = query.eq("category_id", cat.id);
+    // Men's / Women's pages filter by gender so unisex products appear on both
+    // (see migration 20260524_add_product_gender_column.sql). Other category
+    // slugs (accessories, combos, ...) continue to filter by category_id.
+    if (category === "mens-legal-attire") {
+      query = query.in("gender", ["men", "unisex"]);
+    } else if (category === "womens-legal-attire") {
+      query = query.in("gender", ["women", "unisex"]);
+    } else {
+      const { data: cat } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", category)
+        .single();
+      if (cat) query = query.eq("category_id", cat.id);
+    }
   }
 
   if (fit) query = query.eq("fit", fit);

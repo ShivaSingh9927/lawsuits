@@ -29,8 +29,11 @@ export function ProductCard({
   const { isWishlisted, addItem, removeItem } = useWishlistStore();
   const wishlisted = isWishlisted(product.id);
 
-  const primaryImage = product.images?.find((img) => img.is_primary) || product.images?.[0];
-  const secondaryImage = product.images?.[1] || primaryImage;
+  const sortedImages = [...(product.images || [])].sort(
+    (a, b) => (a.position ?? 0) - (b.position ?? 0)
+  );
+  const primaryImage = sortedImages[0];
+  const secondaryImage = sortedImages[1] || primaryImage;
   const variantMin = product.variants?.reduce((min, v) => (v.price < min ? v.price : min), Infinity);
   const lowestPrice = (variantMin !== undefined && variantMin !== Infinity) ? variantMin : product.base_price;
   const hasDiscount = product.compare_at_price && product.compare_at_price > lowestPrice;

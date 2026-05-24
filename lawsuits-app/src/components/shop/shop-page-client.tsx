@@ -173,7 +173,7 @@ export function ShopPageClient() {
   const [selectedFabric, setSelectedFabric] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 30000]);
   const [sortBy, setSortBy] = useState("popular");
-  const [allProducts, setAllProducts] = useState<Product[]>(mockProducts);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>(mockCategories);
   const [loading, setLoading] = useState(true);
 
@@ -217,7 +217,23 @@ export function ShopPageClient() {
         let query = supabase.from("products").select("*, category:categories(*), images:product_images(*), variants:product_variants(*)").is("deleted_at", null).eq("is_visible", true);
 
         if (selectedFit) query = query.eq("fit", selectedFit);
-        if (searchQuery) query = query.ilike("name", `%${searchQuery}%`);
+        if (searchQuery) {
+          // Search across multiple product attributes. Sanitize the term so
+          // commas/parentheses can't break PostgREST's `or` filter syntax.
+          const term = searchQuery.replace(/[,()]/g, " ").trim();
+          if (term) {
+            const like = `%${term}%`;
+            query = query.or(
+              [
+                `name.ilike.${like}`,
+                `description.ilike.${like}`,
+                `slug.ilike.${like}`,
+                `fabric.ilike.${like}`,
+                `color.ilike.${like}`,
+              ].join(",")
+            );
+          }
+        }
 
         switch (sortBy) {
           case "price-asc": query = query.order("base_price", { ascending: true }); break;
@@ -236,16 +252,16 @@ export function ShopPageClient() {
         if (!error && data) {
           console.log("[ShopPage] Data from Supabase:", data.length, "items");
           console.log("[ShopPage] Product names:", data.map(p => p.name));
-          if (data.length > 0) {
-            setAllProducts(data);
-            setLoading(false);
-            return;
-          }
+          setAllProducts(data);
+          setLoading(false);
+          return;
         }
       } catch (err) {
         console.error("Browser Supabase Fetch Error:", err);
       }
-      setAllProducts(mockProducts);
+      // Supabase failed entirely — show empty rather than leaking stale
+      // local mock products (e.g. "Pant Cloth") into the live catalogue.
+      setAllProducts([]);
       setLoading(false);
     };
 
@@ -261,6 +277,7 @@ export function ShopPageClient() {
     .filter((p) => {
       if (selectedCategory) {
         const cat = (p as any).category;
+        const gender = (p as any).gender as "men" | "women" | "unisex" | undefined;
         const isComboProduct = p.name.toLowerCase().match(/combo|set|piece|package/) ||
           p.description?.toLowerCase().match(/combo|set|piece|package/);
 
@@ -269,9 +286,15 @@ export function ShopPageClient() {
           return !!isComboProduct;
         }
 
-        // For Men's Legal Attire, exclude combo/package products
-        if (selectedCategory === "mens-legal-attire" && isComboProduct) {
-          return false;
+        // Men's / Women's pages: filter by gender so 'unisex' products appear
+        // on both. See migration 20260524_add_product_gender_column.sql.
+        if (selectedCategory === "mens-legal-attire") {
+          if (isComboProduct) return false;
+          // Fallback to category match if a row predates the gender backfill.
+          if (gender) return gender === "men" || gender === "unisex";
+        }
+        if (selectedCategory === "womens-legal-attire") {
+          if (gender) return gender === "women" || gender === "unisex";
         }
 
         if (cat) {

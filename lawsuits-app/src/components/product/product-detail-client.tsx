@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -288,7 +288,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   // Use the provided demo image as fallback if no images exist
   const displayImages = product.images?.length > 0
-    ? [...product.images]
+    ? [...product.images].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
     : [{ id: "fallback-1", product_id: product.id, url: "/product-image/demo.webp", thumbnail_url: "/product-image/demo.webp", medium_url: "/product-image/demo.webp", alt: product.name, position: 0, is_primary: true }];
 
   if (isCombo && displayImages.length < 2) {
@@ -340,8 +340,12 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [selectedSize, setSelectedSize] = useState<string | number>(
     uniqueSizes[0] || ""
   );
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [selectedFabric, setSelectedFabric] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(
+    colorOptions[0] ?? null
+  );
+  const [selectedFabric, setSelectedFabric] = useState<string | null>(
+    fabricOptions[0] ?? null
+  );
   const [selectedTopSize, setSelectedTopSize] = useState<string | number>(
     topSizes[0] || (isShirtCombo ? "S" : 40)
   );
@@ -351,65 +355,117 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [bundleSelections, setBundleSelections] = useState<Record<string, string | number>>({});
   const [selectedImage, setSelectedImage] = useState(0);
 
-  // 2. Memoized Values
-  const availableColorsForSelection = useMemo(() => {
-    // Determine which size to filter by
-    const currentSize = isCombo ? selectedTopSize : (uniqueSizes.length > 0 ? selectedSize : null);
-    
-    if (!currentSize) return colorOptions;
-    const colors = new Set<string>();
-    product.variants?.forEach(v => {
-      const vSize = String(v.size || v.sku).toUpperCase();
-      const strSize = String(currentSize).toUpperCase();
-      
-      const matchesSize = vSize.includes(strSize) || v.sku.includes(strSize);
-      if (matchesSize && v.color && v.color.trim() !== "" && v.color !== "EMPTY" && v.color.toLowerCase() !== "null") {
-        colors.add(v.color.trim());
+  // Resolve the gallery index whose image best matches the active color/fabric
+  // selection. Returns null when no selection is active or no tagged image
+  // scores positively, in which case the user's current `selectedImage` is
+  // preserved (i.e. behavior identical to pre-feature).
+  const matchedImageIndex = useMemo(() => {
+    const norm = (s?: string | null) => (s ?? "").trim().toLowerCase();
+    const color = norm(selectedColor);
+    const fabric = norm(selectedFabric);
+    if (!color && !fabric) return null;
+
+    const score = (img: typeof displayImages[number]) => {
+      const ic = norm(img.color);
+      const ifab = norm(img.fabric);
+      let s = 0;
+      if (color && ic === color) s += 2;
+      if (fabric && ifab === fabric) s += 2;
+      // Penalise mismatched tags so e.g. a black-tagged image isn't picked
+      // when the user has selected white.
+      if (color && ic && ic !== color) s -= 5;
+      if (fabric && ifab && ifab !== fabric) s -= 5;
+      return s;
+    };
+
+    let bestIdx = -1;
+    let bestScore = 0; // require at least one positive match
+    displayImages.forEach((img, i) => {
+      const sc = score(img);
+      if (sc > bestScore) {
+        bestScore = sc;
+        bestIdx = i;
       }
     });
-    const arr = Array.from(colors);
-    return arr.slice().sort(buildOptionComparator("color", arr));
-  }, [product.variants, selectedTopSize, selectedSize, colorOptions, isCombo, uniqueSizes]);
+    return bestIdx === -1 ? null : bestIdx;
+  }, [displayImages, selectedColor, selectedFabric]);
 
-  // Fabrics available for the currently selected size
-  const availableFabricsForSelection = useMemo(() => {
-    const currentSize = isCombo ? selectedTopSize : (uniqueSizes.length > 0 ? selectedSize : null);
-    if (!currentSize) return fabricOptions;
-    const fabrics = new Set<string>();
-    product.variants?.forEach(v => {
-      const vSize = String(v.size || v.sku).toUpperCase();
-      const strSize = String(currentSize).toUpperCase();
-      const matchesSize = vSize.includes(strSize) || v.sku.includes(strSize);
-      if (matchesSize && v.fabric && v.fabric.trim() !== "" && v.fabric !== "EMPTY" && v.fabric.toLowerCase() !== "null") {
-        fabrics.add(v.fabric.trim());
-      }
+  // Auto-swap the main image when a new color/fabric match is found. We skip
+  // the very first run so the initial hero (position-0 image) is preserved on
+  // mount even if a color/fabric is preselected. We only react to subsequent
+  // changes in matchedImageIndex so a manual thumbnail click is not
+  // immediately overridden either.
+  const didMountImageMatchRef = useRef(false);
+  useEffect(() => {
+    if (!didMountImageMatchRef.current) {
+      didMountImageMatchRef.current = true;
+      return;
+    }
+    if (matchedImageIndex !== null && matchedImageIndex !== selectedImage) {
+      setSelectedImage(matchedImageIndex);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchedImageIndex]);
+
+  // 2. Availability predicates
+  // ---------------------------------------------------------------
+  // Previously the fabric/color rows were rebuilt per-size via
+  // `availableFabricsForSelection` / `availableColorsForSelection`,
+  // which both (a) reordered pills as the size changed (the visible
+  // "shuffle" bug) and (b) used substring size matching that mis-tagged
+  // SKUs containing a size's digits. The pill row is now rendered from
+  // the stable global `fabricOptions` / `colorOptions` lists; these
+  // predicates simply tell the JSX which pill should be disabled for
+  // the currently selected size.
+  // ---------------------------------------------------------------
+
+  // Boundary-aware size match — same heuristic as findComponentVariantForSize.
+  // Avoids "50" matching "4500" / SKUs that happen to contain the digits.
+  const variantMatchesSize = (
+    v: ProductVariant,
+    size: string | number | null | undefined
+  ) => {
+    if (size === undefined || size === null || size === "") return true;
+    const strV = String(v.size || v.sku).toUpperCase().trim();
+    const strSku = String(v.sku || "").toUpperCase().trim();
+    const strS = String(size).toUpperCase().trim();
+    const boundary = (s: string) =>
+      s === strS ||
+      s.includes(`-${strS}`) ||
+      s.includes(` ${strS}`) ||
+      s.startsWith(`${strS} `) ||
+      s.endsWith(` ${strS}`);
+    // Prefer strict equality on the dedicated `size` column; only fall back
+    // to SKU boundary matching when the size column itself is empty.
+    if (String(v.size || "").trim() !== "") {
+      return String(v.size).trim().toUpperCase() === strS;
+    }
+    return boundary(strV) || boundary(strSku);
+  };
+
+  // True iff at least one in-stock variant exists for (currentSize, key=value).
+  const isOptionInStockForSize = (
+    key: "fabric" | "color",
+    value: string,
+    size: string | number | null | undefined
+  ) => {
+    if (!product.variants || product.variants.length === 0) return false;
+    return product.variants.some((v) => {
+      const val = ((v as any)[key] || "").trim();
+      if (val.toLowerCase() !== value.trim().toLowerCase()) return false;
+      if (size !== undefined && size !== null && size !== "" && !variantMatchesSize(v, size)) return false;
+      return !isVariantOutOfStock(v);
     });
-    const arr = Array.from(fabrics);
-    return arr.slice().sort(buildOptionComparator("fabric", arr));
-  }, [product.variants, selectedTopSize, selectedSize, fabricOptions, isCombo, uniqueSizes]);
+  };
 
-  // 3. Effects
-  // Sync selectedColor with availability for the current size
-  useEffect(() => {
-    if (availableColorsForSelection.length > 0) {
-      if (!selectedColor || !availableColorsForSelection.includes(selectedColor)) {
-        setSelectedColor(availableColorsForSelection[0]);
-      }
-    } else {
-      setSelectedColor(null);
-    }
-  }, [availableColorsForSelection, selectedColor]);
+  const currentPrimarySize = isCombo
+    ? selectedTopSize
+    : (uniqueSizes.length > 0 ? selectedSize : null);
 
-  // Sync selectedFabric with availability for the current size
-  useEffect(() => {
-    if (availableFabricsForSelection.length > 0) {
-      if (!selectedFabric || !availableFabricsForSelection.includes(selectedFabric)) {
-        setSelectedFabric(availableFabricsForSelection[0]);
-      }
-    } else {
-      setSelectedFabric(null);
-    }
-  }, [availableFabricsForSelection, selectedFabric]);
+  const isFabricAvailable = (fabric: string) =>
+    isOptionInStockForSize("fabric", fabric, currentPrimarySize);
+  const isColorAvailable = (color: string) =>
+    isOptionInStockForSize("color", color, currentPrimarySize);
 
   // Helper: find a component variant matching a given size label.
   // Mirrors the isSizeMatch heuristic used in the bundle size grid.
@@ -1090,51 +1146,61 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   </div>
 
                   {/* Color/Variation Selection for Combos */}
-                  {availableColorsForSelection.length > 0 && (
+                  {colorOptions.length > 0 && (
                     <div className="space-y-4 pt-8 border-t border-black/5">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
                         FABRIC SELECTION : <span className="text-foreground">{selectedColor}</span>
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {availableColorsForSelection.map((color) => (
-                          <button
-                            key={color}
-                            onClick={() => setSelectedColor(color)}
-                            className={cn(
-                              "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
-                              selectedColor === color
-                                ? "border-black bg-black text-white shadow-lg"
-                                : "border-zinc-200 hover:border-black text-zinc-600"
-                            )}
-                          >
-                            {color}
-                          </button>
-                        ))}
+                        {colorOptions.map((color) => {
+                          const unavailable = !isColorAvailable(color);
+                          return (
+                            <button
+                              key={color}
+                              disabled={unavailable}
+                              onClick={() => setSelectedColor(color)}
+                              className={cn(
+                                "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                                selectedColor === color
+                                  ? "border-black bg-black text-white shadow-lg"
+                                  : "border-zinc-200 hover:border-black text-zinc-600",
+                                unavailable && "opacity-20 cursor-not-allowed grayscale border-zinc-100"
+                              )}
+                            >
+                              {color}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
 
                   {/* Fabric Selection for Combos */}
-                  {availableFabricsForSelection.length > 0 && (
+                  {fabricOptions.length > 0 && (
                     <div className="space-y-4 pt-8 border-t border-black/5">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
                         FINISH SELECTION : <span className="text-foreground">{selectedFabric}</span>
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {availableFabricsForSelection.map((fabric) => (
-                          <button
-                            key={fabric}
-                            onClick={() => setSelectedFabric(fabric)}
-                            className={cn(
-                              "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
-                              selectedFabric === fabric
-                                ? "border-black bg-black text-white shadow-lg"
-                                : "border-zinc-200 hover:border-black text-zinc-600"
-                            )}
-                          >
-                            {fabric}
-                          </button>
-                        ))}
+                        {fabricOptions.map((fabric) => {
+                          const unavailable = !isFabricAvailable(fabric);
+                          return (
+                            <button
+                              key={fabric}
+                              disabled={unavailable}
+                              onClick={() => setSelectedFabric(fabric)}
+                              className={cn(
+                                "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                                selectedFabric === fabric
+                                  ? "border-black bg-black text-white shadow-lg"
+                                  : "border-zinc-200 hover:border-black text-zinc-600",
+                                unavailable && "opacity-20 cursor-not-allowed grayscale border-zinc-100"
+                              )}
+                            >
+                              {fabric}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -1205,51 +1271,61 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   })()}
 
                   {/* Color Selection for Individual Products */}
-                  {availableColorsForSelection.length > 0 && (
+                  {colorOptions.length > 0 && (
                     <div className="space-y-4">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
                         COLOR / FABRIC : <span className="text-foreground tracking-widest">{selectedColor}</span>
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {availableColorsForSelection.map((color) => (
-                          <button
-                            key={color}
-                            onClick={() => setSelectedColor(color)}
-                            className={cn(
-                              "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
-                              selectedColor === color
-                                ? "border-black bg-black text-white shadow-lg"
-                                : "border-border hover:border-black text-zinc-600"
-                            )}
-                          >
-                            {color}
-                          </button>
-                        ))}
+                        {colorOptions.map((color) => {
+                          const unavailable = !isColorAvailable(color);
+                          return (
+                            <button
+                              key={color}
+                              disabled={unavailable}
+                              onClick={() => setSelectedColor(color)}
+                              className={cn(
+                                "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                                selectedColor === color
+                                  ? "border-black bg-black text-white shadow-lg"
+                                  : "border-border hover:border-black text-zinc-600",
+                                unavailable && "opacity-20 cursor-not-allowed grayscale border-zinc-100"
+                              )}
+                            >
+                              {color}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
 
                   {/* Fabric Selection for Individual Products */}
-                  {availableFabricsForSelection.length > 0 && (
+                  {fabricOptions.length > 0 && (
                     <div className="space-y-4 pt-8 border-t border-black/5">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-black">
                         FABRIC TYPE : <span className="text-foreground tracking-widest">{selectedFabric}</span>
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {availableFabricsForSelection.map((fabric) => (
-                          <button
-                            key={fabric}
-                            onClick={() => setSelectedFabric(fabric)}
-                            className={cn(
-                              "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
-                              selectedFabric === fabric
-                                ? "border-black bg-black text-white shadow-lg"
-                                : "border-border hover:border-black text-zinc-600"
-                            )}
-                          >
-                            {fabric}
-                          </button>
-                        ))}
+                        {fabricOptions.map((fabric) => {
+                          const unavailable = !isFabricAvailable(fabric);
+                          return (
+                            <button
+                              key={fabric}
+                              disabled={unavailable}
+                              onClick={() => setSelectedFabric(fabric)}
+                              className={cn(
+                                "flex h-10 px-6 items-center justify-center border text-[10px] tracking-widest font-black transition-all duration-300",
+                                selectedFabric === fabric
+                                  ? "border-black bg-black text-white shadow-lg"
+                                  : "border-border hover:border-black text-zinc-600",
+                                unavailable && "opacity-20 cursor-not-allowed grayscale border-zinc-100"
+                              )}
+                            >
+                              {fabric}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
