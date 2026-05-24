@@ -141,8 +141,9 @@ export function Header() {
                   {item.dropdown ? (
                     <>
                       <button
+                        onClick={() => router.push("/shop")}
                         className={cn(
-                          "flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-bold transition-all duration-300 py-2",
+                          "flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-bold transition-all duration-300 py-2 cursor-pointer",
                           pathname.startsWith("/shop") ? "text-accent-yellow" : "text-zinc-400 hover:text-white"
                         )}
                       >
